@@ -18,7 +18,7 @@ final class TenantReprocessCommand extends Command
     {
         if ((bool) $this->option('all')) {
             Tenant::query()
-                ->where('is_active', true)
+                ->where('status', 'active')
                 ->orderBy('id')
                 ->each(function (Tenant $tenant) use ($executionManager): void {
                     $executionManager->run($tenant, function () use ($tenant): void {

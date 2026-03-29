@@ -35,12 +35,10 @@ final class TenantExecutionManager
             if ($previousTenant !== null) {
                 $this->tenantContext->set($previousTenant);
                 $this->tenantSearchPathService->setTenantSchema($previousTenant->schema_name);
-
-                return;
+            } else {
+                $this->tenantContext->clear();
+                $this->tenantSearchPathService->resetToPublic();
             }
-
-            $this->tenantContext->clear();
-            $this->tenantSearchPathService->resetToPublic();
         }
     }
 }
