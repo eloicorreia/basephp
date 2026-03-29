@@ -54,11 +54,5 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(20)->by($identifier),
             ];
         });
-
-        Passport::tokensCan([
-            'admin.full' => 'Acesso administrativo total',
-            'tenant.access' => 'Acesso ao tenant',
-            'user.profile' => 'Acesso ao perfil autenticado',
-        ]);
     }
 }

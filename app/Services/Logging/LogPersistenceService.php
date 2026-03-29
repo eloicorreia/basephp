@@ -147,7 +147,6 @@ class LogPersistenceService
         }
 
         $input = $request->all();
-
         $sanitized = $this->sanitizeArray($input);
 
         return $sanitized === [] ? null : $sanitized;
@@ -170,6 +169,9 @@ class LogPersistenceService
             'refresh_token',
             'token',
             'authorization',
+            'bearer_token',
+            'secret',
+            'api_key',
         ];
 
         $sanitized = [];
