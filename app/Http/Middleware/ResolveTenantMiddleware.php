@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\Tenant\TenantNotFoundException;
+use App\Exceptions\Tenant\TenantRequiredException;
 use App\Models\Tenant;
 use App\Services\Tenant\TenantSearchPathService;
 use App\Support\Tenant\TenantContext;
@@ -23,12 +25,12 @@ class ResolveTenantMiddleware
     {
         $tenantCode = $request->header('X-Tenant-Id');
 
-        if (empty($tenantCode)) {
+        if ($tenantCode === null || trim($tenantCode) === '') {
             throw new TenantRequiredException();
         }
 
         $tenant = Tenant::query()
-            ->where('code', $tenantCode)
+            ->where('code', trim($tenantCode))
             ->where('status', 'active')
             ->first();
 
@@ -42,6 +44,7 @@ class ResolveTenantMiddleware
         try {
             return $next($request);
         } finally {
+            $this->tenantContext->clear();
             $this->tenantSearchPathService->resetToPublic();
         }
     }
