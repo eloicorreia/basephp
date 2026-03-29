@@ -11,6 +11,25 @@ use Throwable;
 
 class LogPersistenceService
 {
+    /**
+     * @var array<int, string>
+     */
+    private const SENSITIVE_KEYS = [
+        'password',
+        'password_confirmation',
+        'current_password',
+        'new_password',
+        'new_password_confirmation',
+        'client_secret',
+        'access_token',
+        'refresh_token',
+        'token',
+        'authorization',
+        'bearer_token',
+        'secret',
+        'api_key',
+    ];
+
     public function logSystemInfo(
         string $message,
         string $category,
@@ -60,9 +79,13 @@ class LogPersistenceService
         ?int $userId = null,
         ?int $httpStatus = 500,
     ): void {
+        $message = $throwable->getMessage() !== ''
+            ? $throwable->getMessage()
+            : 'Erro sem mensagem.';
+
         $this->persistSystemLog(
             level: 'error',
-            message: $throwable->getMessage() !== '' ? $throwable->getMessage() : 'Erro sem mensagem.',
+            message: $message,
             category: $category,
             operation: $operation,
             userId: $userId,
@@ -152,34 +175,25 @@ class LogPersistenceService
         return $sanitized === [] ? null : $sanitized;
     }
 
+    /**
+     * @param array<mixed>|null $data
+     * @return array<mixed>|null
+     */
     private function sanitizeArray(?array $data): ?array
     {
         if ($data === null) {
             return null;
         }
 
-        $sensitiveKeys = [
-            'password',
-            'password_confirmation',
-            'current_password',
-            'new_password',
-            'new_password_confirmation',
-            'client_secret',
-            'access_token',
-            'refresh_token',
-            'token',
-            'authorization',
-            'bearer_token',
-            'secret',
-            'api_key',
-        ];
-
         $sanitized = [];
 
         foreach ($data as $key => $value) {
             $normalizedKey = is_string($key) ? mb_strtolower($key) : $key;
 
-            if (is_string($normalizedKey) && in_array($normalizedKey, $sensitiveKeys, true)) {
+            if (
+                is_string($normalizedKey)
+                && in_array($normalizedKey, self::SENSITIVE_KEYS, true)
+            ) {
                 $sanitized[$key] = '***';
                 continue;
             }
