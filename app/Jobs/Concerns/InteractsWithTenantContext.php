@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Concerns;
 
-use App\Contracts\Multitenancy\TenantResolverInterface;
+use App\Models\Tenant;
 use App\Services\Tenant\TenantExecutionManager;
 use Closure;
 
@@ -20,14 +20,11 @@ trait InteractsWithTenantContext
      */
     protected function runInTenantContext(Closure $callback): mixed
     {
-        /** @var TenantResolverInterface $resolver */
-        $resolver = app(TenantResolverInterface::class);
+        $tenant = Tenant::query()->findOrFail($this->tenantId);
 
-        /** @var TenantExecutionManager $manager */
-        $manager = app(TenantExecutionManager::class);
+        /** @var TenantExecutionManager $executionManager */
+        $executionManager = app(TenantExecutionManager::class);
 
-        $tenant = $resolver->resolveById($this->tenantId);
-
-        return $manager->run($tenant, $callback);
+        return $executionManager->run($tenant, $callback);
     }
 }
