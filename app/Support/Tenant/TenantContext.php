@@ -2,52 +2,43 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace App\Support\Tenant;
 
-return new class extends Migration
+use App\Exceptions\TenantContextNotDefinedException;
+use App\Models\Tenant;
+
+final class TenantContext
 {
-    public function up(): void
+    private ?Tenant $tenant = null;
+
+    public function set(Tenant $tenant): void
     {
-        Schema::create('api_request_logs', function (Blueprint $table): void {
-            $table->bigIncrements('id');
-            $table->uuid('request_id')->nullable()->index();
-            $table->uuid('trace_id')->nullable()->index();
-
-            $table->unsignedBigInteger('tenant_id')->nullable()->index();
-            $table->string('tenant_code', 100)->nullable()->index();
-            $table->unsignedBigInteger('user_id')->nullable()->index();
-            $table->string('oauth_client_id', 100)->nullable()->index();
-
-            $table->string('method', 10)->index();
-            $table->string('route', 255)->nullable()->index();
-            $table->string('uri', 1000);
-
-            $table->unsignedSmallInteger('http_status')->nullable()->index();
-            $table->string('ip', 45)->nullable();
-            $table->string('user_agent', 1000)->nullable();
-
-            $table->json('request_headers')->nullable();
-            $table->json('request_query')->nullable();
-            $table->json('request_body')->nullable();
-            $table->json('response_body')->nullable();
-
-            $table->string('processing_status', 30)->nullable()->index();
-            $table->integer('duration_ms')->nullable();
-            $table->text('message')->nullable();
-
-            $table->timestamp('created_at')->useCurrent();
-
-            $table->index(['created_at', 'processing_status']);
-            $table->index(['tenant_id', 'created_at']);
-            $table->index(['tenant_code', 'created_at']);
-            $table->index(['user_id', 'created_at']);
-        });
+        $this->tenant = $tenant;
     }
 
-    public function down(): void
+    public function get(): ?Tenant
     {
-        Schema::dropIfExists('api_request_logs');
+        return $this->tenant;
     }
-};
+
+    public function require(): Tenant
+    {
+        if ($this->tenant === null) {
+            throw new TenantContextNotDefinedException(
+                'Contexto de tenant não foi definido para a execução atual.'
+            );
+        }
+
+        return $this->tenant;
+    }
+
+    public function hasTenant(): bool
+    {
+        return $this->tenant !== null;
+    }
+
+    public function clear(): void
+    {
+        $this->tenant = null;
+    }
+}

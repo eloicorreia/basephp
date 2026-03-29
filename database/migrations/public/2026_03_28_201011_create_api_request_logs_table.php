@@ -12,6 +12,7 @@ return new class extends Migration
     {
         Schema::create('api_request_logs', function (Blueprint $table): void {
             $table->bigIncrements('id');
+
             $table->uuid('request_id')->nullable()->index();
             $table->uuid('trace_id')->nullable()->index();
 
