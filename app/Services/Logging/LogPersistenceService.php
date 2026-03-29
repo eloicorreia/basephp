@@ -62,16 +62,18 @@ class LogPersistenceService
     ): void {
         $this->persistSystemLog(
             level: 'error',
-            message: $throwable->getMessage(),
+            message: $throwable->getMessage() !== '' ? $throwable->getMessage() : 'Erro sem mensagem.',
             category: $category,
             operation: $operation,
             userId: $userId,
             context: [
                 'exception' => $throwable::class,
+                'file' => $throwable->getFile(),
+                'line' => $throwable->getLine(),
             ],
             httpStatus: $httpStatus,
             processingStatus: 'error',
-            stackTraceSummary: $throwable->getFile() . ':' . $throwable->getLine(),
+            stackTraceSummary: $this->buildStackTraceSummary($throwable),
         );
     }
 
@@ -94,8 +96,8 @@ class LogPersistenceService
             'action' => $action,
             'auditable_type' => $auditableType,
             'auditable_id' => $auditableId,
-            'before_data' => $beforeData,
-            'after_data' => $afterData,
+            'before_data' => $this->sanitizeArray($beforeData),
+            'after_data' => $this->sanitizeArray($afterData),
             'route' => $request?->path(),
             'method' => $request?->method(),
             'ip' => $request?->ip(),
@@ -128,7 +130,7 @@ class LogPersistenceService
             'user_id' => $userId,
             'ip' => $request?->ip(),
             'message' => $message,
-            'context' => $context,
+            'context' => $this->sanitizeArray($context),
             'input_payload' => $this->safeInput($request),
             'output_payload' => null,
             'http_status' => $httpStatus,
@@ -144,16 +146,51 @@ class LogPersistenceService
             return null;
         }
 
-        $input = $request->except([
+        $input = $request->all();
+
+        $sanitized = $this->sanitizeArray($input);
+
+        return $sanitized === [] ? null : $sanitized;
+    }
+
+    private function sanitizeArray(?array $data): ?array
+    {
+        if ($data === null) {
+            return null;
+        }
+
+        $sensitiveKeys = [
             'password',
             'password_confirmation',
             'current_password',
             'new_password',
             'new_password_confirmation',
             'client_secret',
-        ]);
+            'access_token',
+            'refresh_token',
+            'token',
+            'authorization',
+        ];
 
-        return $input === [] ? null : $input;
+        $sanitized = [];
+
+        foreach ($data as $key => $value) {
+            $normalizedKey = is_string($key) ? mb_strtolower($key) : $key;
+
+            if (is_string($normalizedKey) && in_array($normalizedKey, $sensitiveKeys, true)) {
+                $sanitized[$key] = '***';
+                continue;
+            }
+
+            if (is_array($value)) {
+                $sanitized[$key] = $this->sanitizeArray($value);
+                continue;
+            }
+
+            $sanitized[$key] = $value;
+        }
+
+        return $sanitized;
     }
 
     private function requestId(?Request $request): ?string
@@ -164,5 +201,12 @@ class LogPersistenceService
     private function traceId(?Request $request): ?string
     {
         return $request?->attributes->get('trace_id');
+    }
+
+    private function buildStackTraceSummary(Throwable $throwable): string
+    {
+        $summary = $throwable->getFile() . ':' . $throwable->getLine();
+
+        return mb_substr($summary, 0, 1000);
     }
 }

@@ -11,8 +11,8 @@ use App\Http\Middleware\RequestContextMiddleware;
 use App\Http\Middleware\ResolveTenantMiddleware;
 use App\Services\Logging\LogPersistenceService;
 use App\Support\Http\ApiErrorFormatter;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -129,12 +129,12 @@ return Application::configure(basePath: dirname(__DIR__))
             $status = $e->getStatusCode();
 
             $message = match ($status) {
+                400 => $e->getMessage() !== '' ? $e->getMessage() : 'Requisição inválida.',
+                401 => 'Não autenticado.',
+                403 => 'Acesso negado.',
                 404 => 'Recurso não encontrado.',
                 405 => 'Método não permitido.',
                 429 => 'Muitas requisições. Tente novamente em instantes.',
-                403 => 'Acesso negado.',
-                401 => 'Não autenticado.',
-                400 => $e->getMessage() !== '' ? $e->getMessage() : 'Requisição inválida.',
                 default => $status >= 500
                     ? 'Erro ao processar a requisição.'
                     : ($e->getMessage() !== '' ? $e->getMessage() : 'Erro ao processar a requisição.'),
