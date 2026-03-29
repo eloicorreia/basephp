@@ -25,6 +25,7 @@ class IntegrationLog extends Model
         'http_status',
         'processing_status',
         'message',
+        'duration_ms',
         'created_at',
     ];
 

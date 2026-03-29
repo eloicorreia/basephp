@@ -6,28 +6,28 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class () extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('integration_logs', function (Blueprint $table): void {
             $table->bigIncrements('id');
-            $table->uuid('request_id')->index();
-            $table->uuid('correlation_id')->index();
-            $table->unsignedBigInteger('tenant_id')->nullable()->index();
-            $table->string('tenant_code', 100)->nullable()->index();
+            $table->uuid('request_id')->nullable()->index();
+            $table->uuid('trace_id')->nullable()->index();
             $table->string('system_name', 120)->index();
-            $table->string('operation', 120)->index();
             $table->string('direction', 20)->index();
+            $table->string('operation', 120)->index();
+            $table->string('endpoint', 500)->nullable();
             $table->string('external_identifier', 150)->nullable()->index();
+            $table->json('request_payload')->nullable();
+            $table->json('response_payload')->nullable();
             $table->unsignedSmallInteger('http_status')->nullable()->index();
-            $table->string('status', 30)->index();
-            $table->jsonb('request_payload')->nullable();
-            $table->jsonb('response_payload')->nullable();
+            $table->string('processing_status', 30)->nullable()->index();
             $table->text('message')->nullable();
             $table->integer('duration_ms')->nullable();
-            $table->timestampTz('created_at')->useCurrent();
+            $table->timestamp('created_at')->useCurrent();
 
-            $table->index(['created_at', 'system_name', 'status']);
+            $table->index(['created_at', 'system_name', 'processing_status']);
         });
     }
 

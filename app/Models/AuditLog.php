@@ -10,6 +10,8 @@ class AuditLog extends Model
 {
     public $timestamps = false;
 
+    protected $table = 'audit_logs';
+
     protected $fillable = [
         'request_id',
         'trace_id',
