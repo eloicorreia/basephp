@@ -2,29 +2,33 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Middleware;
+namespace App\Exceptions;
 
-use Closure;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\Response;
+use Exception;
 
-class RequestContextMiddleware
+class ApiException extends Exception
 {
-    public function handle(Request $request, Closure $next): Response
+    /**
+     * @param array<int, array<string, mixed>> $errors
+     */
+    public function __construct(
+        string $message = 'Erro ao processar a requisição.',
+        private readonly int $statusCode = 400,
+        private readonly array $errors = []
+    ) {
+        parent::__construct($message);
+    }
+
+    public function statusCode(): int
     {
-        $requestId = $request->header('X-Request-Id', (string) Str::uuid());
-        $traceId = $request->header('X-Trace-Id', (string) Str::uuid());
+        return $this->statusCode;
+    }
 
-        $request->attributes->set('request_id', $requestId);
-        $request->attributes->set('trace_id', $traceId);
-
-        /** @var Response $response */
-        $response = $next($request);
-
-        $response->headers->set('X-Request-Id', $requestId);
-        $response->headers->set('X-Trace-Id', $traceId);
-
-        return $response;
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function errors(): array
+    {
+        return $this->errors;
     }
 }

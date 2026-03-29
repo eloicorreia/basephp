@@ -20,6 +20,17 @@ class AppServiceProvider extends ServiceProvider
     {
         Passport::enablePasswordGrant();
 
+        Passport::tokensCan([
+            'admin.full' => 'Acesso administrativo total',
+            'tenant.access' => 'Acesso ao tenant autenticado',
+            'user.profile' => 'Acesso ao perfil autenticado',
+            'user.password.change' => 'Alteração da própria senha',
+            'tenant.users.read' => 'Listagem de usuários do tenant',
+            'tenant.users.write' => 'Criação e manutenção de usuários do tenant',
+            'tenants.read' => 'Listagem de tenants',
+            'tenants.write' => 'Criação e manutenção de tenants',
+        ]);
+
         RateLimiter::for('auth', function (Request $request): array {
             $identifier = (string) ($request->input('username') ?? $request->ip());
 
