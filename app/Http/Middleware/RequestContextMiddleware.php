@@ -13,8 +13,8 @@ class RequestContextMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $requestId = $request->header('X-Request-Id', (string) Str::uuid());
-        $traceId = $request->header('X-Trace-Id', (string) Str::uuid());
+        $requestId = (string) ($request->header('X-Request-Id') ?: Str::uuid());
+        $traceId = (string) ($request->header('X-Trace-Id') ?: Str::uuid());
 
         $request->attributes->set('request_id', $requestId);
         $request->attributes->set('trace_id', $traceId);

@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('api', [
             RequestContextMiddleware::class,
+            ApiRequestLoggingMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

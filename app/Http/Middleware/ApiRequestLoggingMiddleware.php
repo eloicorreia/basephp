@@ -22,6 +22,7 @@ class ApiRequestLoggingMiddleware
         $start = microtime(true);
 
         try {
+            /** @var Response $response */
             $response = $next($request);
 
             $this->apiRequestLogger->log(

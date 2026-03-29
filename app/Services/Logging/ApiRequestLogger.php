@@ -5,25 +5,35 @@ declare(strict_types=1);
 namespace App\Services\Logging;
 
 use App\Models\ApiRequestLog;
+use App\Support\Tenant\TenantContext;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class ApiRequestLogger
 {
-    public function log(Request $request, Response $response, int $durationMs, string $status, ?string $message = null): void
-    {
+    public function __construct(
+        private readonly TenantContext $tenantContext
+    ) {
+    }
+
+    public function log(
+        Request $request,
+        Response $response,
+        int $durationMs,
+        string $status,
+        ?string $message = null
+    ): void {
         ApiRequestLog::query()->create([
             'request_id' => $request->attributes->get('request_id'),
-            'correlation_id' => $request->attributes->get('correlation_id'),
-            'tenant_code' => $request->header('X-Tenant-Id'),
-            'tenant_id' => app(\App\Support\Tenant\TenantContext::class)->get()?->id,
+            'trace_id' => $request->attributes->get('trace_id'),
             'user_id' => $request->user()?->id,
-            'oauth_client_id' => $request->user()?->token()?->client_id,
+            'tenant_code' => $request->header('X-Tenant-Id'),
+            'oauth_client_id' => $this->resolveOauthClientId($request),
             'method' => $request->method(),
             'route' => $request->route()?->uri(),
             'uri' => $request->getRequestUri(),
             'http_status' => $response->getStatusCode(),
-            'ip_address' => $request->ip(),
+            'ip' => $request->ip(),
             'user_agent' => (string) $request->userAgent(),
             'request_headers' => $this->sanitizeHeaders($request->headers->all()),
             'request_query' => $request->query(),
@@ -36,6 +46,17 @@ class ApiRequestLogger
         ]);
     }
 
+    private function resolveOauthClientId(Request $request): ?string
+    {
+        $token = $request->user()?->token();
+
+        if ($token === null) {
+            return null;
+        }
+
+        return $token->client_id !== null ? (string) $token->client_id : null;
+    }
+
     private function sanitizeHeaders(array $headers): array
     {
         unset($headers['authorization']);
@@ -45,7 +66,13 @@ class ApiRequestLogger
 
     private function sanitizePayload(array $payload): array
     {
-        foreach (['password', 'current_password', 'new_password', 'new_password_confirmation', 'client_secret'] as $field) {
+        foreach ([
+            'password',
+            'current_password',
+            'new_password',
+            'new_password_confirmation',
+            'client_secret',
+        ] as $field) {
             if (array_key_exists($field, $payload)) {
                 $payload[$field] = '***';
             }
@@ -64,6 +91,10 @@ class ApiRequestLogger
 
         $decoded = json_decode($content, true);
 
-        return json_last_error() === JSON_ERROR_NONE ? $decoded : mb_substr($content, 0, 4000);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $decoded;
+        }
+
+        return mb_substr($content, 0, 4000);
     }
 }

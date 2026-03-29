@@ -14,8 +14,9 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->uuid('request_id')->nullable()->index();
             $table->uuid('trace_id')->nullable()->index();
-            $table->unsignedBigInteger('user_id')->nullable()->index();
+            $table->unsignedBigInteger('tenant_id')->nullable()->index();
             $table->string('tenant_code', 100)->nullable()->index();
+            $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('oauth_client_id', 100)->nullable()->index();
             $table->string('method', 10)->index();
             $table->string('route', 255)->nullable()->index();
