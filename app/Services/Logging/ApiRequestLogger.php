@@ -26,8 +26,9 @@ class ApiRequestLogger
         ApiRequestLog::query()->create([
             'request_id' => $request->attributes->get('request_id'),
             'trace_id' => $request->attributes->get('trace_id'),
-            'user_id' => $request->user()?->id,
+            'tenant_id' => $this->tenantContext->get()?->id,
             'tenant_code' => $request->header('X-Tenant-Id'),
+            'user_id' => $request->user()?->id,
             'oauth_client_id' => $this->resolveOauthClientId($request),
             'method' => $request->method(),
             'route' => $request->route()?->uri(),
@@ -50,11 +51,11 @@ class ApiRequestLogger
     {
         $token = $request->user()?->token();
 
-        if ($token === null) {
+        if ($token === null || $token->client_id === null) {
             return null;
         }
 
-        return $token->client_id !== null ? (string) $token->client_id : null;
+        return (string) $token->client_id;
     }
 
     private function sanitizeHeaders(array $headers): array
