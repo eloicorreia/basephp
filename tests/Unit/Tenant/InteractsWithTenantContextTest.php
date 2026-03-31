@@ -7,10 +7,11 @@ namespace Tests\Unit\Tenant;
 use App\Jobs\Concerns\InteractsWithTenantContext;
 use App\Models\Tenant;
 use App\Services\Tenant\TenantExecutionManager;
+use App\Services\Tenant\TenantSearchPathService;
+use App\Support\Tenant\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Mockery;
-use Mockery\MockInterface;
 use Tests\TestCase;
 
 class InteractsWithTenantContextTest extends TestCase
@@ -35,37 +36,50 @@ class InteractsWithTenantContextTest extends TestCase
                 $this->tenantId = $tenantId;
             }
 
-            public function execute(): string
+            public function execute(): array
             {
-                return $this->runInTenantContext(function (): string {
-                    return 'executado';
+                return $this->runInTenantContext(function (): array {
+                    /** @var TenantContext $tenantContext */
+                    $tenantContext = app(TenantContext::class);
+
+                    $currentTenant = $tenantContext->require();
+                    $searchPathRow = DB::selectOne('SHOW search_path');
+
+                    return [
+                        'tenant_id' => $currentTenant->id,
+                        'tenant_schema' => $currentTenant->schema_name,
+                        'search_path' => is_object($searchPathRow) && isset($searchPathRow->search_path)
+                            ? (string) $searchPathRow->search_path
+                            : '',
+                    ];
                 });
             }
         };
 
-        /** @var TenantExecutionManager&MockInterface $executionManager */
-        $executionManager = Mockery::mock(TenantExecutionManager::class);
+        $tenantContext = new TenantContext();
+        $tenantSearchPathService = new TenantSearchPathService();
+        $executionManager = new TenantExecutionManager(
+            $tenantContext,
+            $tenantSearchPathService,
+        );
 
-        $executionManager->shouldReceive('run')
-            ->once()
-            ->withArgs(function (Tenant $resolvedTenant, \Closure $callback) use ($tenant): bool {
-                $this->assertSame($tenant->id, $resolvedTenant->id);
-
-                return true;
-            })
-            ->andReturnUsing(function (Tenant $resolvedTenant, \Closure $callback): string {
-                return $callback();
-            });
-
+        $this->app->instance(TenantContext::class, $tenantContext);
+        $this->app->instance(TenantSearchPathService::class, $tenantSearchPathService);
         $this->app->instance(TenantExecutionManager::class, $executionManager);
 
-        $this->assertSame('executado', $job->execute());
-    }
+        $result = $job->execute();
 
-    protected function tearDown(): void
-    {
-        Mockery::close();
+        $this->assertSame($tenant->id, $result['tenant_id']);
+        $this->assertSame('tenant_main', $result['tenant_schema']);
+        $this->assertStringContainsString('tenant_main', $result['search_path']);
 
-        parent::tearDown();
+        $this->assertFalse($tenantContext->hasTenant());
+
+        $resetRow = DB::selectOne('SHOW search_path');
+        $resetSearchPath = is_object($resetRow) && isset($resetRow->search_path)
+            ? (string) $resetRow->search_path
+            : '';
+
+        $this->assertSame('public', $resetSearchPath);
     }
 }

@@ -6,31 +6,26 @@ namespace Tests\Concerns;
 
 trait LoadsProjectMigrations
 {
-    protected static bool $projectMigrationsLoaded = false;
+    protected static bool $projectDatabasePrepared = false;
 
     protected function loadProjectMigrations(): void
     {
-        if (self::$projectMigrationsLoaded) {
+        if (self::$projectDatabasePrepared) {
             return;
         }
 
         $this->artisan('migrate:fresh', [
             '--database' => config('database.default'),
-            '--path' => 'database/migrations',
-        ]);
+            '--force' => true,
+        ])->run();
 
         $this->artisan('migrate', [
             '--database' => config('database.default'),
             '--path' => database_path('migrations/public'),
             '--realpath' => true,
-        ]);
+            '--force' => true,
+        ])->run();
 
-        $this->artisan('migrate', [
-            '--database' => config('database.default'),
-            '--path' => database_path('migrations/tenant'),
-            '--realpath' => true,
-        ]);
-
-        self::$projectMigrationsLoaded = true;
+        self::$projectDatabasePrepared = true;
     }
 }
