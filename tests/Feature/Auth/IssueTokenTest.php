@@ -23,10 +23,8 @@ class IssueTokenTest extends TestCase
         ]);
 
         $client = app(ClientRepository::class)->createPasswordGrantClient(
-            userId: null,
-            name: 'Test Password Client',
-            redirect: 'http://localhost',
-            provider: 'users'
+            'Test Password Client',
+            'users'
         );
 
         $response = $this->post('/oauth/token', [
@@ -55,10 +53,8 @@ class IssueTokenTest extends TestCase
         ]);
 
         $client = app(ClientRepository::class)->createPasswordGrantClient(
-            userId: null,
-            name: 'Test Password Client',
-            redirect: 'http://localhost',
-            provider: 'users'
+            'Test Password Client',
+            'users'
         );
 
         $response = $this->post('/oauth/token', [
@@ -74,8 +70,13 @@ class IssueTokenTest extends TestCase
             ->assertJsonStructure([
                 'error',
                 'error_description',
-                'message',
+            ])
+            ->assertJson([
+                'error' => 'invalid_grant',
             ]);
+
+        $this->assertIsString($response->json('error_description'));
+        $this->assertNotSame('', trim((string) $response->json('error_description')));
     }
 
     public function test_protected_route_requires_authentication(): void

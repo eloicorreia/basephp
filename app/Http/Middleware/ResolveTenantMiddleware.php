@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Exceptions\Tenant\TenantNotFoundException;
-use App\Exceptions\Tenant\TenantRequiredException;
+use App\Exceptions\TenantNotFoundException;
+use App\Exceptions\TenantRequiredException;
 use App\Models\Tenant;
 use App\Services\Tenant\TenantSearchPathService;
 use App\Support\Tenant\TenantContext;

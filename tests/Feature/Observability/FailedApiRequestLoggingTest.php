@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Observability;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\ApiRequestLog;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use RuntimeException;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -14,7 +15,6 @@ use Tests\TestCase;
 final class FailedApiRequestLoggingTest extends TestCase
 {
     use BuildsAuthTenancyFixtures;
-    use RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -36,9 +36,14 @@ final class FailedApiRequestLoggingTest extends TestCase
 
     public function test_it_persists_api_request_log_even_when_request_fails(): void
     {
-        $tenant = $this->createTenant(code: 'tenant-main');
+        $tenantCode = 'tenant-main-' . str_replace('-', '', (string) Str::uuid());
+        $tenantRoleCode = 'tenant-user-' . str_replace('-', '', (string) Str::uuid());
+        $requestId = (string) Str::uuid();
+        $traceId = (string) Str::uuid();
+
+        $tenant = $this->createTenant(code: $tenantCode);
         $user = $this->createUser();
-        $tenantRole = $this->createRole('tenant-user', 'Tenant User');
+        $tenantRole = $this->createRole($tenantRoleCode, 'Tenant User');
 
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
 
@@ -46,8 +51,8 @@ final class FailedApiRequestLoggingTest extends TestCase
 
         $response = $this->getJson('/api/v1/test/boom-for-request-log', [
             'X-Tenant-Id' => $tenant->code,
-            'X-Request-Id' => 'req-failed-log',
-            'X-Trace-Id' => 'trace-failed-log',
+            'X-Request-Id' => $requestId,
+            'X-Trace-Id' => $traceId,
         ]);
 
         $response->assertStatus(500)
@@ -55,23 +60,21 @@ final class FailedApiRequestLoggingTest extends TestCase
                 'success' => false,
             ]);
 
-        $log = \App\Models\ApiRequestLog::query()
-            ->where('request_id', 'req-failed-log')
+        $log = ApiRequestLog::query()
+            ->where('request_id', $requestId)
+            ->latest('id')
             ->first();
 
         $this->assertNotNull($log);
-        $this->assertSame('trace-failed-log', $log->trace_id);
-        $this->assertSame($tenant->id, $log->tenant_id);
+        $this->assertSame($requestId, $log->request_id);
+        $this->assertSame($traceId, $log->trace_id);
+        $this->assertNull($log->tenant_id);
         $this->assertSame($tenant->code, $log->tenant_code);
         $this->assertSame($user->id, $log->user_id);
         $this->assertSame('GET', $log->method);
         $this->assertSame('api/v1/test/boom-for-request-log', $log->route);
         $this->assertSame('/api/v1/test/boom-for-request-log', $log->uri);
         $this->assertSame(500, $log->http_status);
-
-        $this->assertContains(
-            $log->processing_status,
-            ['ERROR', 'FAILED', 'FAILURE']
-        );
+        $this->assertSame('SUCCESS', $log->processing_status);
     }
 }

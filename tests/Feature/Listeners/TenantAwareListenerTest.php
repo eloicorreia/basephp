@@ -6,30 +6,17 @@ namespace Tests\Feature\Listeners;
 
 use App\Models\Tenant;
 use App\Services\Tenant\TenantExecutionManager;
+use App\Services\Tenant\TenantSearchPathService;
 use App\Support\Tenant\TenantContext;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Str;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
 
 final class TenantAwareListenerTest extends TestCase
 {
     use BuildsAuthTenancyFixtures;
-    use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        config(['queue.default' => 'sync']);
-
-        Event::listen(
-            TestTenantAwareEvent::class,
-            TestTenantAwareQueuedListener::class
-        );
-    }
 
     public function test_it_restores_tenant_context_and_search_path_inside_listener(): void
     {
@@ -37,31 +24,43 @@ final class TenantAwareListenerTest extends TestCase
             $this->markTestSkipped('Este teste requer PostgreSQL.');
         }
 
+        $tenantCode = 'tenant-listener-' . str_replace('-', '', (string) Str::uuid());
+        $tenantSchema = 'tenant_listener_' . str_replace('-', '', (string) Str::uuid());
+
         $tenant = $this->createTenant(
-            code: 'tenant-listener',
+            code: $tenantCode,
             status: 'active',
-            schemaName: 'tenant_listener_test'
+            schemaName: $tenantSchema
         );
 
-        DB::statement('CREATE SCHEMA IF NOT EXISTS "' . $tenant->schema_name . '"');
+        DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        TestTenantAwareQueuedListener::resetState();
+        $tenantContext = new TenantContext();
+        $searchPathService = new TenantSearchPathService();
+        $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
-        event(new TestTenantAwareEvent($tenant->id));
+        $this->app->instance(TenantContext::class, $tenantContext);
+        $this->app->instance(TenantSearchPathService::class, $searchPathService);
+        $this->app->instance(TenantExecutionManager::class, $executionManager);
 
-        $this->assertTrue(TestTenantAwareQueuedListener::$handled);
-        $this->assertSame($tenant->id, TestTenantAwareQueuedListener::$resolvedTenantId);
-        $this->assertSame($tenant->schema_name, TestTenantAwareQueuedListener::$schemaDuringHandle);
+        TestTenantAwareQueuedListener::reset();
 
-        /** @var TenantContext $tenantContext */
-        $tenantContext = app(TenantContext::class);
+        try {
+            $listener = new TestTenantAwareQueuedListener();
+            $listener->handle(new TestTenantAwareEvent($tenant->id));
 
-        $this->assertNull($tenantContext->get());
+            $this->assertTrue(TestTenantAwareQueuedListener::$handled);
+            $this->assertSame($tenant->id, TestTenantAwareQueuedListener::$resolvedTenantId);
+            $this->assertSame($tenant->schema_name, TestTenantAwareQueuedListener::$schemaDuringHandle);
+            $this->assertNull($tenantContext->get());
 
-        $currentSchema = DB::selectOne('select current_schema() as schema');
-        $this->assertSame('public', $currentSchema->schema);
-
-        DB::statement('DROP SCHEMA IF EXISTS "' . $tenant->schema_name . '" CASCADE');
+            $currentSchema = DB::selectOne('select current_schema() as schema');
+            $this->assertNotNull($currentSchema);
+            $this->assertSame('public', $currentSchema->schema);
+        } finally {
+            DB::statement(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $tenant->schema_name));
+            TestTenantAwareQueuedListener::reset();
+        }
     }
 }
 
@@ -79,25 +78,32 @@ final class TestTenantAwareQueuedListener implements ShouldQueue
     public static ?int $resolvedTenantId = null;
     public static ?string $schemaDuringHandle = null;
 
-    public static function resetState(): void
+    public function handle(TestTenantAwareEvent $event): void
+    {
+        /** @var TenantExecutionManager $executionManager */
+        $executionManager = app(TenantExecutionManager::class);
+
+        $tenant = Tenant::query()->findOrFail($event->tenantId);
+
+        $executionManager->run($tenant, function (): void {
+            /** @var TenantContext $tenantContext */
+            $tenantContext = app(TenantContext::class);
+
+            self::$handled = true;
+            self::$resolvedTenantId = $tenantContext->require()->id;
+
+            $currentSchema = DB::selectOne('select current_schema() as schema');
+
+            self::$schemaDuringHandle = $currentSchema !== null && isset($currentSchema->schema)
+                ? (string) $currentSchema->schema
+                : null;
+        });
+    }
+
+    public static function reset(): void
     {
         self::$handled = false;
         self::$resolvedTenantId = null;
         self::$schemaDuringHandle = null;
-    }
-
-    public function handle(
-        TestTenantAwareEvent $event,
-        TenantExecutionManager $executionManager
-    ): void {
-        $tenant = Tenant::query()->findOrFail($event->tenantId);
-
-        $executionManager->run($tenant, function () use ($tenant): void {
-            self::$handled = true;
-            self::$resolvedTenantId = $tenant->id;
-
-            $currentSchema = DB::selectOne('select current_schema() as schema');
-            self::$schemaDuringHandle = $currentSchema->schema;
-        });
     }
 }

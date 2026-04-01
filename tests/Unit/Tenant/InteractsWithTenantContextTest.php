@@ -16,13 +16,12 @@ use Tests\TestCase;
 
 class InteractsWithTenantContextTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_it_runs_callback_inside_tenant_execution_manager(): void
     {
         $tenant = Tenant::query()->create([
             'uuid' => (string) Str::uuid(),
-            'code' => 'tenant-main',
+            'code' => 'tenant-main-' . str_replace('-', '', (string) \Illuminate\Support\Str::uuid()),
             'name' => 'Tenant Main',
             'schema_name' => 'tenant_main',
             'status' => 'active',
