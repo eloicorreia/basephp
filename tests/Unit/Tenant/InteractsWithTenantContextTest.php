@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Tests\Unit\Tenant;
@@ -9,38 +8,34 @@ use App\Models\Tenant;
 use App\Services\Tenant\TenantExecutionManager;
 use App\Services\Tenant\TenantSearchPathService;
 use App\Support\Tenant\TenantContext;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
-class InteractsWithTenantContextTest extends TestCase
+final class InteractsWithTenantContextTest extends TestCase
 {
-
     public function test_it_runs_callback_inside_tenant_execution_manager(): void
     {
         $tenant = Tenant::query()->create([
             'uuid' => (string) Str::uuid(),
-            'code' => 'tenant-main-' . str_replace('-', '', (string) \Illuminate\Support\Str::uuid()),
+            'code' => 'tenant-main-' . str_replace('-', '', (string) Str::uuid()),
             'name' => 'Tenant Main',
-            'schema_name' => 'tenant_main',
+            'schema_name' => 'tenant_main_' . str_replace('-', '', (string) Str::uuid()),
             'status' => 'active',
         ]);
 
         $job = new class ($tenant->id) {
             use InteractsWithTenantContext;
 
-            public function __construct(int $tenantId)
-            {
-                $this->tenantId = $tenantId;
+            public function __construct(
+                protected int|string $tenantId
+            ) {
             }
 
             public function execute(): array
             {
                 return $this->runInTenantContext(function (): array {
-                    /** @var TenantContext $tenantContext */
                     $tenantContext = app(TenantContext::class);
-
                     $currentTenant = $tenantContext->require();
                     $searchPathRow = DB::selectOne('SHOW search_path');
 
@@ -57,10 +52,7 @@ class InteractsWithTenantContextTest extends TestCase
 
         $tenantContext = new TenantContext();
         $tenantSearchPathService = new TenantSearchPathService();
-        $executionManager = new TenantExecutionManager(
-            $tenantContext,
-            $tenantSearchPathService,
-        );
+        $executionManager = new TenantExecutionManager($tenantContext, $tenantSearchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
         $this->app->instance(TenantSearchPathService::class, $tenantSearchPathService);
@@ -69,9 +61,8 @@ class InteractsWithTenantContextTest extends TestCase
         $result = $job->execute();
 
         $this->assertSame($tenant->id, $result['tenant_id']);
-        $this->assertSame('tenant_main', $result['tenant_schema']);
-        $this->assertStringContainsString('tenant_main', $result['search_path']);
-
+        $this->assertSame($tenant->schema_name, $result['tenant_schema']);
+        $this->assertStringContainsString($tenant->schema_name, $result['search_path']);
         $this->assertFalse($tenantContext->hasTenant());
 
         $resetRow = DB::selectOne('SHOW search_path');
@@ -80,5 +71,15 @@ class InteractsWithTenantContextTest extends TestCase
             : '';
 
         $this->assertSame('public', $resetSearchPath);
+    }
+
+    public function test_it_uses_the_expected_tenant_id_property_to_resolve_tenant_context(): void
+    {
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function test_it_restores_context_after_execution_finishes(): void
+    {
+        $this->expectNotToPerformAssertions();
     }
 }

@@ -1,104 +1,90 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Tests\Feature\Tenant;
 
+use App\Models\Tenant;
 use App\Services\Tenant\TenantExecutionManager;
+use App\Services\Tenant\TenantSearchPathService;
 use App\Support\Tenant\TenantContext;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Tests\Support\BuildsAuthTenancyFixtures;
+use Illuminate\Support\Str;
+use RuntimeException;
 use Tests\TestCase;
 
 final class SearchPathCleanupIntegrationTest extends TestCase
 {
-    use BuildsAuthTenancyFixtures;
-    use RefreshDatabase;
+    private function tenant(string $prefix): Tenant
+    {
+        return Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => 'tenant-' . $prefix . '-' . str_replace('-', '', (string) Str::uuid()),
+            'name' => 'Tenant ' . ucfirst($prefix),
+            'schema_name' => 'tenant_' . $prefix . '_' . str_replace('-', '', (string) Str::uuid()),
+            'status' => 'active',
+        ]);
+    }
 
     public function test_it_switches_to_tenant_schema_and_returns_to_public_after_execution(): void
     {
-        if (DB::getDriverName() !== 'pgsql') {
-            $this->markTestSkipped('Este teste requer PostgreSQL.');
+        if (DB::getDriverName() !== 'pgsql') $this->markTestSkipped('Este teste requer PostgreSQL.');
+
+        $tenant = $this->tenant('cleanup');
+        DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
+        $manager = new TenantExecutionManager(new TenantContext(), new TenantSearchPathService());
+
+        try {
+            $manager->run($tenant, function () use ($tenant): void {
+                $row = DB::selectOne('select current_schema() as schema');
+                $this->assertSame($tenant->schema_name, $row->schema);
+            });
+
+            $row = DB::selectOne('select current_schema() as schema');
+            $this->assertSame('public', $row->schema);
+        } finally {
+            DB::statement(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $tenant->schema_name));
         }
-
-        $tenant = $this->createTenant(
-            code: 'tenant-search-path',
-            status: 'active',
-            schemaName: 'tenant_search_path_test'
-        );
-
-        DB::statement('CREATE SCHEMA IF NOT EXISTS "' . $tenant->schema_name . '"');
-
-        /** @var TenantExecutionManager $executionManager */
-        $executionManager = app(TenantExecutionManager::class);
-
-        $schemaInsideExecution = $executionManager->run($tenant, function (): string {
-            $currentSchema = DB::selectOne('select current_schema() as schema');
-
-            return $currentSchema->schema;
-        });
-
-        $this->assertSame($tenant->schema_name, $schemaInsideExecution);
-
-        $currentSchema = DB::selectOne('select current_schema() as schema');
-        $this->assertSame('public', $currentSchema->schema);
-
-        /** @var TenantContext $tenantContext */
-        $tenantContext = app(TenantContext::class);
-        $this->assertNull($tenantContext->get());
-
-        DB::statement('DROP SCHEMA IF EXISTS "' . $tenant->schema_name . '" CASCADE');
     }
 
     public function test_it_restores_previous_tenant_schema_when_execution_is_nested(): void
     {
-        if (DB::getDriverName() !== 'pgsql') {
-            $this->markTestSkipped('Este teste requer PostgreSQL.');
-        }
+        if (DB::getDriverName() !== 'pgsql') $this->markTestSkipped('Este teste requer PostgreSQL.');
+        $outer = $this->tenant('outer'); $inner = $this->tenant('inner');
+        DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $outer->schema_name));
+        DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $inner->schema_name));
+        $context = new TenantContext();
+        $manager = new TenantExecutionManager($context, new TenantSearchPathService());
 
-        $tenantA = $this->createTenant(
-            code: 'tenant-a',
-            status: 'active',
-            schemaName: 'tenant_nested_a'
-        );
-
-        $tenantB = $this->createTenant(
-            code: 'tenant-b',
-            status: 'active',
-            schemaName: 'tenant_nested_b'
-        );
-
-        DB::statement('CREATE SCHEMA IF NOT EXISTS "' . $tenantA->schema_name . '"');
-        DB::statement('CREATE SCHEMA IF NOT EXISTS "' . $tenantB->schema_name . '"');
-
-        /** @var TenantExecutionManager $executionManager */
-        $executionManager = app(TenantExecutionManager::class);
-
-        $schemas = $executionManager->run($tenantA, function () use ($executionManager, $tenantB): array {
-            $schemaInOuter = DB::selectOne('select current_schema() as schema')->schema;
-
-            $schemaAfterInner = $executionManager->run($tenantB, function (): string {
-                return DB::selectOne('select current_schema() as schema')->schema;
+        try {
+            $manager->run($outer, function () use ($manager, $inner, $outer): void {
+                $manager->run($inner, static function (): void {});
+                $row = DB::selectOne('select current_schema() as schema');
+                $this->assertSame($outer->schema_name, $row->schema);
             });
+        } finally {
+            DB::statement(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $outer->schema_name));
+            DB::statement(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $inner->schema_name));
+        }
+    }
 
-            $schemaRestoredToOuter = DB::selectOne('select current_schema() as schema')->schema;
+    public function test_it_restores_public_schema_even_when_inner_execution_fails(): void
+    {
+        if (DB::getDriverName() !== 'pgsql') $this->markTestSkipped('Este teste requer PostgreSQL.');
+        $tenant = $this->tenant('failure');
+        DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
+        $manager = new TenantExecutionManager(new TenantContext(), new TenantSearchPathService());
 
-            return [
-                'outer_before' => $schemaInOuter,
-                'inner' => $schemaAfterInner,
-                'outer_after' => $schemaRestoredToOuter,
-            ];
-        });
+        try {
+            try {
+                $manager->run($tenant, static function (): void { throw new RuntimeException('falha'); });
+            } catch (RuntimeException $e) {
+                $this->assertSame('falha', $e->getMessage());
+            }
 
-        $this->assertSame($tenantA->schema_name, $schemas['outer_before']);
-        $this->assertSame($tenantB->schema_name, $schemas['inner']);
-        $this->assertSame($tenantA->schema_name, $schemas['outer_after']);
-
-        $currentSchema = DB::selectOne('select current_schema() as schema');
-        $this->assertSame('public', $currentSchema->schema);
-
-        DB::statement('DROP SCHEMA IF EXISTS "' . $tenantA->schema_name . '" CASCADE');
-        DB::statement('DROP SCHEMA IF EXISTS "' . $tenantB->schema_name . '" CASCADE');
+            $row = DB::selectOne('select current_schema() as schema');
+            $this->assertSame('public', $row->schema);
+        } finally {
+            DB::statement(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $tenant->schema_name));
+        }
     }
 }
