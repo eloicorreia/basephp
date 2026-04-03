@@ -84,7 +84,7 @@ A base segue estes princípios obrigatórios:
 app/
 ├── Console/
 ├── Contracts/
-├── DTOs/
+├── DTO/
 ├── Exceptions/
 ├── Http/
 │   ├── Controllers/

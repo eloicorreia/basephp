@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
-use App\DTOs\Admin\CreateTenantUserDTO;
+use App\DTO\Admin\CreateTenantUserDTO;
 use App\Models\TenantUser;
 use App\Services\Logging\LogPersistenceService;
 use Illuminate\Support\Facades\DB;

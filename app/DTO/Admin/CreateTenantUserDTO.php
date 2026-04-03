@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DTOs\Admin;
+namespace App\DTO\Admin;
 
 final class CreateUserDTO
 {
