@@ -4,27 +4,82 @@ declare(strict_types=1);
 
 namespace App\Jobs\Concerns;
 
+use App\Exceptions\TenantNotAvailableForAsyncExecutionException;
 use App\Models\Tenant;
 use App\Services\Tenant\TenantExecutionManager;
 use Closure;
 
 trait InteractsWithTenantContext
 {
-    protected int|string $tenantId;
+    protected function initializeTenantContextData(
+        int $tenantId,
+        ?string $requestId = null,
+        ?string $traceId = null,
+        ?int $userId = null,
+        ?int $oauthClientId = null
+    ): void {
+        $this->tenantId = $tenantId;
+        $this->requestId = $requestId;
+        $this->traceId = $traceId;
+        $this->userId = $userId;
+        $this->oauthClientId = $oauthClientId;
+    }
+
+    public function getTenantId(): int
+    {
+        return $this->tenantId;
+    }
+
+    public function getRequestId(): ?string
+    {
+        return $this->requestId;
+    }
+
+    public function getTraceId(): ?string
+    {
+        return $this->traceId;
+    }
+
+    public function getUserId(): ?int
+    {
+        return $this->userId;
+    }
+
+    public function getOauthClientId(): ?int
+    {
+        return $this->oauthClientId;
+    }
 
     /**
-     * @template TReturn
-     *
-     * @param Closure():TReturn $callback
-     * @return TReturn
+     * @return array<string, int|string|null>
      */
+    public function getTechnicalContext(): array
+    {
+        return [
+            'tenant_id' => $this->tenantId,
+            'request_id' => $this->requestId,
+            'trace_id' => $this->traceId,
+            'user_id' => $this->userId,
+            'oauth_client_id' => $this->oauthClientId,
+        ];
+    }
+
     protected function runInTenantContext(Closure $callback): mixed
     {
-        $tenant = Tenant::query()->findOrFail($this->tenantId);
+        $tenant = Tenant::query()
+            ->whereKey($this->tenantId)
+            ->where('status', 'active')
+            ->first();
 
-        /** @var TenantExecutionManager $executionManager */
-        $executionManager = app(TenantExecutionManager::class);
+        if ($tenant === null) {
+            throw TenantNotAvailableForAsyncExecutionException::forTenantId(
+                $this->tenantId
+            );
+        }
 
-        return $executionManager->run($tenant, $callback);
+        /** @var TenantExecutionManager $tenantExecutionManager */
+        $tenantExecutionManager = app(TenantExecutionManager::class);
+
+        return $tenantExecutionManager->run($tenant, $callback);
     }
 }
