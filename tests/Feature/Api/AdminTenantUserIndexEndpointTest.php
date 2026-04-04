@@ -9,60 +9,63 @@ use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
 
-final class AdminTenantStoreEndpointTest extends TestCase
+final class AdminTenantUserIndexEndpointTest extends TestCase
 {
     use BuildsAuthTenancyFixtures;
 
-    public function test_admin_tenant_store_creates_tenant_for_admin_user(): void
+    public function test_admin_tenant_user_index_returns_paginated_data_for_admin_user(): void
     {
         $context = $this->createAdminContext();
 
-        $code = 'tenant-new-' . str_replace('-', '', (string) Str::uuid());
-        $schemaName = 'tenant_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 20);
+        $targetTenant = $this->createTenant(
+            code: 'tenant-link-' . str_replace('-', '', (string) Str::uuid())
+        );
 
-        $this->postJson('/api/v1/admin/tenants', [
-            'code' => $code,
-            'name' => 'Tenant Novo',
-            'schema_name' => $schemaName,
-        ], [
+        $targetUserRole = $this->createRole(
+            'linked-user-' . str_replace('-', '', (string) Str::uuid()),
+            'Linked User'
+        );
+
+        $targetTenantRole = $this->createRole(
+            'linked-tenant-role-' . str_replace('-', '', (string) Str::uuid()),
+            'Linked Tenant Role'
+        );
+
+        $targetUser = $this->createUser(role: $targetUserRole);
+
+        $this->grantTenantAccess($targetUser, $targetTenant, $targetTenantRole, true);
+
+        $response = $this->getJson('/api/v1/admin/tenant-users', [
             'X-Tenant-Id' => $context['tenant']->code,
-        ])
-            ->assertStatus(201)
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', 'Tenant provisionado com sucesso.')
-            ->assertJsonPath('data.code', $code)
-            ->assertJsonPath('data.name', 'Tenant Novo')
-            ->assertJsonPath('data.schema_name', $schemaName);
-
-        $this->assertDatabaseHas('tenants', [
-            'code' => $code,
-            'name' => 'Tenant Novo',
-            'schema_name' => $schemaName,
         ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Dados recuperados com sucesso.')
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data',
+                'meta' => [
+                    'page',
+                    'per_page',
+                    'total',
+                    'last_page',
+                ],
+            ]);
+
+        $data = $response->json('data');
+
+        $this->assertIsArray($data);
+        $this->assertNotEmpty($data);
     }
 
-    public function test_admin_tenant_store_returns_validation_error_for_invalid_payload(): void
-    {
-        $context = $this->createAdminContext();
-
-        $this->postJson('/api/v1/admin/tenants', [
-            'code' => '',
-            'name' => '',
-            'schema_name' => '',
-        ], [
-            'X-Tenant-Id' => $context['tenant']->code,
-        ])->assertStatus(422);
-    }
-
-    public function test_admin_tenant_store_returns_forbidden_for_non_admin_user(): void
+    public function test_admin_tenant_user_index_returns_forbidden_for_non_admin_user(): void
     {
         $context = $this->createNonAdminContext();
 
-        $this->postJson('/api/v1/admin/tenants', [
-            'code' => 'tenant-blocked-' . str_replace('-', '', (string) Str::uuid()),
-            'name' => 'Tenant Bloqueado',
-            'schema_name' => 'tenant_blocked_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 10),
-        ], [
+        $this->getJson('/api/v1/admin/tenant-users', [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertStatus(403)

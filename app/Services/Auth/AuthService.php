@@ -7,7 +7,7 @@ namespace App\Services\Auth;
 use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
 use Illuminate\Support\Facades\Hash;
-use RuntimeException;
+use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
@@ -18,7 +18,7 @@ class AuthService
 
     public function changePassword(User $user, string $currentPassword, string $newPassword): void
     {
-        if (!Hash::check($currentPassword, $user->password)) {
+        if (! Hash::check($currentPassword, $user->password)) {
             $this->logPersistenceService->logSystemWarning(
                 message: 'Tentativa de troca de senha com senha atual inválida.',
                 category: 'auth',
@@ -28,7 +28,9 @@ class AuthService
                 processingStatus: 'denied',
             );
 
-            throw new RuntimeException('A senha atual informada é inválida.');
+            throw ValidationException::withMessages([
+                'current_password' => ['A senha atual informada é inválida.'],
+            ]);
         }
 
         $before = [

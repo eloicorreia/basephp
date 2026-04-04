@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Models\Role;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -23,6 +24,8 @@ final class AdminUserEndpointTest extends TestCase
         );
 
         $listedUser = $this->createUser(role: $role);
+
+        $this->assertSame('admin', $context['user']->role->code);
 
         $response = $this->getJson('/api/v1/admin/users', [
             'X-Tenant-Id' => $context['tenant']->code,
@@ -48,7 +51,9 @@ final class AdminUserEndpointTest extends TestCase
             'Created User'
         );
 
-        $email = 'user.' . str_replace('-', '', (string) Str::uuid()) . '@example.com';
+        $email = 'user.' . str_replace('-', '', (string) Str::uuid()) . '@gmail.com';
+
+        $this->assertSame('admin', $context['user']->role->code);
 
         $this->postJson('/api/v1/admin/users', [
             'name' => 'Usuário de Teste',
@@ -83,6 +88,8 @@ final class AdminUserEndpointTest extends TestCase
 
         $targetUser = $this->createUser(role: $targetRole);
 
+        $this->assertSame('admin', $context['user']->role->code);
+
         $this->getJson('/api/v1/admin/users/' . $targetUser->id, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
@@ -95,6 +102,8 @@ final class AdminUserEndpointTest extends TestCase
     public function test_admin_user_store_returns_validation_error_for_invalid_payload(): void
     {
         $context = $this->createAdminContext();
+
+        $this->assertSame('admin', $context['user']->role->code);
 
         $this->postJson('/api/v1/admin/users', [
             'name' => '',
@@ -116,9 +125,12 @@ final class AdminUserEndpointTest extends TestCase
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $tenantRole = $this->createRole(

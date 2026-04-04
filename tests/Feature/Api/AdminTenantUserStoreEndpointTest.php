@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Models\Role;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
+use App\DTO\Admin\CreateTenantUserDTO;
+use App\Http\Resources\Api\V1\TenantUserResource;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
 
@@ -18,20 +21,22 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tenant-link-store-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tlink-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $targetUserRole = $this->createRole(
-            'store-user-' . str_replace('-', '', (string) Str::uuid()),
+            'store-user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Store User'
         );
 
         $targetTenantRole = $this->createRole(
-            'store-tenant-role-' . str_replace('-', '', (string) Str::uuid()),
+            'store-tenant-role-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Store Tenant Role'
         );
 
         $targetUser = $this->createUser(role: $targetUserRole);
+
+        $this->assertSame('admin', $context['user']->role->code);
 
         $this->postJson('/api/v1/admin/tenant-users', [
             'tenant_id' => $targetTenant->id,
@@ -60,6 +65,8 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
     {
         $context = $this->createAdminContext();
 
+        $this->assertSame('admin', $context['user']->role->code);
+
         $this->postJson('/api/v1/admin/tenant-users', [
             'tenant_id' => 999999999,
             'user_id' => 999999999,
@@ -75,16 +82,16 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
         $context = $this->createNonAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tenant-link-blocked-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tblk-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $targetUserRole = $this->createRole(
-            'blocked-user-' . str_replace('-', '', (string) Str::uuid()),
+            'blocked-user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Blocked User'
         );
 
         $targetTenantRole = $this->createRole(
-            'blocked-tenant-role-' . str_replace('-', '', (string) Str::uuid()),
+            'blocked-role-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Blocked Tenant Role'
         );
 
@@ -108,20 +115,25 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tmain-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Tenant Admin'
         );
 
         $user = $this->createUser(role: $adminRole);
+        $user->load('role');
+
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
 
         Passport::actingAs($user, ['user.profile']);
@@ -138,20 +150,22 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tuser-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Tenant User'
         );
 
         $user = $this->createUser(role: $userRole);
+        $user->load('role');
+
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
 
         Passport::actingAs($user, ['user.profile']);

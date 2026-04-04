@@ -35,16 +35,16 @@ final class AdminEmailIndexEndpointTest extends TestCase
             ->assertJsonPath('meta.page', 1);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
-        );
+        $adminRole = $this->createRole('admin', 'Administrator');
 
         $tenantRole = $this->createRole(
             'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),

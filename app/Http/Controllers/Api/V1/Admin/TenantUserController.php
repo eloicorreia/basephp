@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\DTO\Admin\CreateTenantUserDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\StoreTenantUserRequest;
-use App\Http\Resources\TenantUserResource;
+use App\Http\Resources\Api\V1\TenantUserResource;
 use App\Models\TenantUser;
 use App\Services\Admin\TenantUserService;
 use Illuminate\Http\JsonResponse;

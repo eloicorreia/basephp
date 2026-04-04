@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
-use App\Models\EmailDispatch;
-use Illuminate\Support\Str;
+use App\Models\Role;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
@@ -22,7 +22,7 @@ final class AdminEmailSendEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $response = $this->postJson('/api/v1/admin/emails/send', [
-            'to' => ['destinatario@example.com'],
+            'to' => ['destinatario@gmail.com'],
             'subject' => 'Assunto teste',
             'body' => 'Corpo teste',
             'is_html' => false,
@@ -60,15 +60,21 @@ final class AdminEmailSendEndpointTest extends TestCase
         ])->assertStatus(422);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $tenantRole = $this->createRole(

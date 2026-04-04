@@ -4,27 +4,39 @@ declare(strict_types=1);
 
 namespace App\DTO\Admin;
 
-final class CreateUserDTO
+final readonly class CreateTenantUserDTO
 {
     public function __construct(
-        public readonly string $name,
-        public readonly string $email,
-        public readonly string $password,
-        public readonly int $roleId,
-        public readonly bool $isActive,
-        public readonly bool $mustChangePassword,
+        public int $tenantId,
+        public int $userId,
+        public int $roleId,
+        public bool $isActive,
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): self
     {
         return new self(
-            name: (string) $data['name'],
-            email: (string) $data['email'],
-            password: (string) $data['password'],
+            tenantId: (int) $data['tenant_id'],
+            userId: (int) $data['user_id'],
             roleId: (int) $data['role_id'],
-            isActive: (bool) ($data['is_active'] ?? true),
-            mustChangePassword: (bool) ($data['must_change_password'] ?? true),
+            isActive: (bool) $data['is_active'],
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'tenant_id' => $this->tenantId,
+            'user_id' => $this->userId,
+            'role_id' => $this->roleId,
+            'is_active' => $this->isActive,
+        ];
     }
 }
