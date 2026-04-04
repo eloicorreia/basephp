@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api;
 
 use App\Models\Job;
+use App\Models\Role;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -17,9 +18,10 @@ final class AdminQueueSummaryEndpointTest extends TestCase
     public function test_queue_summary_returns_counts(): void
     {
         $context = $this->createAdminContext();
+        $queueName = 'notifications-' . str_replace('-', '', (string) Str::uuid());
 
         Job::query()->create([
-            'queue' => 'notifications',
+            'queue' => $queueName,
             'payload' => json_encode(['displayName' => 'Job A']),
             'attempts' => 0,
             'reserved_at' => null,
@@ -28,7 +30,7 @@ final class AdminQueueSummaryEndpointTest extends TestCase
         ]);
 
         Job::query()->create([
-            'queue' => 'notifications',
+            'queue' => $queueName,
             'payload' => json_encode(['displayName' => 'Job B']),
             'attempts' => 1,
             'reserved_at' => now()->timestamp,
@@ -36,25 +38,31 @@ final class AdminQueueSummaryEndpointTest extends TestCase
             'created_at' => now()->timestamp,
         ]);
 
-        $this->getJson('/api/v1/admin/queues/summary?queue=notifications', [
+        $this->getJson('/api/v1/admin/queues/summary?queue=' . $queueName, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.queue', 'notifications')
+            ->assertJsonPath('data.queue', $queueName)
             ->assertJsonPath('data.pending_jobs', 1)
             ->assertJsonPath('data.running_jobs', 1);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $tenantRole = $this->createRole(

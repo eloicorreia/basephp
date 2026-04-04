@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\V1\Admin\TenantController;
 use App\Http\Controllers\Api\V1\Admin\TenantUserController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Admin\EmailDispatchController;
+use App\Http\Controllers\Api\V1\Admin\QueueController;
+use App\Http\Controllers\Api\V1\Admin\FailedJobController;
+
 use App\Http\Controllers\Api\V1\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use Illuminate\Support\Facades\Route;

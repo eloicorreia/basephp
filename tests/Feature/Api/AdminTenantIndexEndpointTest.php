@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Models\Role;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -66,9 +67,12 @@ final class AdminTenantIndexEndpointTest extends TestCase
 
     public function test_admin_tenant_index_requires_tenant_header(): void
     {
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $user = $this->createUser(role: $adminRole);
@@ -88,9 +92,12 @@ final class AdminTenantIndexEndpointTest extends TestCase
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $tenantRole = $this->createRole(

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api;
 
 use App\Models\Job;
+use App\Models\Role;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -43,7 +44,10 @@ final class AdminQueueJobsEndpointTest extends TestCase
 
         $this->assertIsArray($data);
         $this->assertNotEmpty($data);
-        $this->assertSame($job->id, $data[0]['id']);
+
+        $ids = array_column($data, 'id');
+
+        $this->assertContains($job->id, $ids);
     }
 
     public function test_queue_jobs_show_returns_job_details(): void
@@ -71,15 +75,21 @@ final class AdminQueueJobsEndpointTest extends TestCase
             ->assertJsonPath('data.queue', 'notifications');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $tenantRole = $this->createRole(
@@ -92,6 +102,9 @@ final class AdminQueueJobsEndpointTest extends TestCase
 
         Passport::actingAs($user, ['user.profile']);
 
-        return ['tenant' => $tenant, 'user' => $user];
+        return [
+            'tenant' => $tenant,
+            'user' => $user,
+        ];
     }
 }

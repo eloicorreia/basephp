@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Models\Role;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
@@ -62,9 +63,12 @@ final class AdminFailedJobEndpointTest extends TestCase
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = $this->createRole(
-            'admin-' . str_replace('-', '', (string) Str::uuid()),
-            'Administrator'
+        $adminRole = \App\Models\Role::query()->firstOrCreate(
+            ['code' => 'admin'],
+            [
+                'name' => 'Administrator',
+                'active' => true,
+            ]
         );
 
         $tenantRole = $this->createRole(

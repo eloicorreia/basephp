@@ -12,53 +12,77 @@ use Illuminate\Support\Str;
 
 trait BuildsAuthTenancyFixtures
 {
-    protected function createRole(
-        string $code = 'user',
-        string $name = 'User',
-        bool $active = true
-    ): Role {
-        return Role::query()->create([
-            'code' => $code,
-            'name' => $name,
-            'active' => $active,
-        ]);
+    private function createRole(string $code, string $name, bool $active = true): Role
+    {
+        return Role::query()->firstOrCreate(
+            ['code' => $code],
+            [
+                'name' => $name,
+                'active' => $active,
+            ]
+        );
     }
 
-    protected function createTenant(
-        string $code = 'tenant-main',
-        string $status = 'active',
-        ?string $schemaName = null
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function createTenant(
+        ?string $code = null,
+        ?string $name = null,
+        bool $isActive = true,
+        ?string $schemaName = null,
+        ?string $status = null,
+        array $overrides = []
     ): Tenant {
-        return Tenant::query()->create([
+        $resolvedStatus = $status ?? ($isActive ? 'active' : 'inactive');
+
+        $attributes = array_merge([
             'uuid' => (string) Str::uuid(),
-            'code' => $code,
-            'name' => 'Tenant ' . $code,
-            'schema_name' => $schemaName ?? 'tenant_' . str_replace('-', '_', $code),
-            'status' => $status,
-        ]);
+            'code' => $code ?? 'tenant-' . str_replace('-', '', (string) Str::uuid()),
+            'name' => $name ?? 'Tenant ' . uniqid(),
+            'schema_name' => $schemaName ?? 'tenant_' . uniqid(),
+            'status' => $resolvedStatus,
+        ], $overrides);
+
+        return Tenant::query()->create($attributes);
     }
 
-    protected function createUser(
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function createUser(
         ?Role $role = null,
         bool $isActive = true,
         bool $mustChangePassword = false,
         array $overrides = []
     ): User {
-        return User::factory()->create(array_merge([
+        $attributes = array_merge([
+            'name' => 'User ' . uniqid(),
+            'email' => uniqid('user_', true) . '@example.com',
+            'password' => bcrypt('password'),
             'role_id' => $role?->id,
             'is_active' => $isActive,
             'must_change_password' => $mustChangePassword,
-        ], $overrides));
+        ], $overrides);
+
+        if (array_key_exists('password', $attributes) && is_string($attributes['password'])) {
+            $passwordInfo = password_get_info($attributes['password']);
+            $needsHash = empty($passwordInfo['algo']);
+
+            if ($needsHash) {
+                $attributes['password'] = bcrypt($attributes['password']);
+            }
+        }
+
+        return User::query()->create($attributes);
     }
 
-    protected function grantTenantAccess(
+    private function grantTenantAccess(
         User $user,
         Tenant $tenant,
-        ?Role $role = null,
+        Role $role,
         bool $isActive = true
     ): TenantUser {
-        $role ??= $this->createRole('tenant-user', 'Tenant User');
-
         return TenantUser::query()->create([
             'tenant_id' => $tenant->id,
             'user_id' => $user->id,

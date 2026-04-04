@@ -1,0 +1,308 @@
+
+   PASS  Tests\Unit\Jobs\AbstractTenantAwareJobTest
+  ✓ it must store technical context                                      0.15s  
+
+   PASS  Tests\Unit\Services\Queue\QueueDispatchServiceTest
+  ✓ it must dispatch a job                                               0.10s  
+
+   PASS  Tests\Unit\Services\Queue\QueuePayloadSanitizerTest
+  ✓ it must mask sensitive keys                                          0.08s  
+
+   PASS  Tests\Unit\Tenant\InteractsWithTenantContextTest
+  ✓ it runs callback inside tenant execution manager                     0.12s  
+  ✓ it uses the expected tenant id property to resolve tenant context    0.07s  
+  ✓ it restores context after execution finishes                         0.07s  
+
+   PASS  Tests\Unit\Tenant\TenantContextTest
+  ✓ it starts without tenant                                             0.08s  
+  ✓ it sets and returns current tenant                                   0.07s  
+  ✓ it throws when require is called without tenant                      0.07s  
+  ✓ it clears current tenant                                             0.16s  
+
+   PASS  Tests\Unit\Tenant\TenantExecutionManagerTest
+  ✓ it sets tenant context before running callback                       0.09s  
+  ✓ it restores public schema after callback finishes                    0.08s  
+  ✓ it restores previous tenant context when execution is nested         0.08s  
+  ✓ it restores previous state even when callback throws exception       0.08s  
+
+   PASS  Tests\Unit\Tenant\TenantSearchPathServiceTest
+  ✓ it sets search path to tenant schema and public                      0.09s  
+  ✓ it resets search path to public                                      0.10s  
+
+   PASS  Tests\Feature\Api\AdminEmailIndexEndpointTest
+  ✓ email index returns paginated data                                   0.13s  
+
+   PASS  Tests\Feature\Api\AdminEmailRetryEndpointTest
+  ✓ email retry requeues failed dispatch                                 0.15s  
+
+   PASS  Tests\Feature\Api\AdminEmailSendEndpointTest
+  ✓ email send queues dispatch record                                    0.15s  
+  ✓ email send returns validation error for invalid payload              0.10s  
+
+   PASS  Tests\Feature\Api\AdminEmailShowEndpointTest
+  ✓ email show returns dispatch details                                  0.10s  
+
+   PASS  Tests\Feature\Api\AdminFailedJobEndpointTest
+  ✓ failed jobs index returns paginated data                             0.11s  
+  ✓ failed job show returns details                                      0.11s  
+
+   PASS  Tests\Feature\Api\AdminPingEndpointTest
+  ✓ admin ping returns success for authorized user when contract requir… 0.10s  
+  ✓ admin ping returns forbidden for non admin user                      0.11s  
+
+   PASS  Tests\Feature\Api\AdminQueueCatalogEndpointTest
+  ✓ queue catalog returns available queues for admin                     0.11s  
+  ✓ queue catalog returns forbidden for non admin                        0.10s  
+
+   PASS  Tests\Feature\Api\AdminQueueJobsEndpointTest
+  ✓ queue jobs index returns paginated jobs                              0.11s  
+  ✓ queue jobs show returns job details                                  0.11s  
+
+   PASS  Tests\Feature\Api\AdminQueueSummaryEndpointTest
+  ✓ queue summary returns counts                                         0.11s  
+
+   PASS  Tests\Feature\Api\AdminTenantEndpointTest
+  ✓ admin tenant index returns paginated data for admin user             0.11s  
+  ✓ admin tenant store creates tenant for admin user                     0.32s  
+  ✓ admin tenant show returns tenant data                                0.10s  
+  ✓ admin tenant store returns validation error for invalid payload      0.10s  
+
+   PASS  Tests\Feature\Api\AdminTenantIndexEndpointTest
+  ✓ admin tenant index returns paginated data for admin user             0.11s  
+  ✓ admin tenant index returns forbidden for non admin user              0.11s  
+  ✓ admin tenant index requires tenant header                            0.09s  
+
+   PASS  Tests\Feature\Api\AdminTenantShowEndpointTest
+  ✓ admin tenant show returns tenant data for admin user                 0.10s  
+  ✓ admin tenant show returns forbidden for non admin user               0.11s  
+  ✓ admin tenant show returns not found for missing tenant               0.09s  
+
+   PASS  Tests\Feature\Api\AdminTenantStoreEndpointTest
+  ✓ admin tenant store creates tenant for admin user                     0.29s  
+  ✓ admin tenant store returns validation error for invalid payload      0.11s  
+  ✓ admin tenant store returns forbidden for non admin user              0.11s  
+
+   PASS  Tests\Feature\Api\AdminTenantUserEndpointTest
+  ✓ admin tenant user index returns paginated data for admin user        0.13s  
+  ✓ admin tenant user store creates or updates link                      0.14s  
+  ✓ admin tenant user store returns validation error for invalid payloa… 0.12s  
+
+   PASS  Tests\Feature\Api\AdminTenantUserIndexEndpointTest
+  ✓ admin tenant user index returns paginated data for admin user        0.15s  
+  ✓ admin tenant user index returns forbidden for non admin user         0.11s  
+
+   PASS  Tests\Feature\Api\AdminTenantUserStoreEndpointTest
+  ✓ admin tenant user store creates link for admin user                  0.13s  
+  ✓ admin tenant user store returns validation error for invalid payloa… 0.12s  
+  ✓ admin tenant user store returns forbidden for non admin user         0.11s  
+
+   PASS  Tests\Feature\Api\AdminUserEndpointTest
+  ✓ admin user index returns paginated data for admin user               0.12s  
+  ✓ admin user store creates user for admin user                         0.12s  
+  ✓ admin user show returns user data                                    0.11s  
+  ✓ admin user store returns validation error for invalid payload        0.11s  
+
+   PASS  Tests\Feature\Api\AdminUserIndexEndpointTest
+  ✓ admin user index returns paginated data for admin user               0.13s  
+  ✓ admin user index returns forbidden for non admin user                0.12s  
+
+   PASS  Tests\Feature\Api\AdminUserShowEndpointTest
+  ✓ admin user show returns user data for admin user                     0.12s  
+  ✓ admin user show returns forbidden for non admin user                 0.13s  
+  ✓ admin user show returns not found for missing user                   0.10s  
+
+   PASS  Tests\Feature\Api\AdminUserStoreEndpointTest
+  ✓ admin user store creates user for admin user                         0.12s  
+  ✓ admin user store returns validation error for invalid payload        0.14s  
+  ✓ admin user store returns forbidden for non admin user                0.11s  
+
+   PASS  Tests\Feature\Api\AuthMeEndpointTest
+  ✓ auth me returns authenticated user data for valid tenant context     0.11s  
+  ✓ auth me returns standard forbidden response when membership is inva… 0.11s  
+
+   PASS  Tests\Feature\Api\ChangePasswordEndpointTest
+  ✓ change password requires authentication                              0.09s  
+  ✓ change password returns validation error for invalid payload         0.10s  
+  ✓ change password rejects invalid current password                     0.09s  
+  ✓ change password updates password and clears must change password     0.10s  
+
+   PASS  Tests\Feature\Api\HealthEndpointTest
+  ✓ health endpoint returns success payload                              0.08s  
+  ✓ health endpoint returns request and trace headers                    0.10s  
+
+   PASS  Tests\Feature\Auth\AdminAuthorizationTest
+  ✓ admin route requires admin role                                      0.12s  
+  ✓ admin route allows admin role when contract requires it              0.08s  
+  ✓ admin route returns standard forbidden response for non admin user   0.08s  
+
+   PASS  Tests\Feature\Auth\TenantMembershipAuthorizationTest
+  ✓ it rejects user without access to tenant                             0.11s  
+  ✓ it rejects inactive user tenant membership                           0.11s  
+  ✓ it allows access when user has active membership                     0.12s  
+  ✓ it returns standard forbidden response when membership is invalid    0.08s  
+
+   PASS  Tests\Feature\Auth\TenantResolutionTest
+  ✓ it requires tenant header                                            0.10s  
+  ✓ it rejects unknown tenant code                                       0.14s  
+  ✓ it rejects inactive tenant                                           0.11s  
+  ✓ it allows request when tenant is active and resolved                 0.13s  
+
+   PASS  Tests\Feature\Auth\UserStatusAuthorizationTest
+  ✓ it blocks user marked as inactive                                    0.10s  
+  ✓ it blocks user that must change password                             0.11s  
+  ✓ it allows active user with password already changed                  0.12s  
+
+   WARN  Tests\Feature\Console\TenantReprocessCommandFailureTest
+  ✓ it fails when tenant id does not exist                               0.09s  
+  ✓ it ignores inactive tenants when all option is used                  0.09s  
+  … it restores public schema when processing callback fails → Adiciona… 0.08s  
+  … it does not leave tenant context defined after failure → Adicionar…  0.09s  
+
+   PASS  Tests\Feature\Console\TenantReprocessCommandTest
+  ✓ it fails when no tenant id and no all option are provided            0.08s  
+  ✓ it processes only active tenants when all option is used             0.27s  
+  ✓ it processes a single tenant when tenant id is provided              0.10s  
+  ✓ it restores public schema after processing all tenants               0.07s  
+  ✓ it restores public schema after processing single tenant             0.07s  
+
+   PASS  Tests\Feature\Exceptions\AuthorizationExceptionResponseTest
+  ✓ forbidden authorization returns standard forbidden response          0.11s  
+  ✓ forbidden authorization uses expected message contract               0.07s  
+
+   WARN  Tests\Feature\Exceptions\InternalServerErrorResponseTest
+  … internal exception returns standard internal server error response…  0.07s  
+  … internal exception does not expose internal details → Cobrir junto…  0.07s  
+
+   PASS  Tests\Feature\Exceptions\TenantExceptionResponseTest
+  ✓ tenant required exception returns standard bad request response      0.09s  
+  ✓ tenant not found exception returns standard not found response       0.11s  
+  ✓ inactive tenant returns standard not found response when contract r… 0.11s  
+
+   WARN  Tests\Feature\Exceptions\ValidationExceptionResponseTest
+  … validation exception returns standard validation response → Cobrir…  0.08s  
+  … validation exception includes expected errors structure → Cobrir ju… 0.07s  
+
+   PASS  Tests\Feature\Infrastructure\Queue\QueueInfrastructureTest
+  ✓ queue default connection must be database                            0.08s  
+  ✓ jobs table must exist                                                0.11s  
+  ✓ job batches table must exist                                         0.08s  
+  ✓ failed jobs table must exist                                         0.07s  
+  ✓ jobs table must have expected columns                                0.12s  
+  ✓ job batches table must have expected columns                         0.08s  
+  ✓ failed jobs table must have expected columns                         0.07s  
+
+   PASS  Tests\Feature\Infrastructure\Queue\QueueLoggingTablesTest
+  ✓ queue job logs table must exist                                      0.09s  
+  ✓ queue worker logs table must exist                                   0.09s  
+  ✓ queue job logs table must have expected columns                      0.08s  
+  ✓ queue worker logs table must have expected columns                   0.08s  
+
+   WARN  Tests\Feature\Listeners\TenantAwareListenerFailureTest
+  … it restores public schema when listener execution fails → Implement… 0.12s  
+  … it clears tenant context when listener execution fails → Implementa… 0.08s  
+  … it restores previous outer context when nested listener execution f… 0.07s  
+
+   PASS  Tests\Feature\Listeners\TenantAwareListenerTest
+  ✓ it restores tenant context and search path inside listener           0.12s  
+  ✓ it restores previous tenant context after listener execution         0.08s  
+  ✓ it restores public schema after listener execution                   0.07s  
+
+   PASS  Tests\Feature\Mail\SendTenantEmailJobFailureTest
+  ✓ it marks log as failed when sender throws                            1.63s  
+
+   PASS  Tests\Feature\Mail\SendTenantEmailJobTest
+  ✓ it marks log as sent                                                 2.32s  
+
+   PASS  Tests\Feature\Mail\TenantMailDispatcherServiceTest
+  ✓ it dispatches job and persists queued log                            2.18s  
+
+   WARN  Tests\Feature\Middleware\ApiRequestLoggingMiddlewareTest
+  … it persists api request log after successful response → Coberto ind… 0.09s  
+  … it persists api request log after failed response → Coberto indiret… 0.10s  
+
+   WARN  Tests\Feature\Middleware\EnsurePasswordChangedMiddlewareTest
+  … it blocks user that must change password → Coberto indiretamente em… 0.10s  
+  … it allows user with password already changed → Coberto indiretament… 0.10s  
+
+   WARN  Tests\Feature\Middleware\EnsureTenantAccessMiddlewareTest
+  … it blocks user without tenant membership → Coberto indiretamente em… 0.08s  
+  … it blocks user with inactive tenant membership → Coberto indiretame… 0.08s  
+  … it allows user with active tenant membership → Coberto indiretament… 0.08s  
+
+   WARN  Tests\Feature\Middleware\EnsureUserIsActiveMiddlewareTest
+  … it blocks inactive user → Coberto indiretamente em UserStatusAuthor… 0.07s  
+  … it allows active user → Coberto indiretamente em UserStatusAuthoriz… 0.08s  
+
+   PASS  Tests\Feature\Middleware\RequestContextMiddlewareTest
+  ✓ it sets request id in request attributes                             0.09s  
+  ✓ it sets trace id in request attributes                               0.10s  
+  ✓ it preserves existing request id and trace id                        0.09s  
+
+   PASS  Tests\Feature\Middleware\ResolveTenantMiddlewareTest
+  ✓ it requires tenant header                                            0.10s  
+  ✓ it rejects unknown tenant                                            0.19s  
+  ✓ it rejects inactive tenant                                           0.13s  
+  ✓ it sets tenant context when tenant is valid                          0.08s  
+
+   PASS  Tests\Feature\Observability\ApiRequestLoggingTest
+  ✓ health endpoint returns request and trace headers                    0.09s  
+  ✓ health endpoint preserves incoming request and trace headers         0.10s  
+  ✓ successful tenant request is persisted in api request logs           0.15s  
+  ✓ api request log persists tenant code when tenant id is not availabl… 0.08s  
+  ✓ api request log persists authenticated user id                       0.08s  
+
+   WARN  Tests\Feature\Observability\ApiRequestSanitizationTest
+  ✓ api request logger sanitizes sensitive request payload fields        0.09s  
+  ✓ api request logger does not mask safe fields                         0.08s  
+  … api request logger masks nested sensitive fields when contract requ… 0.14s  
+
+   PASS  Tests\Feature\Observability\ExceptionHandlingAndSystemLogTest
+  ✓ it returns standard json and persists system log for internal excep… 0.26s  
+  ✓ it returns standard json for validation error and persists system l… 0.11s  
+  ✓ it persists system log with request and trace ids                    0.07s  
+  ✓ it persists system log with authenticated user id                    0.09s  
+
+   PASS  Tests\Feature\Observability\FailedApiRequestLoggingTest
+  ✓ it persists api request log even when request fails                  0.12s  
+  ✓ it persists request and trace ids for failed requests                0.09s  
+  ✓ it persists http status for failed requests                          0.09s  
+
+   PASS  Tests\Feature\Observability\RequestContextHeadersTest
+  ✓ it generates request id when header is missing                       0.08s  
+  ✓ it generates trace id when header is missing                         0.09s  
+  ✓ it preserves provided request id                                     0.11s  
+  ✓ it preserves provided trace id                                       0.09s  
+
+   WARN  Tests\Feature\Observability\SystemLogFailureScenariosTest
+  … it persists system log when exception occurs before tenant resoluti… 0.08s  
+  … it persists system log when authorization fails → Cobrir negação de… 0.09s  
+  ✓ it persists system log when validation fails                         0.09s  
+  … it does not persist sensitive data in system log context → Adiciona… 0.07s  
+
+   PASS  Tests\Feature\Queue\QueueDispatchAfterCommitTest
+  ✓ it must dispatch after commit by default                             0.08s  
+
+   PASS  Tests\Feature\Queue\QueueExecutionLogServiceTest
+  ✓ it must log queued job                                               0.15s  
+  ✓ it must persist sanitized payload                                    0.14s  
+
+   PASS  Tests\Feature\Queue\QueueFailureLoggingTest
+  ✓ it must log failed job event                                         0.09s  
+
+   PASS  Tests\Feature\Queue\TenantAwareJobDispatchTest
+  ✓ it executes should queue job with restored tenant context            0.12s  
+  ✓ it restores previous tenant context after job execution              0.08s  
+
+   WARN  Tests\Feature\Queue\TenantAwareJobFailureTest
+  … it restores public schema when job execution fails → Implementar co… 0.07s  
+  … it clears tenant context when job execution fails → Implementar com… 0.07s  
+  … it restores previous outer context when nested job execution fails…  0.07s  
+
+   PASS  Tests\Feature\Tenant\SearchPathCleanupIntegrationTest
+  ✓ it switches to tenant schema and returns to public after execution   0.09s  
+  ✓ it restores previous tenant schema when execution is nested          0.10s  
+  ✓ it restores public schema even when inner execution fails            0.09s  
+
+  Tests:    25 incomplete, 149 passed (383 assertions)
+  Duration: 24.23s
+
