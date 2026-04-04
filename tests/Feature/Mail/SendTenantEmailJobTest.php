@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Mail;
 
-use App\DTOs\Mail\EmailAddressData;
-use App\DTOs\Mail\SendEmailData;
-use App\DTOs\Mail\TenantMailConfigData;
+use App\DTO\Mail\EmailAddressData;
+use App\DTO\Mail\SendEmailData;
+use App\DTO\Mail\TenantMailConfigData;
 use App\Jobs\Mail\SendTenantEmailJob;
 use App\Models\EmailDispatchLog;
 use App\Models\Tenant;
+use App\Services\Logging\IntegrationLogger;
+use App\Services\Logging\LogPersistenceService;
 use App\Services\Mail\Contracts\RuntimeMailSenderInterface;
 use App\Services\Mail\EmailDispatchLogService;
 use App\Services\Mail\TenantMailConfigResolverService;
 use App\Services\Tenant\TenantExecutionManager;
+use App\Support\Tenant\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Mockery;
@@ -76,8 +79,14 @@ final class SendTenantEmailJobTest extends TestCase
                 'provider_message_id' => 'abc123',
             ]);
 
-        $this->app->instance(TenantMailConfigResolverService::class, $resolver);
-        $this->app->instance(RuntimeMailSenderInterface::class, $sender);
+        $integrationLogger = Mockery::mock(IntegrationLogger::class);
+        $logPersistenceService = Mockery::mock(LogPersistenceService::class);
+
+        $emailDispatchLogService = new EmailDispatchLogService(
+            tenantContext: app(TenantContext::class),
+            logPersistenceService: $logPersistenceService,
+            integrationLogger: $integrationLogger,
+        );
 
         $job = new SendTenantEmailJob(
             tenantId: (int) $tenant->id,
@@ -95,9 +104,9 @@ final class SendTenantEmailJobTest extends TestCase
 
         $job->handle(
             app(TenantExecutionManager::class),
-            app(TenantMailConfigResolverService::class),
-            app(RuntimeMailSenderInterface::class),
-            app(EmailDispatchLogService::class),
+            $resolver,
+            $sender,
+            $emailDispatchLogService,
         );
 
         $this->assertDatabaseHas('email_dispatch_logs', [

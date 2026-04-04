@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DTOs\Mail;
+namespace App\DTO\Mail;
 
 final readonly class EmailAddressData
 {

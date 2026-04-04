@@ -52,9 +52,11 @@ final class SendTenantEmailJob implements ShouldQueue
         ): void {
             $config = $configResolverService->resolveDefault();
 
-            $jobUuid = method_exists($this->job, 'uuid')
-                ? $this->job->uuid()
-                : null;
+            $jobUuid = null;
+
+            if ($this->job !== null && method_exists($this->job, 'uuid')) {
+                $jobUuid = $this->job->uuid();
+            }
 
             $emailDispatchLogService->markSending(
                 log: $log,

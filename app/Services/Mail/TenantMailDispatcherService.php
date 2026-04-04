@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mail;
 
-use App\DTOs\Mail\SendEmailData;
+use App\DTO\Mail\SendEmailData;
 use App\Jobs\Mail\SendTenantEmailJob;
 use App\Models\EmailDispatchLog;
 use App\Services\Tenant\TenantExecutionManager;

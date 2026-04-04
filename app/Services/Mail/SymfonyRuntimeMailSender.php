@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Mail;
 
-use App\DTOs\Mail\SendEmailData;
-use App\DTOs\Mail\TenantMailConfigData;
+use App\DTO\Mail\SendEmailData;
+use App\DTO\Mail\TenantMailConfigData;
 use App\Services\Mail\Contracts\RuntimeMailSenderInterface;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Mail;
 
-use App\DTOs\Mail\SendEmailData;
-use App\DTOs\Mail\TenantMailConfigData;
+use App\DTO\Mail\SendEmailData;
+use App\DTO\Mail\TenantMailConfigData;
 use App\Models\EmailDispatchLog;
 use App\Services\Logging\IntegrationLogger;
 use App\Services\Logging\LogPersistenceService;
-use App\Support\TenantContext;
+use App\Support\Tenant\TenantContext;
 use Throwable;
 
 final readonly class EmailDispatchLogService
