@@ -6,9 +6,9 @@ namespace Tests\Feature\Mail;
 
 use App\DTO\Mail\EmailAddressData;
 use App\DTO\Mail\SendEmailData;
-use App\DTO\Mail\TenantMailConfigData;
 use App\Jobs\Mail\SendTenantEmailJob;
 use App\Models\EmailDispatchLog;
+use App\Models\MailConfig;
 use App\Models\Tenant;
 use App\Services\Logging\IntegrationLogger;
 use App\Services\Logging\LogPersistenceService;
@@ -17,6 +17,7 @@ use App\Services\Mail\EmailDispatchLogService;
 use App\Services\Mail\TenantMailConfigResolverService;
 use App\Services\Tenant\TenantExecutionManager;
 use App\Support\Tenant\TenantContext;
+use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Mockery;
@@ -36,6 +37,29 @@ final class SendTenantEmailJobTest extends TestCase
             'status' => 'active',
         ]);
 
+        $encrypter = app(Encrypter::class);
+
+        MailConfig::query()->create([
+            'name' => 'SMTP padrão',
+            'driver' => 'smtp',
+            'host' => 'smtp.example.com',
+            'port' => 587,
+            'encryption' => 'tls',
+            'username' => 'user',
+            'password_encrypted' => $encrypter->encryptString('secret'),
+            'from_address' => 'no-reply@example.com',
+            'from_name' => 'Sistema',
+            'reply_to_address' => null,
+            'reply_to_name' => null,
+            'timeout_seconds' => 30,
+            'verify_peer' => true,
+            'verify_peer_name' => true,
+            'allow_self_signed' => false,
+            'is_active' => true,
+            'is_default' => true,
+            'metadata' => null,
+        ]);
+
         $log = EmailDispatchLog::query()->create([
             'tenant_id' => $tenant->id,
             'tenant_code' => $tenant->code,
@@ -50,28 +74,6 @@ final class SendTenantEmailJobTest extends TestCase
             'subject' => 'Teste',
         ]);
 
-        $resolver = Mockery::mock(TenantMailConfigResolverService::class);
-        $resolver->shouldReceive('resolveDefault')
-            ->once()
-            ->andReturn(new TenantMailConfigData(
-                id: 1,
-                name: 'SMTP padrão',
-                driver: 'smtp',
-                host: 'smtp.example.com',
-                port: 587,
-                encryption: 'tls',
-                username: 'user',
-                password: 'secret',
-                fromAddress: 'no-reply@example.com',
-                fromName: 'Sistema',
-                replyToAddress: null,
-                replyToName: null,
-                timeoutSeconds: 30,
-                verifyPeer: true,
-                verifyPeerName: true,
-                allowSelfSigned: false,
-            ));
-
         $sender = Mockery::mock(RuntimeMailSenderInterface::class);
         $sender->shouldReceive('send')
             ->once()
@@ -82,11 +84,15 @@ final class SendTenantEmailJobTest extends TestCase
         $integrationLogger = Mockery::mock(IntegrationLogger::class);
         $logPersistenceService = Mockery::mock(LogPersistenceService::class);
 
+        $tenantContext = app(TenantContext::class);
+
         $emailDispatchLogService = new EmailDispatchLogService(
-            tenantContext: app(TenantContext::class),
+            tenantContext: $tenantContext,
             logPersistenceService: $logPersistenceService,
             integrationLogger: $integrationLogger,
         );
+
+        $resolver = app(TenantMailConfigResolverService::class);
 
         $job = new SendTenantEmailJob(
             tenantId: (int) $tenant->id,

@@ -7,8 +7,7 @@ namespace App\Services\Mail;
 use App\DTO\Mail\SendEmailData;
 use App\Jobs\Mail\SendTenantEmailJob;
 use App\Models\EmailDispatchLog;
-use App\Services\Tenant\TenantExecutionManager;
-use App\Support\TenantContext;
+use App\Support\Tenant\TenantContext;
 
 final readonly class TenantMailDispatcherService
 {
