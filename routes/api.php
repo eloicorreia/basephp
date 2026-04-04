@@ -56,6 +56,21 @@ Route::prefix('v1')->group(function (): void {
 
             Route::get('/admin/tenant-users', [TenantUserController::class, 'index']);
             Route::post('/admin/tenant-users', [TenantUserController::class, 'store']);
+
+            Route::get('/admin/queues/catalog', [QueueController::class, 'catalog']);
+            Route::get('/admin/queues/summary', [QueueController::class, 'summary']);
+            Route::get('/admin/queues/jobs', [QueueController::class, 'index']);
+            Route::get('/admin/queues/jobs/{job}', [QueueController::class, 'show']);
+
+            Route::get('/admin/queues/failed-jobs', [FailedJobController::class, 'index']);
+            Route::get('/admin/queues/failed-jobs/{failedJob}', [FailedJobController::class, 'show']);
+            Route::post('/admin/queues/failed-jobs/{failedJob}/retry', [FailedJobController::class, 'retry']);
+            Route::delete('/admin/queues/failed-jobs/{failedJob}', [FailedJobController::class, 'destroy']);
+
+            Route::get('/admin/emails', [EmailDispatchController::class, 'index']);
+            Route::get('/admin/emails/{emailDispatch}', [EmailDispatchController::class, 'show']);
+            Route::post('/admin/emails/send', [EmailDispatchController::class, 'send']);
+            Route::post('/admin/emails/{emailDispatch}/retry', [EmailDispatchController::class, 'retry']);
         });
     });
 });

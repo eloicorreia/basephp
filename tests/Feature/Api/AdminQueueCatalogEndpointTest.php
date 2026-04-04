@@ -9,11 +9,39 @@ use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
 
-final class AdminPingEndpointTest extends TestCase
+final class AdminQueueCatalogEndpointTest extends TestCase
 {
     use BuildsAuthTenancyFixtures;
 
-    public function test_admin_ping_returns_success_for_authorized_user_when_contract_requires_it(): void
+    public function test_queue_catalog_returns_available_queues_for_admin(): void
+    {
+        $context = $this->createAdminContext();
+
+        $response = $this->getJson('/api/v1/admin/queues/catalog', [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Dados recuperados com sucesso.');
+
+        $data = $response->json('data');
+
+        $this->assertIsArray($data);
+        $this->assertNotEmpty($data);
+    }
+
+    public function test_queue_catalog_returns_forbidden_for_non_admin(): void
+    {
+        $context = $this->createNonAdminContext();
+
+        $this->getJson('/api/v1/admin/queues/catalog', [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])->assertStatus(403);
+    }
+
+    private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
             code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
@@ -34,19 +62,13 @@ final class AdminPingEndpointTest extends TestCase
 
         Passport::actingAs($user, ['user.profile']);
 
-        $this->getJson('/api/v1/admin/ping', [
-            'X-Tenant-Id' => $tenant->code,
-        ])
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', 'Operação realizada com sucesso.')
-            ->assertJsonPath('data.area', 'admin');
+        return ['tenant' => $tenant, 'user' => $user];
     }
 
-    public function test_admin_ping_returns_forbidden_for_non_admin_user(): void
+    private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
@@ -55,7 +77,7 @@ final class AdminPingEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 
@@ -64,10 +86,6 @@ final class AdminPingEndpointTest extends TestCase
 
         Passport::actingAs($user, ['user.profile']);
 
-        $this->getJson('/api/v1/admin/ping', [
-            'X-Tenant-Id' => $tenant->code,
-        ])
-            ->assertStatus(403)
-            ->assertJsonPath('success', false);
+        return ['tenant' => $tenant, 'user' => $user];
     }
 }
