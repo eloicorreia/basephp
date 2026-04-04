@@ -37,6 +37,17 @@ trait LoadsProjectMigrations
             throw new RuntimeException('Falha ao executar as migrations públicas no ambiente de testes.');
         }
 
+        $tenantExitCode = $this->artisan('migrate', [
+            '--database' => $database,
+            '--path' => database_path('migrations/tenant'),
+            '--realpath' => true,
+            '--force' => true,
+        ])->run();
+
+        if ($tenantExitCode !== 0) {
+            throw new RuntimeException('Falha ao executar as migrations tenant no ambiente de testes.');
+        }
+
         if (! $this->projectSchemaIsReady()) {
             throw new RuntimeException(
                 'O schema de testes não ficou consistente após o bootstrap das migrations.'
