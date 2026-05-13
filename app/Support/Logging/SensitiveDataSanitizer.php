@@ -30,7 +30,7 @@ final class SensitiveDataSanitizer
     ];
 
     /**
-     * @param array<mixed>|null $data
+     * @param  array<mixed>|null  $data
      * @return array<mixed>|null
      */
     public function sanitizeArray(?array $data, string $mask = '***'): ?array
@@ -44,6 +44,7 @@ final class SensitiveDataSanitizer
         foreach ($data as $key => $value) {
             if (is_string($key) && $this->isSensitiveKey($key)) {
                 $sanitized[$key] = $mask;
+
                 continue;
             }
 

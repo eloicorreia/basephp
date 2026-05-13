@@ -24,17 +24,17 @@ final class EnsureClientCredentials
         }
 
         if (! method_exists($guard, 'client')) {
-            throw new AuthenticationException();
+            throw new AuthenticationException;
         }
 
         $client = $guard->client();
 
         if ($client === null) {
-            throw new AuthenticationException();
+            throw new AuthenticationException;
         }
 
         if (! $client instanceof Client) {
-            throw new AuthenticationException();
+            throw new AuthenticationException;
         }
 
         if (! $client->hasGrantType('client_credentials')) {

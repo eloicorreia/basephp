@@ -18,8 +18,7 @@ final readonly class EmailDispatchLogService
         private TenantContext $tenantContext,
         private LogPersistenceService $logPersistenceService,
         private IntegrationLogger $integrationLogger,
-    ) {
-    }
+    ) {}
 
     public function createQueuedLog(SendEmailData $email, ?int $userId = null): EmailDispatchLog
     {
@@ -103,7 +102,7 @@ final readonly class EmailDispatchLogService
             'error_class' => $throwable::class,
             'error_message' => $throwable->getMessage(),
             'stack_trace_summary' => mb_substr(
-                $throwable->getFile() . ':' . $throwable->getLine(),
+                $throwable->getFile().':'.$throwable->getLine(),
                 0,
                 1000
             ),

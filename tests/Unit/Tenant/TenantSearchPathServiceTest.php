@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Unit\Tenant;
@@ -15,7 +16,7 @@ final class TenantSearchPathServiceTest extends TestCase
             $this->markTestSkipped('Este teste requer PostgreSQL.');
         }
 
-        $service = new TenantSearchPathService();
+        $service = new TenantSearchPathService;
         $schema = 'tenant_search_path_test';
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $schema));
@@ -39,7 +40,7 @@ final class TenantSearchPathServiceTest extends TestCase
             $this->markTestSkipped('Este teste requer PostgreSQL.');
         }
 
-        $service = new TenantSearchPathService();
+        $service = new TenantSearchPathService;
         $service->resetToPublic();
 
         $row = DB::selectOne('select current_schema() as schema');

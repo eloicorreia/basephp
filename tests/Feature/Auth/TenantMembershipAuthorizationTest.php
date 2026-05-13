@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
@@ -14,7 +15,7 @@ final class TenantMembershipAuthorizationTest extends TestCase
 
     public function test_it_rejects_user_without_access_to_tenant(): void
     {
-        $tenant = $this->createTenant(code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid()));
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
         $user = $this->createUser();
         Passport::actingAs($user, ['user.profile']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])
@@ -23,9 +24,9 @@ final class TenantMembershipAuthorizationTest extends TestCase
 
     public function test_it_rejects_inactive_user_tenant_membership(): void
     {
-        $tenant = $this->createTenant(code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid()));
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
         $user = $this->createUser();
-        $tenantRole = $this->createRole('tenant-user-' . str_replace('-', '', (string) Str::uuid()), 'Tenant User');
+        $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, false);
         Passport::actingAs($user, ['user.profile']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])->assertStatus(403);
@@ -33,9 +34,9 @@ final class TenantMembershipAuthorizationTest extends TestCase
 
     public function test_it_allows_access_when_user_has_active_membership(): void
     {
-        $tenant = $this->createTenant(code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid()));
-        $role = $this->createRole('user-' . str_replace('-', '', (string) Str::uuid()), 'User');
-        $tenantRole = $this->createRole('tenant-user-' . str_replace('-', '', (string) Str::uuid()), 'Tenant User');
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
+        $role = $this->createRole('user-'.str_replace('-', '', (string) Str::uuid()), 'User');
+        $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $user = $this->createUser(role: $role);
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
         Passport::actingAs($user, ['user.profile']);
@@ -44,6 +45,17 @@ final class TenantMembershipAuthorizationTest extends TestCase
 
     public function test_it_returns_standard_forbidden_response_when_membership_is_invalid(): void
     {
-        $this->expectNotToPerformAssertions();
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
+        $user = $this->createUser();
+
+        Passport::actingAs($user, ['user.profile']);
+
+        $this->getJson('/api/v1/auth/me', [
+            'X-Tenant-Id' => $tenant->code,
+        ])->assertStatus(403)->assertJson([
+            'success' => false,
+            'message' => 'Acesso negado.',
+            'errors' => [],
+        ]);
     }
 }

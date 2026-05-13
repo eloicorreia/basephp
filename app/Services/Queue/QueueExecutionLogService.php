@@ -17,8 +17,7 @@ final readonly class QueueExecutionLogService
 {
     public function __construct(
         private QueuePayloadSanitizer $payloadSanitizer,
-    ) {
-    }
+    ) {}
 
     public function logQueued(JobQueued $event): void
     {
@@ -181,7 +180,7 @@ final readonly class QueueExecutionLogService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function extractTechnicalContextFromPayload(array $payload): array
@@ -204,7 +203,7 @@ final readonly class QueueExecutionLogService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function extractJobUuid(array $payload): ?string
     {
@@ -214,7 +213,7 @@ final readonly class QueueExecutionLogService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function extractBatchId(array $payload): ?string
     {
@@ -224,7 +223,7 @@ final readonly class QueueExecutionLogService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function extractJobClass(array $payload): string
     {
@@ -244,7 +243,7 @@ final readonly class QueueExecutionLogService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function extractMaxTries(array $payload): ?int
     {
@@ -254,7 +253,7 @@ final readonly class QueueExecutionLogService
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     private function extractNullableString(array $context, string $key): ?string
     {
@@ -264,7 +263,7 @@ final readonly class QueueExecutionLogService
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param  array<string, mixed>  $context
      */
     private function extractNullableInt(array $context, string $key): ?int
     {
@@ -300,6 +299,9 @@ final readonly class QueueExecutionLogService
         return (int) $matches[1];
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     */
     private function extractQueuedJobClass(JobQueued $event, array $payload): string
     {
         if (is_object($event->job)) {

@@ -7,7 +7,7 @@ namespace App\Support\Http;
 class ApiErrorFormatter
 {
     /**
-     * @param array<string, array<int, string>> $validationErrors
+     * @param  array<string, array<int, string>>  $validationErrors
      * @return array<int, array<string, mixed>>
      */
     public static function fromValidation(array $validationErrors): array

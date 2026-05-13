@@ -18,7 +18,7 @@ class EnsureRole
             abort(401, 'Não autenticado.');
         }
 
-        if (!$user->hasRole(...$roles)) {
+        if (! $user->hasRole(...$roles)) {
             abort(403, 'Acesso negado para este perfil.');
         }
 

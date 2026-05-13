@@ -66,7 +66,7 @@ final class AdminQueueJobsEndpointTest extends TestCase
             'created_at' => now()->timestamp,
         ]);
 
-        $this->getJson('/api/v1/admin/queues/jobs/' . $job->id, [
+        $this->getJson('/api/v1/admin/queues/jobs/'.$job->id, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertOk()
@@ -81,7 +81,7 @@ final class AdminQueueJobsEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -93,7 +93,7 @@ final class AdminQueueJobsEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 

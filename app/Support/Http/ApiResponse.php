@@ -21,6 +21,9 @@ class ApiResponse
         ], $status);
     }
 
+    /**
+     * @param  LengthAwarePaginator<int, mixed>  $paginator
+     */
     public static function paginated(
         LengthAwarePaginator $paginator,
         string $message = 'Dados recuperados com sucesso.'
@@ -38,6 +41,9 @@ class ApiResponse
         ]);
     }
 
+    /**
+     * @param  array<mixed>  $errors
+     */
     public static function error(
         string $message = 'Erro ao processar a requisição.',
         array $errors = [],

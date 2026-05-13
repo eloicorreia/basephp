@@ -23,7 +23,7 @@ class TenantSearchPathService
 
     private function assertValidSchemaName(string $schemaName): void
     {
-        if (!preg_match('/^[a-z][a-z0-9_]{2,62}$/', $schemaName)) {
+        if (! preg_match('/^[a-z][a-z0-9_]{2,62}$/', $schemaName)) {
             throw new InvalidArgumentException('Nome de schema inválido.');
         }
     }

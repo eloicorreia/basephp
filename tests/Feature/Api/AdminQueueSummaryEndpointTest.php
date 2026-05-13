@@ -18,7 +18,7 @@ final class AdminQueueSummaryEndpointTest extends TestCase
     public function test_queue_summary_returns_counts(): void
     {
         $context = $this->createAdminContext();
-        $queueName = 'notifications-' . str_replace('-', '', (string) Str::uuid());
+        $queueName = 'notifications-'.str_replace('-', '', (string) Str::uuid());
 
         Job::query()->create([
             'queue' => $queueName,
@@ -38,7 +38,7 @@ final class AdminQueueSummaryEndpointTest extends TestCase
             'created_at' => now()->timestamp,
         ]);
 
-        $this->getJson('/api/v1/admin/queues/summary?queue=' . $queueName, [
+        $this->getJson('/api/v1/admin/queues/summary?queue='.$queueName, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertOk()
@@ -54,7 +54,7 @@ final class AdminQueueSummaryEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -66,7 +66,7 @@ final class AdminQueueSummaryEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 

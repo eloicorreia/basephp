@@ -34,10 +34,11 @@ final class TenantProvisioningServiceTest extends TestCase
     public function test_it_persists_error_status_when_structural_provisioning_fails(): void
     {
         $schemaName = $this->newSchemaName();
-        $code = 'tenant-failure-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
+        $code = 'tenant-failure-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
         $this->schemasToDrop[] = $schemaName;
 
-        $migrationService = new class (app(TenantSchemaService::class)) extends TenantMigrationService {
+        $migrationService = new class(app(TenantSchemaService::class)) extends TenantMigrationService
+        {
             public function runTenantMigrations(string $schemaName, bool $force = false): void
             {
                 throw new RuntimeException('Falha controlada nas migrations do tenant.');
@@ -79,7 +80,7 @@ final class TenantProvisioningServiceTest extends TestCase
     public function test_it_runs_tenant_migrations_with_repository_inside_tenant_schema(): void
     {
         $schemaName = $this->newSchemaName();
-        $code = 'tenant-success-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
+        $code = 'tenant-success-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
         $this->schemasToDrop[] = $schemaName;
 
         $tenant = app(TenantProvisioningService::class)->provision(
@@ -98,7 +99,7 @@ final class TenantProvisioningServiceTest extends TestCase
 
     private function newSchemaName(): string
     {
-        return 'tenant_prov_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 16);
+        return 'tenant_prov_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 16);
     }
 
     private function currentSchema(): string

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
@@ -14,9 +15,9 @@ final class AdminAuthorizationTest extends TestCase
 
     public function test_admin_route_requires_admin_role(): void
     {
-        $tenant = $this->createTenant(code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid()));
-        $userRole = $this->createRole('user-' . str_replace('-', '', (string) Str::uuid()), 'User');
-        $tenantRole = $this->createRole('tenant-user-' . str_replace('-', '', (string) Str::uuid()), 'Tenant User');
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
+        $userRole = $this->createRole('user-'.str_replace('-', '', (string) Str::uuid()), 'User');
+        $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $user = $this->createUser(role: $userRole);
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
         Passport::actingAs($user, ['user.profile']);
@@ -25,11 +26,38 @@ final class AdminAuthorizationTest extends TestCase
 
     public function test_admin_route_allows_admin_role_when_contract_requires_it(): void
     {
-        $this->expectNotToPerformAssertions();
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
+        $adminRole = $this->createRole('admin', 'Admin');
+        $tenantRole = $this->createRole('tenant-admin-'.str_replace('-', '', (string) Str::uuid()), 'Tenant Admin');
+        $user = $this->createUser(role: $adminRole);
+        $this->grantTenantAccess($user, $tenant, $tenantRole, true);
+
+        Passport::actingAs($user, ['user.profile']);
+
+        $this->getJson('/api/v1/admin/ping', [
+            'X-Tenant-Id' => $tenant->code,
+        ])->assertOk()->assertJson([
+            'success' => true,
+            'data' => ['area' => 'admin'],
+        ]);
     }
 
     public function test_admin_route_returns_standard_forbidden_response_for_non_admin_user(): void
     {
-        $this->expectNotToPerformAssertions();
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
+        $userRole = $this->createRole('user-'.str_replace('-', '', (string) Str::uuid()), 'User');
+        $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
+        $user = $this->createUser(role: $userRole);
+        $this->grantTenantAccess($user, $tenant, $tenantRole, true);
+
+        Passport::actingAs($user, ['user.profile']);
+
+        $this->getJson('/api/v1/admin/ping', [
+            'X-Tenant-Id' => $tenant->code,
+        ])->assertStatus(403)->assertJson([
+            'success' => false,
+            'message' => 'Acesso negado.',
+            'errors' => [],
+        ]);
     }
 }

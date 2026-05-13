@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Exceptions\ApiException;
+use App\Http\Middleware\ApiRequestLoggingMiddleware;
 use App\Http\Middleware\EnsureClientCredentials;
 use App\Http\Middleware\EnsurePasswordChangedMiddleware;
 use App\Http\Middleware\EnsureRole;
@@ -22,12 +23,11 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Passport\Http\Middleware\CheckToken;
 use Laravel\Passport\Http\Middleware\CheckTokenForAnyScope;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use App\Http\Middleware\ApiRequestLoggingMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        api: __DIR__ . '/../routes/api.php',
-        commands: __DIR__ . '/../routes/console.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {

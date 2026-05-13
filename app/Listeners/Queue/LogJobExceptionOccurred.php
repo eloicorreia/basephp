@@ -11,8 +11,7 @@ final readonly class LogJobExceptionOccurred
 {
     public function __construct(
         private QueueExecutionLogService $service,
-    ) {
-    }
+    ) {}
 
     public function handle(JobExceptionOccurred $event): void
     {

@@ -16,8 +16,7 @@ class ApiRequestLogger
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly SensitiveDataSanitizer $sensitiveDataSanitizer,
-    ) {
-    }
+    ) {}
 
     public function log(
         Request $request,
@@ -67,16 +66,27 @@ class ApiRequestLogger
         return (string) $token->client_id;
     }
 
+    /**
+     * @param  array<string, array<int, string>>  $headers
+     * @return array<mixed>
+     */
     private function sanitizeHeaders(array $headers): array
     {
         return $this->sanitizePayload($headers);
     }
 
+    /**
+     * @param  array<mixed>  $payload
+     * @return array<mixed>
+     */
     private function sanitizePayload(array $payload): array
     {
         return $this->sensitiveDataSanitizer->sanitizeArray($payload) ?? [];
     }
 
+    /**
+     * @return array<mixed>|string|null
+     */
     private function sanitizeResponse(Response $response): array|string|null
     {
         $content = $response->getContent();

@@ -19,7 +19,7 @@ final class AdminUserIndexEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $role = $this->createRole(
-            'user-list-' . str_replace('-', '', (string) Str::uuid()),
+            'user-list-'.str_replace('-', '', (string) Str::uuid()),
             'User List'
         );
 
@@ -69,7 +69,7 @@ final class AdminUserIndexEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -81,7 +81,7 @@ final class AdminUserIndexEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 
@@ -102,16 +102,16 @@ final class AdminUserIndexEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-user-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-role-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 

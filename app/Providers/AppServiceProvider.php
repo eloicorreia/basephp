@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\Multitenancy\TenantContextInterface;
+use App\Support\Tenant\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -14,6 +16,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(TenantContext::class);
+        $this->app->alias(TenantContext::class, TenantContextInterface::class);
     }
 
     public function boot(): void
@@ -38,15 +42,16 @@ class AppServiceProvider extends ServiceProvider
             $identifier = (string) ($request->input('username') ?? $request->ip());
 
             return [
-                Limit::perMinute(5)->by($identifier . '|' . $request->ip()),
+                Limit::perMinute(5)->by($identifier.'|'.$request->ip()),
             ];
         });
 
         RateLimiter::for('api', function (Request $request): array {
             $oauthClientId = $request->attributes->get('oauth_client_id');
+            $userId = $request->user()?->getAuthIdentifier();
             $identifier = $oauthClientId !== null
-                ? 'oauth-client:' . $oauthClientId
-                : 'user-or-ip:' . ($request->user()?->id ?? $request->ip());
+                ? 'oauth-client:'.$oauthClientId
+                : 'user-or-ip:'.($userId !== null ? (string) $userId : $request->ip());
 
             return [
                 Limit::perMinute(60)->by($identifier),
@@ -54,7 +59,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('strict', function (Request $request): array {
-            $identifier = (string) ($request->user()?->id ?? $request->ip());
+            $userId = $request->user()?->getAuthIdentifier();
+            $identifier = $userId !== null ? (string) $userId : $request->ip();
 
             return [
                 Limit::perMinute(20)->by($identifier),

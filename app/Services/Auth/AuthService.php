@@ -13,8 +13,7 @@ class AuthService
 {
     public function __construct(
         private readonly LogPersistenceService $logPersistenceService
-    ) {
-    }
+    ) {}
 
     public function changePassword(User $user, string $currentPassword, string $newPassword): void
     {

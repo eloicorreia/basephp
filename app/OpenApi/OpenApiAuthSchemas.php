@@ -32,6 +32,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiAuthSchemas
-{
-}
+final class OpenApiAuthSchemas {}

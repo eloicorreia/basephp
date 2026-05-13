@@ -11,8 +11,7 @@ final readonly class LogQueuedJob
 {
     public function __construct(
         private QueueExecutionLogService $service,
-    ) {
-    }
+    ) {}
 
     public function handle(JobQueued $event): void
     {

@@ -12,7 +12,7 @@ final class QueueFailureLoggingTest extends TestCase
 {
     public function test_it_must_log_failed_job_event(): void
     {
-        Queue::push(new FailingTestQueueJob());
+        Queue::push(new FailingTestQueueJob);
 
         $this->assertDatabaseHas('queue_job_logs', [
             'event_type' => 'dispatched',

@@ -11,11 +11,10 @@ final readonly class CreateTenantUserDTO
         public int $userId,
         public int $roleId,
         public bool $isActive,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public static function fromArray(array $data): self
     {

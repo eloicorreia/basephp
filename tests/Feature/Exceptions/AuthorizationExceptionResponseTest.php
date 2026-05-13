@@ -16,7 +16,7 @@ final class AuthorizationExceptionResponseTest extends TestCase
     public function test_forbidden_authorization_returns_standard_forbidden_response(): void
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
         $user = $this->createUser();
 
@@ -33,6 +33,18 @@ final class AuthorizationExceptionResponseTest extends TestCase
 
     public function test_forbidden_authorization_uses_expected_message_contract(): void
     {
-        $this->expectNotToPerformAssertions();
+        $tenant = $this->createTenant(
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
+        );
+        $user = $this->createUser();
+
+        Passport::actingAs($user, ['user.profile']);
+
+        $this->getJson('/api/v1/auth/me', [
+            'X-Tenant-Id' => $tenant->code,
+        ])->assertStatus(403)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Acesso negado.')
+            ->assertJsonPath('errors', []);
     }
 }

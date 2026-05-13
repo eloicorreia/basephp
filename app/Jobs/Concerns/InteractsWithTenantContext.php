@@ -64,6 +64,12 @@ trait InteractsWithTenantContext
         ];
     }
 
+    /**
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $callback
+     * @return TReturn
+     */
     protected function runInTenantContext(Closure $callback): mixed
     {
         $tenant = Tenant::query()

@@ -9,7 +9,7 @@ use Exception;
 class ApiException extends Exception
 {
     /**
-     * @param array<int, array<string, mixed>> $errors
+     * @param  array<int, array<string, mixed>>  $errors
      */
     public function __construct(
         string $message = 'Erro ao processar a requisição.',

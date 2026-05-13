@@ -15,8 +15,7 @@ final readonly class DispatchContextDTO
         public ?string $operation = null,
         public ?string $queueName = null,
         public ?string $connectionName = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, bool|int|string|null>

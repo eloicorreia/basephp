@@ -14,7 +14,7 @@ class TenantContextTest extends TestCase
 {
     public function test_it_starts_without_tenant(): void
     {
-        $context = new TenantContext();
+        $context = new TenantContext;
 
         $this->assertNull($context->get());
         $this->assertFalse($context->hasTenant());
@@ -22,7 +22,7 @@ class TenantContextTest extends TestCase
 
     public function test_it_sets_and_returns_current_tenant(): void
     {
-        $context = new TenantContext();
+        $context = new TenantContext;
         $tenant = new Tenant([
             'uuid' => (string) Str::uuid(),
             'code' => 'tenant-main',
@@ -40,7 +40,7 @@ class TenantContextTest extends TestCase
 
     public function test_it_throws_when_require_is_called_without_tenant(): void
     {
-        $context = new TenantContext();
+        $context = new TenantContext;
 
         $this->expectException(TenantContextNotDefinedException::class);
         $this->expectExceptionMessage('Contexto de tenant não foi definido para a execução atual.');
@@ -50,7 +50,7 @@ class TenantContextTest extends TestCase
 
     public function test_it_clears_current_tenant(): void
     {
-        $context = new TenantContext();
+        $context = new TenantContext;
         $tenant = new Tenant([
             'uuid' => (string) Str::uuid(),
             'code' => 'tenant-main',

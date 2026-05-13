@@ -7,10 +7,10 @@ namespace App\DTO\Mail;
 final readonly class SendEmailData
 {
     /**
-     * @param array<int, EmailAddressData> $to
-     * @param array<int, EmailAddressData> $cc
-     * @param array<int, EmailAddressData> $bcc
-     * @param array<string, mixed>|null $context
+     * @param  array<int, EmailAddressData>  $to
+     * @param  array<int, EmailAddressData>  $cc
+     * @param  array<int, EmailAddressData>  $bcc
+     * @param  array<string, mixed>|null  $context
      */
     public function __construct(
         public string $trigger,
@@ -22,6 +22,5 @@ final readonly class SendEmailData
         public array $bcc = [],
         public ?string $idempotencyKey = null,
         public ?array $context = null,
-    ) {
-    }
+    ) {}
 }

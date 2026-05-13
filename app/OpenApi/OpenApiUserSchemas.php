@@ -66,6 +66,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiUserSchemas
-{
-}
+final class OpenApiUserSchemas {}

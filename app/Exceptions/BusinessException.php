@@ -7,7 +7,7 @@ namespace App\Exceptions;
 class BusinessException extends ApiException
 {
     /**
-     * @param array<int, array<string, mixed>> $errors
+     * @param  array<int, array<string, mixed>>  $errors
      */
     public function __construct(
         string $message,

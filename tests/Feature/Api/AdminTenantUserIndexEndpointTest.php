@@ -19,16 +19,16 @@ final class AdminTenantUserIndexEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tenant-link-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-link-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $targetUserRole = $this->createRole(
-            'linked-user-' . str_replace('-', '', (string) Str::uuid()),
+            'linked-user-'.str_replace('-', '', (string) Str::uuid()),
             'Linked User'
         );
 
         $targetTenantRole = $this->createRole(
-            'linked-tenant-role-' . str_replace('-', '', (string) Str::uuid()),
+            'linked-tenant-role-'.str_replace('-', '', (string) Str::uuid()),
             'Linked Tenant Role'
         );
 
@@ -79,7 +79,7 @@ final class AdminTenantUserIndexEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -91,7 +91,7 @@ final class AdminTenantUserIndexEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 
@@ -112,16 +112,16 @@ final class AdminTenantUserIndexEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-user-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-role-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 

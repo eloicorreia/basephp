@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Queue;
 
-use App\Jobs\TestQueueJob;
 use App\Models\QueueJobLog;
 use Illuminate\Support\Facades\Queue;
+use Tests\Support\Queue\TestQueueJob;
 use Tests\TestCase;
 
 final class QueueExecutionLogServiceTest extends TestCase

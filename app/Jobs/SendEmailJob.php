@@ -18,8 +18,7 @@ final class SendEmailJob implements ShouldQueue
 
     public function __construct(
         public readonly int $emailDispatchId,
-    ) {
-    }
+    ) {}
 
     public function handle(LogPersistenceService $logPersistenceService): void
     {

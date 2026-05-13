@@ -14,11 +14,10 @@ final readonly class EmailDispatchService
 {
     public function __construct(
         private LogPersistenceService $logPersistenceService,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function dispatch(array $payload, ?int $actorId, ?string $actorRole): EmailDispatch
     {
@@ -72,6 +71,9 @@ final readonly class EmailDispatchService
         });
     }
 
+    /**
+     * @return LengthAwarePaginator<int, EmailDispatch>
+     */
     public function list(?string $status, int $perPage = 15): LengthAwarePaginator
     {
         return EmailDispatch::query()

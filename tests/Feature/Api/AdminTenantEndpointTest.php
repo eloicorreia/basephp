@@ -19,11 +19,11 @@ final class AdminTenantEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $tenantOne = $this->createTenant(
-            code: 'tenant-a-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-a-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $tenantTwo = $this->createTenant(
-            code: 'tenant-b-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-b-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $response = $this->getJson('/api/v1/admin/tenants', [
@@ -47,12 +47,12 @@ final class AdminTenantEndpointTest extends TestCase
     {
         $context = $this->createAdminContext();
 
-        $code = 'tenant-new-' . str_replace('-', '', (string) Str::uuid());
+        $code = 'tenant-new-'.str_replace('-', '', (string) Str::uuid());
 
         $this->postJson('/api/v1/admin/tenants', [
             'code' => $code,
             'name' => 'Tenant Novo',
-            'schema_name' => 'tenant_novo_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'schema_name' => 'tenant_novo_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
         ], [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
@@ -72,10 +72,10 @@ final class AdminTenantEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tenant-show-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-show-'.str_replace('-', '', (string) Str::uuid())
         );
 
-        $this->getJson('/api/v1/admin/tenants/' . $targetTenant->id, [
+        $this->getJson('/api/v1/admin/tenants/'.$targetTenant->id, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertOk()
@@ -103,7 +103,7 @@ final class AdminTenantEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -115,7 +115,7 @@ final class AdminTenantEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 

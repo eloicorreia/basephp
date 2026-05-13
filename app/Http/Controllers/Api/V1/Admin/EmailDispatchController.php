@@ -16,8 +16,7 @@ final class EmailDispatchController extends Controller
 {
     public function __construct(
         private readonly EmailDispatchService $emailDispatchService,
-    ) {
-    }
+    ) {}
 
     public function index(EmailDispatchListRequest $request): JsonResponse
     {

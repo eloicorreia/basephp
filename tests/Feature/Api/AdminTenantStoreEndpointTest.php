@@ -18,8 +18,8 @@ final class AdminTenantStoreEndpointTest extends TestCase
     {
         $context = $this->createAdminContext();
 
-        $code = 'tenant-new-' . str_replace('-', '', (string) Str::uuid());
-        $schemaName = 'tenant_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 20);
+        $code = 'tenant-new-'.str_replace('-', '', (string) Str::uuid());
+        $schemaName = 'tenant_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 20);
 
         $this->postJson('/api/v1/admin/tenants', [
             'code' => $code,
@@ -60,9 +60,9 @@ final class AdminTenantStoreEndpointTest extends TestCase
         $context = $this->createNonAdminContext();
 
         $this->postJson('/api/v1/admin/tenants', [
-            'code' => 'tenant-blocked-' . str_replace('-', '', (string) Str::uuid()),
+            'code' => 'tenant-blocked-'.str_replace('-', '', (string) Str::uuid()),
             'name' => 'Tenant Bloqueado',
-            'schema_name' => 'tenant_blocked_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 10),
+            'schema_name' => 'tenant_blocked_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 10),
         ], [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
@@ -76,7 +76,7 @@ final class AdminTenantStoreEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -88,7 +88,7 @@ final class AdminTenantStoreEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 
@@ -109,16 +109,16 @@ final class AdminTenantStoreEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-user-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-role-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 

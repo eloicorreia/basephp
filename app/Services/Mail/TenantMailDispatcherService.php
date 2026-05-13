@@ -14,8 +14,7 @@ final readonly class TenantMailDispatcherService
     public function __construct(
         private TenantContext $tenantContext,
         private EmailDispatchLogService $emailDispatchLogService,
-    ) {
-    }
+    ) {}
 
     public function dispatch(SendEmailData $emailData, ?int $userId = null): EmailDispatchLog
     {

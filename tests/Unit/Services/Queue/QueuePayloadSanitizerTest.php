@@ -12,7 +12,7 @@ final class QueuePayloadSanitizerTest extends TestCase
 {
     public function test_it_must_mask_sensitive_keys(): void
     {
-        $service = new QueuePayloadSanitizer(new SensitiveDataSanitizer());
+        $service = new QueuePayloadSanitizer(new SensitiveDataSanitizer);
 
         $sanitized = $service->sanitize([
             'email' => 'user@example.com',
@@ -31,7 +31,7 @@ final class QueuePayloadSanitizerTest extends TestCase
 
     public function test_it_must_mask_sensitive_keys_recursively_with_shared_key_list(): void
     {
-        $service = new QueuePayloadSanitizer(new SensitiveDataSanitizer());
+        $service = new QueuePayloadSanitizer(new SensitiveDataSanitizer);
 
         $sanitized = $service->sanitize([
             'payload' => [

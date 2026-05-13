@@ -14,8 +14,7 @@ class MeController extends Controller
 {
     public function __construct(
         private readonly LogPersistenceService $logPersistenceService
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request): JsonResponse
     {

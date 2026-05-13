@@ -18,8 +18,7 @@ class TenantProvisioningService
         private readonly TenantMigrationService $tenantMigrationService,
         private readonly TenantSeederService $tenantSeederService,
         private readonly LogPersistenceService $logPersistenceService,
-    ) {
-    }
+    ) {}
 
     public function provision(
         string $code,

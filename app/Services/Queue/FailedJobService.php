@@ -13,9 +13,11 @@ final readonly class FailedJobService
 {
     public function __construct(
         private LogPersistenceService $logPersistenceService,
-    ) {
-    }
+    ) {}
 
+    /**
+     * @return LengthAwarePaginator<int, FailedJob>
+     */
     public function list(?string $queue, int $perPage = 15): LengthAwarePaginator
     {
         return FailedJob::query()

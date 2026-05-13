@@ -146,6 +146,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiCommonSchemas
-{
-}
+final class OpenApiCommonSchemas {}

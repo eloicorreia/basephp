@@ -26,15 +26,15 @@ final class TenantAwareListenerFailureTest extends TestCase
         }
 
         $tenant = $this->createTenant(
-            code: 'tfl-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tfl-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tfl_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tfl_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
@@ -45,7 +45,7 @@ final class TenantAwareListenerFailureTest extends TestCase
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('Falha controlada no listener tenant-aware.');
 
-            (new FailingTenantAwareQueuedListener())->handle(new FailingTenantAwareEvent($tenant->id));
+            (new FailingTenantAwareQueuedListener)->handle(new FailingTenantAwareEvent($tenant->id));
         } finally {
             $row = DB::selectOne('select current_schema() as schema');
             $this->assertNotNull($row);
@@ -62,15 +62,15 @@ final class TenantAwareListenerFailureTest extends TestCase
         }
 
         $tenant = $this->createTenant(
-            code: 'tflc-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tflc-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tflc_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tflc_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
@@ -79,7 +79,7 @@ final class TenantAwareListenerFailureTest extends TestCase
 
         try {
             try {
-                (new FailingTenantAwareQueuedListener())->handle(new FailingTenantAwareEvent($tenant->id));
+                (new FailingTenantAwareQueuedListener)->handle(new FailingTenantAwareEvent($tenant->id));
                 $this->fail('O listener deveria lançar uma exceção controlada.');
             } catch (RuntimeException $exception) {
                 $this->assertSame('Falha controlada no listener tenant-aware.', $exception->getMessage());
@@ -98,22 +98,22 @@ final class TenantAwareListenerFailureTest extends TestCase
         }
 
         $outerTenant = $this->createTenant(
-            code: 'tofl-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tofl-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tofl_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tofl_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $innerTenant = $this->createTenant(
-            code: 'tifl-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tifl-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tifl_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tifl_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $outerTenant->schema_name));
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $innerTenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
@@ -123,7 +123,7 @@ final class TenantAwareListenerFailureTest extends TestCase
         try {
             $executionManager->run($outerTenant, function () use ($tenantContext, $outerTenant, $innerTenant): void {
                 try {
-                    (new FailingTenantAwareQueuedListener())->handle(new FailingTenantAwareEvent($innerTenant->id));
+                    (new FailingTenantAwareQueuedListener)->handle(new FailingTenantAwareEvent($innerTenant->id));
                     $this->fail('O listener interno deveria lançar uma exceção controlada.');
                 } catch (RuntimeException $exception) {
                     $this->assertSame('Falha controlada no listener tenant-aware.', $exception->getMessage());
@@ -146,9 +146,7 @@ final class TenantAwareListenerFailureTest extends TestCase
 
 final readonly class FailingTenantAwareEvent
 {
-    public function __construct(public int $tenantId)
-    {
-    }
+    public function __construct(public int $tenantId) {}
 }
 
 final class FailingTenantAwareQueuedListener implements ShouldQueue

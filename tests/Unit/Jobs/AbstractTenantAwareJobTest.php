@@ -11,16 +11,9 @@ final class AbstractTenantAwareJobTest extends TestCase
 {
     public function test_it_must_store_technical_context(): void
     {
-        $job = new class (
-            10,
-            'req-123',
-            'trace-456',
-            20,
-            30
-        ) extends AbstractTenantAwareJob {
-            public function handle(): void
-            {
-            }
+        $job = new class(10, 'req-123', 'trace-456', 20, 30) extends AbstractTenantAwareJob
+        {
+            public function handle(): void {}
         };
 
         $this->assertSame(10, $job->getTenantId());

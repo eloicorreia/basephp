@@ -14,8 +14,7 @@ class ApiRequestLoggingMiddleware
 {
     public function __construct(
         private readonly ApiRequestLogger $apiRequestLogger
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -29,12 +28,25 @@ class ApiRequestLoggingMiddleware
                 request: $request,
                 response: $response,
                 durationMs: (int) ((microtime(true) - $start) * 1000),
-                status: 'SUCCESS',
+                status: $this->processingStatusFor($response),
             );
 
             return $response;
         } catch (Throwable $throwable) {
             throw $throwable;
         }
+    }
+
+    private function processingStatusFor(Response $response): string
+    {
+        if ($response->getStatusCode() >= 500) {
+            return 'ERROR';
+        }
+
+        if ($response->getStatusCode() >= 400) {
+            return 'FAILED';
+        }
+
+        return 'SUCCESS';
     }
 }

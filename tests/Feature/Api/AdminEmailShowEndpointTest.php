@@ -28,7 +28,7 @@ final class AdminEmailShowEndpointTest extends TestCase
             'status' => 'queued',
         ]);
 
-        $this->getJson('/api/v1/admin/emails/' . $dispatch->id, [
+        $this->getJson('/api/v1/admin/emails/'.$dispatch->id, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertOk()
@@ -40,10 +40,10 @@ final class AdminEmailShowEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = \App\Models\Role::query()->firstOrCreate(
+        $adminRole = Role::query()->firstOrCreate(
             ['code' => 'admin'],
             [
                 'name' => 'Administrator',
@@ -52,7 +52,7 @@ final class AdminEmailShowEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 

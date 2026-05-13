@@ -13,8 +13,7 @@ class UserService
 {
     public function __construct(
         private readonly LogPersistenceService $logPersistenceService
-    ) {
-    }
+    ) {}
 
     public function create(CreateUserDTO $dto): User
     {

@@ -16,16 +16,16 @@ final class AuthMeEndpointTest extends TestCase
     public function test_auth_me_returns_authenticated_user_data_for_valid_tenant_context(): void
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 
@@ -51,11 +51,11 @@ final class AuthMeEndpointTest extends TestCase
     public function test_auth_me_returns_standard_forbidden_response_when_membership_is_invalid(): void
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 

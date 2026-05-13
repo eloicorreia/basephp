@@ -17,10 +17,10 @@ final class AdminPingEndpointTest extends TestCase
     public function test_admin_ping_returns_success_for_authorized_user_when_contract_requires_it(): void
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = \App\Models\Role::query()->firstOrCreate(
+        $adminRole = Role::query()->firstOrCreate(
             ['code' => 'admin'],
             [
                 'name' => 'Administrator',
@@ -29,7 +29,7 @@ final class AdminPingEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 
@@ -50,16 +50,16 @@ final class AdminPingEndpointTest extends TestCase
     public function test_admin_ping_returns_forbidden_for_non_admin_user(): void
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 

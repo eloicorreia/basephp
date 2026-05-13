@@ -13,9 +13,11 @@ final class CreateUserDTO
         public readonly int $roleId,
         public readonly bool $isActive,
         public readonly bool $mustChangePassword,
-    ) {
-    }
+    ) {}
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public static function fromArray(array $data): self
     {
         return new self(

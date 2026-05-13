@@ -9,9 +9,11 @@ final readonly class EmailAddressData
     public function __construct(
         public string $email,
         public ?string $name = null,
-    ) {
-    }
+    ) {}
 
+    /**
+     * @return array{email: string, name: string|null}
+     */
     public function toArray(): array
     {
         return [

@@ -80,6 +80,9 @@ jobs:
       - name: Generate OpenAPI Documentation
         run: php artisan l5-swagger:generate
 
+      - name: Code Style
+        run: composer format:test
+
       - name: Static Analysis
         run: composer analyse
 

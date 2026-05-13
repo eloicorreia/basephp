@@ -83,6 +83,4 @@ Observações de segurança:
     name: 'Emails',
     description: 'Consulta, envio, auditoria e retentativa de e-mails registrados pela aplicação.'
 )]
-final class OpenApi
-{
-}
+final class OpenApi {}

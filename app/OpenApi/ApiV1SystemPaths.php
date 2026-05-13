@@ -35,7 +35,5 @@ final class ApiV1SystemPaths
             ),
         ]
     )]
-    public function systemPing(): void
-    {
-    }
+    public function systemPing(): void {}
 }

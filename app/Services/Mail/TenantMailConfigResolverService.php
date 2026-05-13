@@ -15,8 +15,7 @@ final readonly class TenantMailConfigResolverService
 {
     public function __construct(
         private Encrypter $encrypter,
-    ) {
-    }
+    ) {}
 
     public function resolveDefault(): TenantMailConfigData
     {
@@ -26,7 +25,7 @@ final readonly class TenantMailConfigResolverService
             ->first();
 
         if ($config === null) {
-            throw new MailConfigurationNotFoundException();
+            throw new MailConfigurationNotFoundException;
         }
 
         if ($config->driver !== 'smtp') {

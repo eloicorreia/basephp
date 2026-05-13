@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\DTO\Admin\CreateTenantUserDTO;
-use App\Models\User;
 use App\Models\TenantUser;
+use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
 use Illuminate\Support\Facades\DB;
 
@@ -14,8 +14,7 @@ class TenantUserService
 {
     public function __construct(
         private readonly LogPersistenceService $logPersistenceService
-    ) {
-    }
+    ) {}
 
     public function createOrUpdate(CreateTenantUserDTO $dto): TenantUser
     {

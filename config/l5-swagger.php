@@ -76,9 +76,9 @@ return [
                     'description' => 'Autenticação OAuth2 via Laravel Passport usando Authorization Code + PKCE para usuários humanos e Client Credentials para integrações sistema-a-sistema.',
                     'flows' => [
                         'authorizationCode' => [
-                            'authorizationUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/authorize',
-                            'tokenUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/token',
-                            'refreshUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/token',
+                            'authorizationUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/authorize',
+                            'tokenUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/token',
+                            'refreshUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/token',
                             'scopes' => [
                                 'user.profile' => 'Permite consultar dados do usuário autenticado.',
                                 'tenant.access' => 'Permite acessar recursos vinculados a tenant.',
@@ -86,7 +86,7 @@ return [
                             ],
                         ],
                         'clientCredentials' => [
-                            'tokenUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/token',
+                            'tokenUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/token',
                             'scopes' => [
                                 'system.health' => 'Permite consultar endpoints operacionais sistema-a-sistema.',
                             ],

@@ -2,18 +2,10 @@ includes:
     - vendor/larastan/larastan/extension.neon
 
 parameters:
-    level: 5
+    level: 6
 
     paths:
-        - app/Console
-        - app/Contracts
-        - app/DTO
-        - app/Enums
-        - app/Exceptions
-        - app/Http/Middleware
-        - app/Jobs
-        - app/Services
-        - app/Support
+        - app
         - routes
         - database/seeders
 

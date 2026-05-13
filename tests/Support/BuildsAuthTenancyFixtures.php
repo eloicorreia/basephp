@@ -24,7 +24,7 @@ trait BuildsAuthTenancyFixtures
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createTenant(
         ?string $code = null,
@@ -38,9 +38,9 @@ trait BuildsAuthTenancyFixtures
 
         $attributes = array_merge([
             'uuid' => (string) Str::uuid(),
-            'code' => $code ?? 'tenant-' . str_replace('-', '', (string) Str::uuid()),
-            'name' => $name ?? 'Tenant ' . uniqid(),
-            'schema_name' => $schemaName ?? 'tenant_' . uniqid(),
+            'code' => $code ?? 'tenant-'.str_replace('-', '', (string) Str::uuid()),
+            'name' => $name ?? 'Tenant '.uniqid(),
+            'schema_name' => $schemaName ?? 'tenant_'.uniqid(),
             'status' => $resolvedStatus,
         ], $overrides);
 
@@ -48,7 +48,7 @@ trait BuildsAuthTenancyFixtures
     }
 
     /**
-     * @param array<string, mixed> $overrides
+     * @param  array<string, mixed>  $overrides
      */
     private function createUser(
         ?Role $role = null,
@@ -57,8 +57,8 @@ trait BuildsAuthTenancyFixtures
         array $overrides = []
     ): User {
         $attributes = array_merge([
-            'name' => 'User ' . uniqid(),
-            'email' => uniqid('user_', true) . '@example.com',
+            'name' => 'User '.uniqid(),
+            'email' => uniqid('user_', true).'@example.com',
             'password' => bcrypt('password'),
             'role_id' => $role?->id,
             'is_active' => $isActive,

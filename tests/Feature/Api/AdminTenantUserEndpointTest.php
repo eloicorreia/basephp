@@ -19,16 +19,16 @@ final class AdminTenantUserEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tenant-link-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-link-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $targetUserRole = $this->createRole(
-            'linked-user-' . str_replace('-', '', (string) Str::uuid()),
+            'linked-user-'.str_replace('-', '', (string) Str::uuid()),
             'Linked User'
         );
 
         $targetTenantRole = $this->createRole(
-            'linked-tenant-role-' . str_replace('-', '', (string) Str::uuid()),
+            'linked-tenant-role-'.str_replace('-', '', (string) Str::uuid()),
             'Linked Tenant Role'
         );
 
@@ -56,16 +56,16 @@ final class AdminTenantUserEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tenant-link-store-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-link-store-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $targetUserRole = $this->createRole(
-            'store-user-' . str_replace('-', '', (string) Str::uuid()),
+            'store-user-'.str_replace('-', '', (string) Str::uuid()),
             'Store User'
         );
 
         $targetTenantRole = $this->createRole(
-            'store-tenant-role-' . str_replace('-', '', (string) Str::uuid()),
+            'store-tenant-role-'.str_replace('-', '', (string) Str::uuid()),
             'Store Tenant Role'
         );
 
@@ -113,7 +113,7 @@ final class AdminTenantUserEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -125,7 +125,7 @@ final class AdminTenantUserEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 

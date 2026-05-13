@@ -18,15 +18,14 @@ class ResolveTenantMiddleware
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly TenantSearchPathService $tenantSearchPathService
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
         $tenantCode = $request->header('X-Tenant-Id');
 
         if ($tenantCode === null || trim($tenantCode) === '') {
-            throw new TenantRequiredException();
+            throw new TenantRequiredException;
         }
 
         $tenant = Tenant::query()
@@ -35,7 +34,7 @@ class ResolveTenantMiddleware
             ->first();
 
         if ($tenant === null) {
-            throw new TenantNotFoundException();
+            throw new TenantNotFoundException;
         }
 
         $this->tenantSearchPathService->setTenantSchema($tenant->schema_name);

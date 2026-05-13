@@ -13,8 +13,7 @@ class ChangePasswordController extends Controller
 {
     public function __construct(
         private readonly AuthService $authService
-    ) {
-    }
+    ) {}
 
     public function __invoke(ChangePasswordRequest $request): JsonResponse
     {

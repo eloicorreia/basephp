@@ -11,11 +11,10 @@ class IntegrationLogger
 {
     public function __construct(
         private readonly SensitiveDataSanitizer $sensitiveDataSanitizer,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed>|null $payload
+     * @param  array<string, mixed>|null  $payload
      */
     public function logRequest(
         string $service,

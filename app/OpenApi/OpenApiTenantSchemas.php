@@ -65,6 +65,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiTenantSchemas
-{
-}
+final class OpenApiTenantSchemas {}

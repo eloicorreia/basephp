@@ -81,6 +81,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiQueueSchemas
-{
-}
+final class OpenApiQueueSchemas {}

@@ -14,9 +14,11 @@ class LogPersistenceService
 {
     public function __construct(
         private readonly SensitiveDataSanitizer $sensitiveDataSanitizer,
-    ) {
-    }
+    ) {}
 
+    /**
+     * @param  array<string, mixed>|null  $context
+     */
     public function logSystemInfo(
         string $message,
         string $category,
@@ -38,6 +40,9 @@ class LogPersistenceService
         );
     }
 
+    /**
+     * @param  array<string, mixed>|null  $context
+     */
     public function logSystemWarning(
         string $message,
         string $category,
@@ -87,6 +92,10 @@ class LogPersistenceService
         );
     }
 
+    /**
+     * @param  array<string, mixed>|null  $beforeData
+     * @param  array<string, mixed>|null  $afterData
+     */
     public function logAudit(
         string $action,
         string $auditableType,
@@ -115,6 +124,9 @@ class LogPersistenceService
         ]);
     }
 
+    /**
+     * @param  array<string, mixed>|null  $context
+     */
     private function persistSystemLog(
         string $level,
         string $message,
@@ -150,6 +162,9 @@ class LogPersistenceService
         ]);
     }
 
+    /**
+     * @return array<mixed>|null
+     */
     private function safeInput(Request $request): ?array
     {
         $input = $request->all();
@@ -159,7 +174,7 @@ class LogPersistenceService
     }
 
     /**
-     * @param array<mixed>|null $data
+     * @param  array<mixed>|null  $data
      * @return array<mixed>|null
      */
     private function sanitizeArray(?array $data): ?array
@@ -179,7 +194,7 @@ class LogPersistenceService
 
     private function buildStackTraceSummary(Throwable $throwable): string
     {
-        $summary = $throwable->getFile() . ':' . $throwable->getLine();
+        $summary = $throwable->getFile().':'.$throwable->getLine();
 
         return mb_substr($summary, 0, 1000);
     }

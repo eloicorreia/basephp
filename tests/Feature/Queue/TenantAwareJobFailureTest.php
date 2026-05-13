@@ -26,15 +26,15 @@ final class TenantAwareJobFailureTest extends TestCase
         }
 
         $tenant = $this->createTenant(
-            code: 'tfj-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tfj-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tfj_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tfj_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
@@ -62,15 +62,15 @@ final class TenantAwareJobFailureTest extends TestCase
         }
 
         $tenant = $this->createTenant(
-            code: 'tfjc-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tfjc-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tfjc_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tfjc_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
@@ -98,22 +98,22 @@ final class TenantAwareJobFailureTest extends TestCase
         }
 
         $outerTenant = $this->createTenant(
-            code: 'tofj-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tofj-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tofj_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tofj_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $innerTenant = $this->createTenant(
-            code: 'tifj-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            code: 'tifj-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             status: 'active',
-            schemaName: 'tifj_' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            schemaName: 'tifj_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $outerTenant->schema_name));
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $innerTenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);

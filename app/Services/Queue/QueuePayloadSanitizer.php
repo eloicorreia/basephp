@@ -10,11 +10,10 @@ final class QueuePayloadSanitizer
 {
     public function __construct(
         private readonly SensitiveDataSanitizer $sensitiveDataSanitizer,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function sanitize(array $payload): array

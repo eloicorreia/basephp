@@ -17,8 +17,7 @@ class TenantUserController extends Controller
 {
     public function __construct(
         private readonly TenantUserService $tenantUserService
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {

@@ -13,8 +13,7 @@ final readonly class QueueDispatchService
 {
     public function __construct(
         private Dispatcher $dispatcher,
-    ) {
-    }
+    ) {}
 
     public function dispatch(
         ShouldQueue $job,

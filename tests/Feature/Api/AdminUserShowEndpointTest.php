@@ -19,13 +19,13 @@ final class AdminUserShowEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetRole = $this->createRole(
-            'user-show-' . str_replace('-', '', (string) Str::uuid()),
+            'user-show-'.str_replace('-', '', (string) Str::uuid()),
             'Show User'
         );
 
         $targetUser = $this->createUser(role: $targetRole);
 
-        $this->getJson('/api/v1/admin/users/' . $targetUser->id, [
+        $this->getJson('/api/v1/admin/users/'.$targetUser->id, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertOk()
@@ -41,13 +41,13 @@ final class AdminUserShowEndpointTest extends TestCase
         $context = $this->createNonAdminContext();
 
         $targetRole = $this->createRole(
-            'user-show-blocked-' . str_replace('-', '', (string) Str::uuid()),
+            'user-show-blocked-'.str_replace('-', '', (string) Str::uuid()),
             'Blocked Show User'
         );
 
         $targetUser = $this->createUser(role: $targetRole);
 
-        $this->getJson('/api/v1/admin/users/' . $targetUser->id, [
+        $this->getJson('/api/v1/admin/users/'.$targetUser->id, [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertStatus(403)
@@ -69,7 +69,7 @@ final class AdminUserShowEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -81,7 +81,7 @@ final class AdminUserShowEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 
@@ -102,16 +102,16 @@ final class AdminUserShowEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-user-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-role-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 

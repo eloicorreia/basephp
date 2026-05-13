@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class QueueMonitoringService
 {
+    /**
+     * @return LengthAwarePaginator<int, Job>
+     */
     public function listJobs(?string $queue, int $perPage = 15): LengthAwarePaginator
     {
         return Job::query()
@@ -76,7 +79,7 @@ final readonly class QueueMonitoringService
 
         $decoded = json_decode($payload, true);
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             return null;
         }
 

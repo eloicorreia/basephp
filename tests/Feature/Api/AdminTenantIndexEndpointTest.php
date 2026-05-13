@@ -19,11 +19,11 @@ final class AdminTenantIndexEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $tenantOne = $this->createTenant(
-            code: 'tenant-a-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-a-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $tenantTwo = $this->createTenant(
-            code: 'tenant-b-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-b-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $response = $this->getJson('/api/v1/admin/tenants', [
@@ -89,7 +89,7 @@ final class AdminTenantIndexEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -101,7 +101,7 @@ final class AdminTenantIndexEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 
@@ -122,16 +122,16 @@ final class AdminTenantIndexEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-user-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-role-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 

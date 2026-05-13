@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Unit\Tenant;
@@ -9,6 +10,7 @@ use App\Services\Tenant\TenantSearchPathService;
 use App\Support\Tenant\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -23,8 +25,8 @@ final class TenantExecutionManagerTest extends TestCase
         $tenant = $this->tenant('exec');
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $context = new TenantContext();
-        $manager = new TenantExecutionManager($context, new TenantSearchPathService());
+        $context = new TenantContext;
+        $manager = new TenantExecutionManager($context, new TenantSearchPathService);
 
         try {
             $manager->run($tenant, function () use ($tenant, $context): void {
@@ -49,7 +51,7 @@ final class TenantExecutionManagerTest extends TestCase
         $tenant = $this->tenant('public');
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $manager = new TenantExecutionManager(new TenantContext(), new TenantSearchPathService());
+        $manager = new TenantExecutionManager(new TenantContext, new TenantSearchPathService);
 
         try {
             $manager->run($tenant, static function (): void {});
@@ -72,8 +74,8 @@ final class TenantExecutionManagerTest extends TestCase
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $outer->schema_name));
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $inner->schema_name));
 
-        $context = new TenantContext();
-        $manager = new TenantExecutionManager($context, new TenantSearchPathService());
+        $context = new TenantContext;
+        $manager = new TenantExecutionManager($context, new TenantSearchPathService);
 
         try {
             $manager->run($outer, function () use ($manager, $context, $outer, $inner): void {
@@ -98,8 +100,8 @@ final class TenantExecutionManagerTest extends TestCase
         $tenant = $this->tenant('error');
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $context = new TenantContext();
-        $manager = new TenantExecutionManager($context, new TenantSearchPathService());
+        $context = new TenantContext;
+        $manager = new TenantExecutionManager($context, new TenantSearchPathService);
 
         try {
             try {
@@ -120,13 +122,49 @@ final class TenantExecutionManagerTest extends TestCase
         }
     }
 
+    public function test_it_restores_previous_state_even_when_schema_switch_fails(): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Este teste requer PostgreSQL.');
+        }
+
+        $tenant = Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => 'tenant-invalid-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'name' => 'Tenant Invalid Schema',
+            'schema_name' => 'invalid schema '.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'status' => 'active',
+        ]);
+
+        $context = new TenantContext;
+        $manager = new TenantExecutionManager($context, new TenantSearchPathService);
+
+        try {
+            try {
+                $manager->run($tenant, static function (): void {
+                    throw new RuntimeException('callback não deveria executar');
+                });
+                $this->fail('Era esperada uma exceção de schema inválido.');
+            } catch (InvalidArgumentException $exception) {
+                $this->assertSame('Nome de schema inválido.', $exception->getMessage());
+            }
+
+            $this->assertNull($context->get());
+            $row = DB::selectOne('select current_schema() as schema');
+            $this->assertNotNull($row);
+            $this->assertSame('public', $row->schema);
+        } finally {
+            $tenant->delete();
+        }
+    }
+
     private function tenant(string $prefix): Tenant
     {
         return Tenant::query()->create([
             'uuid' => (string) Str::uuid(),
-            'code' => 'tenant-' . $prefix . '-' . str_replace('-', '', (string) Str::uuid()),
-            'name' => 'Tenant ' . ucfirst($prefix),
-            'schema_name' => 'tenant_' . $prefix . '_' . str_replace('-', '', (string) Str::uuid()),
+            'code' => 'tenant-'.$prefix.'-'.str_replace('-', '', (string) Str::uuid()),
+            'name' => 'Tenant '.ucfirst($prefix),
+            'schema_name' => 'tenant_'.$prefix.'_'.str_replace('-', '', (string) Str::uuid()),
             'status' => 'active',
         ]);
     }

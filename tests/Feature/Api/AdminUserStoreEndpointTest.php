@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Models\Role;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -18,11 +19,11 @@ final class AdminUserStoreEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetRole = $this->createRole(
-            'user-created-' . str_replace('-', '', (string) Str::uuid()),
+            'user-created-'.str_replace('-', '', (string) Str::uuid()),
             'Created User'
         );
 
-        $email = 'user.' . str_replace('-', '', (string) Str::uuid()) . '@example.com';
+        $email = 'user.'.str_replace('-', '', (string) Str::uuid()).'@example.com';
 
         $this->postJson('/api/v1/admin/users', [
             'name' => 'Usuário de Teste',
@@ -67,13 +68,13 @@ final class AdminUserStoreEndpointTest extends TestCase
         $context = $this->createNonAdminContext();
 
         $targetRole = $this->createRole(
-            'user-blocked-' . str_replace('-', '', (string) Str::uuid()),
+            'user-blocked-'.str_replace('-', '', (string) Str::uuid()),
             'Blocked User'
         );
 
         $this->postJson('/api/v1/admin/users', [
             'name' => 'Usuário Bloqueado',
-            'email' => 'blocked.' . str_replace('-', '', (string) Str::uuid()) . '@example.com',
+            'email' => 'blocked.'.str_replace('-', '', (string) Str::uuid()).'@example.com',
             'password' => 'SenhaForteMuitoBoa@123',
             'password_confirmation' => 'SenhaForteMuitoBoa@123',
             'role_id' => $targetRole->id,
@@ -92,10 +93,10 @@ final class AdminUserStoreEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
-        $adminRole = \App\Models\Role::query()->firstOrCreate(
+        $adminRole = Role::query()->firstOrCreate(
             ['code' => 'admin'],
             [
                 'name' => 'Administrator',
@@ -104,7 +105,7 @@ final class AdminUserStoreEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 
@@ -125,16 +126,16 @@ final class AdminUserStoreEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-user-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-user-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $userRole = $this->createRole(
-            'user-' . str_replace('-', '', (string) Str::uuid()),
+            'user-'.str_replace('-', '', (string) Str::uuid()),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-role-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-user-role-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant User'
         );
 

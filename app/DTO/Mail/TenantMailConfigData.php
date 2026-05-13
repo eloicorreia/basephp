@@ -23,6 +23,5 @@ final readonly class TenantMailConfigData
         public bool $verifyPeer,
         public bool $verifyPeerName,
         public bool $allowSelfSigned,
-    ) {
-    }
+    ) {}
 }

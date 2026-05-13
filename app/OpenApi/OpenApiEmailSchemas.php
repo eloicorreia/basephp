@@ -57,6 +57,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiEmailSchemas
-{
-}
+final class OpenApiEmailSchemas {}

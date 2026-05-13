@@ -37,11 +37,13 @@ class TenantMigrateCommand extends Command
 
         if (($tenantCode === null || $tenantCode === '') && ($schemaName === null || $schemaName === '')) {
             $this->error('Informe --tenant ou --schema.');
+
             return self::FAILURE;
         }
 
         if (($tenantCode !== null && $tenantCode !== '') && ($schemaName !== null && $schemaName !== '')) {
             $this->error('Use apenas uma opção: --tenant ou --schema.');
+
             return self::FAILURE;
         }
 
@@ -141,7 +143,7 @@ class TenantMigrateCommand extends Command
 
     private function assertValidSchemaName(string $schemaName): void
     {
-        if (!preg_match('/^[a-z][a-z0-9_]{2,62}$/', $schemaName)) {
+        if (! preg_match('/^[a-z][a-z0-9_]{2,62}$/', $schemaName)) {
             throw new \InvalidArgumentException('Nome de schema inválido.');
         }
     }

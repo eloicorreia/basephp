@@ -43,6 +43,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiTenantUserSchemas
-{
-}
+final class OpenApiTenantUserSchemas {}

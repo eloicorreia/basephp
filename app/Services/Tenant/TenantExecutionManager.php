@@ -13,13 +13,12 @@ final class TenantExecutionManager
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly TenantSearchPathService $tenantSearchPathService,
-    ) {
-    }
+    ) {}
 
     /**
      * @template TReturn
      *
-     * @param Closure():TReturn $callback
+     * @param  Closure():TReturn  $callback
      * @return TReturn
      */
     public function run(Tenant $tenant, Closure $callback): mixed
@@ -27,9 +26,10 @@ final class TenantExecutionManager
         $previousTenant = $this->tenantContext->get();
 
         $this->tenantContext->set($tenant);
-        $this->tenantSearchPathService->setTenantSchema($tenant->schema_name);
 
         try {
+            $this->tenantSearchPathService->setTenantSchema($tenant->schema_name);
+
             return $callback();
         } finally {
             if ($previousTenant !== null) {

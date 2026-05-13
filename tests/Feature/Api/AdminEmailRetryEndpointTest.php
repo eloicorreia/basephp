@@ -31,7 +31,7 @@ final class AdminEmailRetryEndpointTest extends TestCase
             'error_message' => 'SMTP timeout',
         ]);
 
-        $this->postJson('/api/v1/admin/emails/' . $dispatch->id . '/retry', [], [
+        $this->postJson('/api/v1/admin/emails/'.$dispatch->id.'/retry', [], [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertStatus(202)
@@ -49,13 +49,13 @@ final class AdminEmailRetryEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tenant-main-' . str_replace('-', '', (string) Str::uuid())
+            code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid())
         );
 
         $adminRole = $this->createRole('admin', 'Administrator');
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . str_replace('-', '', (string) Str::uuid()),
+            'tenant-admin-'.str_replace('-', '', (string) Str::uuid()),
             'Tenant Admin'
         );
 

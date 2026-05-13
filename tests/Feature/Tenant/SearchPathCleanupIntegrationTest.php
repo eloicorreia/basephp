@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Tests\Feature\Tenant;
@@ -18,20 +19,22 @@ final class SearchPathCleanupIntegrationTest extends TestCase
     {
         return Tenant::query()->create([
             'uuid' => (string) Str::uuid(),
-            'code' => 'tenant-' . $prefix . '-' . str_replace('-', '', (string) Str::uuid()),
-            'name' => 'Tenant ' . ucfirst($prefix),
-            'schema_name' => 'tenant_' . $prefix . '_' . str_replace('-', '', (string) Str::uuid()),
+            'code' => 'tenant-'.$prefix.'-'.str_replace('-', '', (string) Str::uuid()),
+            'name' => 'Tenant '.ucfirst($prefix),
+            'schema_name' => 'tenant_'.$prefix.'_'.str_replace('-', '', (string) Str::uuid()),
             'status' => 'active',
         ]);
     }
 
     public function test_it_switches_to_tenant_schema_and_returns_to_public_after_execution(): void
     {
-        if (DB::getDriverName() !== 'pgsql') $this->markTestSkipped('Este teste requer PostgreSQL.');
+        if (DB::getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Este teste requer PostgreSQL.');
+        }
 
         $tenant = $this->tenant('cleanup');
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
-        $manager = new TenantExecutionManager(new TenantContext(), new TenantSearchPathService());
+        $manager = new TenantExecutionManager(new TenantContext, new TenantSearchPathService);
 
         try {
             $manager->run($tenant, function () use ($tenant): void {
@@ -48,12 +51,15 @@ final class SearchPathCleanupIntegrationTest extends TestCase
 
     public function test_it_restores_previous_tenant_schema_when_execution_is_nested(): void
     {
-        if (DB::getDriverName() !== 'pgsql') $this->markTestSkipped('Este teste requer PostgreSQL.');
-        $outer = $this->tenant('outer'); $inner = $this->tenant('inner');
+        if (DB::getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Este teste requer PostgreSQL.');
+        }
+        $outer = $this->tenant('outer');
+        $inner = $this->tenant('inner');
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $outer->schema_name));
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $inner->schema_name));
-        $context = new TenantContext();
-        $manager = new TenantExecutionManager($context, new TenantSearchPathService());
+        $context = new TenantContext;
+        $manager = new TenantExecutionManager($context, new TenantSearchPathService);
 
         try {
             $manager->run($outer, function () use ($manager, $inner, $outer): void {
@@ -69,14 +75,18 @@ final class SearchPathCleanupIntegrationTest extends TestCase
 
     public function test_it_restores_public_schema_even_when_inner_execution_fails(): void
     {
-        if (DB::getDriverName() !== 'pgsql') $this->markTestSkipped('Este teste requer PostgreSQL.');
+        if (DB::getDriverName() !== 'pgsql') {
+            $this->markTestSkipped('Este teste requer PostgreSQL.');
+        }
         $tenant = $this->tenant('failure');
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
-        $manager = new TenantExecutionManager(new TenantContext(), new TenantSearchPathService());
+        $manager = new TenantExecutionManager(new TenantContext, new TenantSearchPathService);
 
         try {
             try {
-                $manager->run($tenant, static function (): void { throw new RuntimeException('falha'); });
+                $manager->run($tenant, static function (): void {
+                    throw new RuntimeException('falha');
+                });
             } catch (RuntimeException $e) {
                 $this->assertSame('falha', $e->getMessage());
             }

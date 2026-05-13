@@ -11,8 +11,7 @@ class TenantMigrationService
 {
     public function __construct(
         private readonly TenantSchemaService $tenantSchemaService,
-    ) {
-    }
+    ) {}
 
     public function runTenantMigrations(string $schemaName, bool $force = false): void
     {

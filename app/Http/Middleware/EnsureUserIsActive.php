@@ -18,7 +18,7 @@ class EnsureUserIsActive
             abort(401, 'Não autenticado.');
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             abort(403, 'Usuário inativo.');
         }
 

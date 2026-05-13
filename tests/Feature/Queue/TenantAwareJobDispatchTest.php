@@ -38,15 +38,15 @@ final class TenantAwareJobDispatchTest extends TestCase
         }
 
         $tenant = $this->createTenant(
-            code: 'tenant-job-' . str_replace('-', '', (string) Str::uuid()),
+            code: 'tenant-job-'.str_replace('-', '', (string) Str::uuid()),
             status: 'active',
-            schemaName: 'tenant_job_' . str_replace('-', '', (string) Str::uuid())
+            schemaName: 'tenant_job_'.str_replace('-', '', (string) Str::uuid())
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $tenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
@@ -77,22 +77,22 @@ final class TenantAwareJobDispatchTest extends TestCase
         }
 
         $outerTenant = $this->createTenant(
-            code: 'tenant-outer-' . str_replace('-', '', (string) Str::uuid()),
+            code: 'tenant-outer-'.str_replace('-', '', (string) Str::uuid()),
             status: 'active',
-            schemaName: 'tenant_outer_' . str_replace('-', '', (string) Str::uuid())
+            schemaName: 'tenant_outer_'.str_replace('-', '', (string) Str::uuid())
         );
 
         $jobTenant = $this->createTenant(
-            code: 'tenant-inner-' . str_replace('-', '', (string) Str::uuid()),
+            code: 'tenant-inner-'.str_replace('-', '', (string) Str::uuid()),
             status: 'active',
-            schemaName: 'tenant_inner_' . str_replace('-', '', (string) Str::uuid())
+            schemaName: 'tenant_inner_'.str_replace('-', '', (string) Str::uuid())
         );
 
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $outerTenant->schema_name));
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $jobTenant->schema_name));
 
-        $tenantContext = new TenantContext();
-        $searchPathService = new TenantSearchPathService();
+        $tenantContext = new TenantContext;
+        $searchPathService = new TenantSearchPathService;
         $executionManager = new TenantExecutionManager($tenantContext, $searchPathService);
 
         $this->app->instance(TenantContext::class, $tenantContext);
@@ -134,13 +134,14 @@ final class TestTenantAwareJob implements ShouldQueue
     use InteractsWithTenantContext;
 
     public static bool $handled = false;
+
     public static ?int $tenantIdSeen = null;
+
     public static ?string $schemaSeen = null;
 
     public function __construct(
         protected int|string $tenantId
-    ) {
-    }
+    ) {}
 
     public function handle(): void
     {

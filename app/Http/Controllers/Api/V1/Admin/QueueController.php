@@ -21,8 +21,7 @@ final class QueueController extends Controller
         private readonly QueueCatalogService $queueCatalogService,
         private readonly QueueMonitoringService $queueMonitoringService,
         private readonly LogPersistenceService $logPersistenceService,
-    ) {
-    }
+    ) {}
 
     public function catalog(): JsonResponse
     {

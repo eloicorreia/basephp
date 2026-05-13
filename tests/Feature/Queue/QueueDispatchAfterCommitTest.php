@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Queue;
 
 use App\DTO\Queue\DispatchContextDTO;
-use App\Jobs\TestQueueJob;
 use App\Services\Queue\QueueDispatchService;
 use Illuminate\Support\Facades\Bus;
+use Tests\Support\Queue\TestQueueJob;
 use Tests\TestCase;
 
 final class QueueDispatchAfterCommitTest extends TestCase

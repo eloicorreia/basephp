@@ -15,8 +15,7 @@ final class FailedJobController extends Controller
 {
     public function __construct(
         private readonly FailedJobService $failedJobService,
-    ) {
-    }
+    ) {}
 
     public function index(FailedJobListRequest $request): JsonResponse
     {

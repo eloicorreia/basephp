@@ -7,8 +7,8 @@ namespace App\Services\Mail;
 use App\DTO\Mail\SendEmailData;
 use App\DTO\Mail\TenantMailConfigData;
 use App\Services\Mail\Contracts\RuntimeMailSenderInterface;
-use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 
@@ -16,15 +16,14 @@ final readonly class SymfonyRuntimeMailSender implements RuntimeMailSenderInterf
 {
     public function __construct(
         private RuntimeMailTransportFactory $transportFactory,
-    ) {
-    }
+    ) {}
 
     public function send(TenantMailConfigData $config, SendEmailData $email): array
     {
         $transport = $this->transportFactory->make($config);
         $mailer = new Mailer($transport);
 
-        $message = new Email();
+        $message = new Email;
         $message->from(new Address($config->fromAddress, $config->fromName));
         $message->subject($email->subject);
 

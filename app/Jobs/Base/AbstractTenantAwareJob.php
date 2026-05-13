@@ -17,9 +17,9 @@ abstract class AbstractTenantAwareJob implements ShouldQueue, TenantAwareJob
 {
     use Dispatchable;
     use InteractsWithQueue;
+    use InteractsWithTenantContext;
     use Queueable;
     use SerializesModels;
-    use InteractsWithTenantContext;
 
     protected int $tenantId;
 

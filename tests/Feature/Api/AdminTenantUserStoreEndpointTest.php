@@ -7,8 +7,6 @@ namespace Tests\Feature\Api;
 use App\Models\Role;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
-use App\DTO\Admin\CreateTenantUserDTO;
-use App\Http\Resources\Api\V1\TenantUserResource;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
 
@@ -21,16 +19,16 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
         $context = $this->createAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tlink-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            code: 'tlink-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $targetUserRole = $this->createRole(
-            'store-user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'store-user-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Store User'
         );
 
         $targetTenantRole = $this->createRole(
-            'store-tenant-role-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'store-tenant-role-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Store Tenant Role'
         );
 
@@ -82,16 +80,16 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
         $context = $this->createNonAdminContext();
 
         $targetTenant = $this->createTenant(
-            code: 'tblk-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            code: 'tblk-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $targetUserRole = $this->createRole(
-            'blocked-user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'blocked-user-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Blocked User'
         );
 
         $targetTenantRole = $this->createRole(
-            'blocked-role-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'blocked-role-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Blocked Tenant Role'
         );
 
@@ -115,7 +113,7 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
     private function createAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tmain-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            code: 'tmain-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $adminRole = Role::query()->firstOrCreate(
@@ -127,7 +125,7 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
         );
 
         $tenantRole = $this->createRole(
-            'tenant-admin-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'tenant-admin-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Tenant Admin'
         );
 
@@ -150,16 +148,16 @@ final class AdminTenantUserStoreEndpointTest extends TestCase
     private function createNonAdminContext(): array
     {
         $tenant = $this->createTenant(
-            code: 'tuser-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
+            code: 'tuser-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12)
         );
 
         $userRole = $this->createRole(
-            'user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'user-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'User'
         );
 
         $tenantRole = $this->createRole(
-            'tenant-user-' . substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+            'tenant-user-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
             'Tenant User'
         );
 

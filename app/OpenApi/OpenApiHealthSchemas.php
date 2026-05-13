@@ -37,6 +37,4 @@ use OpenApi\Attributes as OA;
         ),
     ]
 )]
-final class OpenApiHealthSchemas
-{
-}
+final class OpenApiHealthSchemas {}

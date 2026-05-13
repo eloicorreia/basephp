@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Exceptions;
 
+use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
@@ -42,6 +43,20 @@ final class TenantExceptionResponseTest extends TestCase
 
     public function test_inactive_tenant_returns_standard_not_found_response_when_contract_requires_it(): void
     {
-        $this->expectNotToPerformAssertions();
+        $tenant = $this->createTenant(
+            code: 'tenant-inactive-'.str_replace('-', '', (string) Str::uuid()),
+            isActive: false
+        );
+        $user = $this->createUser();
+
+        Passport::actingAs($user, ['user.profile']);
+
+        $this->getJson('/api/v1/auth/me', [
+            'X-Tenant-Id' => $tenant->code,
+        ])->assertStatus(404)->assertJson([
+            'success' => false,
+            'message' => 'Tenant não encontrado.',
+            'errors' => [],
+        ]);
     }
 }

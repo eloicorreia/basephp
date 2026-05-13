@@ -33,6 +33,7 @@ final class TenantReprocessCommand extends Command
 
         if ($tenantId === null) {
             $this->error('Informe {tenant_id} ou utilize --all.');
+
             return self::FAILURE;
         }
 

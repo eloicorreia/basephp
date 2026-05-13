@@ -25,7 +25,7 @@ final class TenantContext implements TenantContextInterface
     public function require(): Tenant
     {
         if ($this->tenant === null) {
-            throw new TenantContextNotDefinedException();
+            throw new TenantContextNotDefinedException;
         }
 
         return $this->tenant;
