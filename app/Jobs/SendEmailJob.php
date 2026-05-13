@@ -34,7 +34,7 @@ final class SendEmailJob implements ShouldQueue
             'request_id' => null,
             'trace_id' => null,
             'job_id' => $this->job?->getJobId(),
-            'job_uuid' => method_exists($this->job, 'uuid') ? $this->job->uuid() : null,
+            'job_uuid' => $this->jobUuid(),
             'queue' => $this->job?->getQueue() ?? $dispatch->queue,
             'job_class' => self::class,
             'event' => 'processing',
@@ -72,7 +72,7 @@ final class SendEmailJob implements ShouldQueue
                 'request_id' => null,
                 'trace_id' => null,
                 'job_id' => $this->job?->getJobId(),
-                'job_uuid' => method_exists($this->job, 'uuid') ? $this->job->uuid() : null,
+                'job_uuid' => $this->jobUuid(),
                 'queue' => $this->job?->getQueue() ?? $dispatch->queue,
                 'job_class' => self::class,
                 'event' => 'completed',
@@ -108,7 +108,7 @@ final class SendEmailJob implements ShouldQueue
                 'request_id' => null,
                 'trace_id' => null,
                 'job_id' => $this->job?->getJobId(),
-                'job_uuid' => method_exists($this->job, 'uuid') ? $this->job->uuid() : null,
+                'job_uuid' => $this->jobUuid(),
                 'queue' => $this->job?->getQueue() ?? $dispatch->queue,
                 'job_class' => self::class,
                 'event' => 'failed',
@@ -131,5 +131,16 @@ final class SendEmailJob implements ShouldQueue
 
             throw $throwable;
         }
+    }
+
+    private function jobUuid(): ?string
+    {
+        $job = $this->job;
+
+        if (! is_object($job) || ! method_exists($job, 'uuid')) {
+            return null;
+        }
+
+        return (string) $job->uuid();
     }
 }

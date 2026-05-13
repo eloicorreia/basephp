@@ -151,13 +151,13 @@ class LogPersistenceService
             'method' => $request->method(),
             'user_id' => $userId,
             'ip' => $request->ip(),
-            'message' => $message,
+            'message' => $this->sanitizeText($message),
             'context' => $this->sanitizeArray($context),
             'input_payload' => $this->safeInput($request),
             'output_payload' => null,
             'http_status' => $httpStatus,
             'processing_status' => $processingStatus,
-            'stack_trace_summary' => $stackTraceSummary,
+            'stack_trace_summary' => $stackTraceSummary !== null ? $this->sanitizeText($stackTraceSummary, 1000) : null,
             'created_at' => now(),
         ]);
     }
@@ -180,6 +180,11 @@ class LogPersistenceService
     private function sanitizeArray(?array $data): ?array
     {
         return $this->sensitiveDataSanitizer->sanitizeArray($data);
+    }
+
+    private function sanitizeText(string $value, int $maxLength = 4000): string
+    {
+        return $this->sensitiveDataSanitizer->sanitizeText($value, maxLength: $maxLength);
     }
 
     private function requestId(Request $request): ?string

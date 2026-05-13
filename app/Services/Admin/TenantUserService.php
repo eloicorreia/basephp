@@ -8,6 +8,7 @@ use App\DTO\Admin\CreateTenantUserDTO;
 use App\Models\TenantUser;
 use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
+use App\Support\Auth\AuthenticatedUserId;
 use Illuminate\Support\Facades\DB;
 
 class TenantUserService
@@ -42,7 +43,7 @@ class TenantUserService
                     'role_id' => $tenantUser->role_id,
                     'is_active' => $tenantUser->is_active,
                 ],
-                userId: auth()->id(),
+                userId: AuthenticatedUserId::resolve(),
                 userRole: $authenticatedUser instanceof User
                     ? $authenticatedUser->role?->code
                     : null,

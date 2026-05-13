@@ -36,11 +36,11 @@ final readonly class QueueDispatchService
 
         $pendingDispatch = $this->dispatcher->dispatch($job);
 
-        if (is_object($pendingDispatch) && method_exists($pendingDispatch, 'afterCommit')) {
-            if ($context->afterCommit) {
-                return $pendingDispatch->afterCommit();
-            }
+        if ($context->afterCommit && is_object($pendingDispatch) && method_exists($pendingDispatch, 'afterCommit')) {
+            return $pendingDispatch->afterCommit();
+        }
 
+        if (! $context->afterCommit && is_object($pendingDispatch) && method_exists($pendingDispatch, 'beforeCommit')) {
             return $pendingDispatch->beforeCommit();
         }
 

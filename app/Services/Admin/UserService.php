@@ -7,6 +7,7 @@ namespace App\Services\Admin;
 use App\DTO\Admin\CreateUserDTO;
 use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
+use App\Support\Auth\AuthenticatedUserId;
 use Illuminate\Support\Facades\DB;
 
 class UserService
@@ -38,7 +39,7 @@ class UserService
                     'role_id' => $user->role_id,
                     'is_active' => $user->is_active,
                 ],
-                userId: auth()->id(),
+                userId: AuthenticatedUserId::resolve(),
                 userRole: $authenticatedUser instanceof User
                     ? $authenticatedUser->role?->code
                     : null,

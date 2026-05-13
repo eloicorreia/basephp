@@ -103,6 +103,8 @@ final readonly class EmailDispatchService
             userRole: $actorRole,
         );
 
-        return $emailDispatch->fresh();
+        $emailDispatch->refresh();
+
+        return $emailDispatch;
     }
 }

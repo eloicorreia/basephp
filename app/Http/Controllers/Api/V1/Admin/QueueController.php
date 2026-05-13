@@ -13,6 +13,7 @@ use App\Models\Job;
 use App\Services\Logging\LogPersistenceService;
 use App\Services\Queue\QueueCatalogService;
 use App\Services\Queue\QueueMonitoringService;
+use App\Support\Auth\AuthenticatedUserId;
 use Illuminate\Http\JsonResponse;
 
 final class QueueController extends Controller
@@ -31,7 +32,7 @@ final class QueueController extends Controller
             message: 'Catálogo de filas consultado com sucesso.',
             category: 'queue',
             operation: 'catalog',
-            userId: auth()->id(),
+            userId: AuthenticatedUserId::resolve(),
             httpStatus: 200,
             processingStatus: 'success',
         );
@@ -53,7 +54,7 @@ final class QueueController extends Controller
             message: 'Resumo de filas consultado com sucesso.',
             category: 'queue',
             operation: 'summary',
-            userId: auth()->id(),
+            userId: AuthenticatedUserId::resolve(),
             context: [
                 'queue' => $request->validated('queue'),
             ],

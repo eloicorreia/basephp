@@ -145,9 +145,29 @@ final class SystemLogFailureScenariosTest extends TestCase
 
         $this->assertNotNull($log);
         $this->assertSame('visible', $log->context['safe']);
-        $this->assertSame('***', $log->context['credentials']['password']);
-        $this->assertSame('***', $log->context['credentials']['client_secret']);
-        $this->assertSame('***', $log->context['credentials']['nested']['refresh_token']);
-        $this->assertSame('still-visible', $log->context['credentials']['nested']['safe_nested']);
+        $this->assertSame('***', $log->context['credentials']);
+    }
+
+    public function test_it_does_not_persist_sensitive_data_in_system_log_message(): void
+    {
+        $requestId = (string) Str::uuid();
+        request()->attributes->set('request_id', $requestId);
+
+        app(LogPersistenceService::class)->logSystemError(
+            throwable: new RuntimeException('Falha externa password=secret Authorization: Bearer real-token'),
+            category: 'observability',
+            operation: 'sanitize_system_log_message',
+        );
+
+        $log = SystemLog::query()
+            ->where('request_id', $requestId)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertStringNotContainsString('password=secret', $log->message);
+        $this->assertStringNotContainsString('real-token', $log->message);
+        $this->assertStringContainsString('password=***', $log->message);
+        $this->assertStringContainsString('Authorization: ***', $log->message);
     }
 }

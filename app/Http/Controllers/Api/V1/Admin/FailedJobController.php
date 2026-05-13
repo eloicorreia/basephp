@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\Admin\FailedJobListRequest;
 use App\Http\Resources\Api\V1\FailedJobResource;
 use App\Models\FailedJob;
 use App\Services\Queue\FailedJobService;
+use App\Support\Auth\AuthenticatedUserId;
 use Illuminate\Http\JsonResponse;
 
 final class FailedJobController extends Controller
@@ -50,7 +51,7 @@ final class FailedJobController extends Controller
     {
         $this->failedJobService->retry(
             failedJob: $failedJob,
-            userId: auth()->id(),
+            userId: AuthenticatedUserId::resolve(),
         );
 
         return response()->json([
@@ -64,7 +65,7 @@ final class FailedJobController extends Controller
     {
         $this->failedJobService->destroy(
             failedJob: $failedJob,
-            userId: auth()->id(),
+            userId: AuthenticatedUserId::resolve(),
         );
 
         return response()->json([

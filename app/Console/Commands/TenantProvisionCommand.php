@@ -16,7 +16,7 @@ class TenantProvisionCommand extends Command
                             {schema_name : Nome do schema}
                             {--force : Força execução em produção}';
 
-    protected $description = 'Cria um novo tenant, schema, migrations e seeders.';
+    protected $description = 'Cria ou retoma o provisionamento de tenant, schema, migrations e seeders.';
 
     public function __construct(
         private readonly TenantProvisioningService $tenantProvisioningService

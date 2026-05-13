@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Concerns;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
@@ -11,10 +12,15 @@ trait LoadsProjectMigrations
 {
     protected function loadProjectMigrations(): void
     {
-        if ($this->projectSchemaIsReady()) {
-            return;
+        if (! $this->projectSchemaIsReady()) {
+            $this->bootstrapProjectMigrations();
         }
 
+        $this->resetDatabaseState();
+    }
+
+    private function bootstrapProjectMigrations(): void
+    {
         $database = (string) config('database.default');
 
         $freshExitCode = $this->artisan('migrate:fresh', [
@@ -53,6 +59,52 @@ trait LoadsProjectMigrations
                 'O schema de testes não ficou consistente após o bootstrap das migrations.'
             );
         }
+    }
+
+    private function resetDatabaseState(): void
+    {
+        DB::statement('SET search_path TO public');
+
+        $tables = $this->publicTablesForCleanup();
+
+        if ($tables === []) {
+            return;
+        }
+
+        $qualifiedTables = array_map(
+            fn (string $table): string => $this->quoteIdentifier($table),
+            $tables
+        );
+
+        DB::statement(sprintf(
+            'TRUNCATE TABLE %s RESTART IDENTITY CASCADE',
+            implode(', ', $qualifiedTables)
+        ));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function publicTablesForCleanup(): array
+    {
+        /** @var array<int, object{tablename: string}> $rows */
+        $rows = DB::select(
+            "SELECT tablename
+            FROM pg_tables
+            WHERE schemaname = 'public'
+            AND tablename <> 'migrations'
+            ORDER BY tablename"
+        );
+
+        return array_map(
+            static fn (object $row): string => (string) $row->tablename,
+            $rows
+        );
+    }
+
+    private function quoteIdentifier(string $identifier): string
+    {
+        return '"'.str_replace('"', '""', $identifier).'"';
     }
 
     protected function projectSchemaIsReady(): bool

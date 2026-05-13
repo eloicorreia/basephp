@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Tenant;
 
+use App\Contracts\Multitenancy\TenantContextInterface;
 use App\Exceptions\TenantContextNotDefinedException;
 use App\Models\Tenant;
 use App\Support\Tenant\TenantContext;
@@ -64,5 +65,31 @@ class TenantContextTest extends TestCase
 
         $this->assertNull($context->get());
         $this->assertFalse($context->hasTenant());
+    }
+
+    public function test_it_is_bound_as_scoped_context_in_container(): void
+    {
+        $tenant = new Tenant([
+            'uuid' => (string) Str::uuid(),
+            'code' => 'tenant-main',
+            'name' => 'Tenant Main',
+            'schema_name' => 'tenant_main',
+            'status' => Tenant::STATUS_ACTIVE,
+        ]);
+
+        /** @var TenantContext $firstContext */
+        $firstContext = app(TenantContext::class);
+        $firstContext->set($tenant);
+
+        $this->assertSame($firstContext, app(TenantContextInterface::class));
+        $this->assertSame($tenant, app(TenantContext::class)->get());
+
+        $this->app->forgetScopedInstances();
+
+        /** @var TenantContext $secondContext */
+        $secondContext = app(TenantContext::class);
+
+        $this->assertNotSame($firstContext, $secondContext);
+        $this->assertFalse($secondContext->hasTenant());
     }
 }

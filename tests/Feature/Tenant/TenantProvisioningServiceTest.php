@@ -97,6 +97,102 @@ final class TenantProvisioningServiceTest extends TestCase
         $this->assertGreaterThan(0, $this->tenantMigrationCount($schemaName));
     }
 
+    public function test_it_returns_existing_active_tenant_when_provisioning_is_repeated(): void
+    {
+        $schemaName = $this->newSchemaName();
+        $code = 'tenant-idem-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
+        $this->schemasToDrop[] = $schemaName;
+
+        $firstTenant = app(TenantProvisioningService::class)->provision(
+            code: $code,
+            name: 'Tenant Idempotente',
+            schemaName: $schemaName,
+        );
+
+        $secondTenant = app(TenantProvisioningService::class)->provision(
+            code: $code,
+            name: 'Tenant Idempotente Renomeado',
+            schemaName: $schemaName,
+        );
+
+        $this->assertSame($firstTenant->id, $secondTenant->id);
+        $this->assertSame('Tenant Idempotente', $secondTenant->name);
+        $this->assertSame('active', $secondTenant->status);
+        $this->assertSame(1, Tenant::query()->where('code', $code)->count());
+    }
+
+    public function test_it_retries_failed_tenant_provisioning_with_same_code_and_schema(): void
+    {
+        $schemaName = $this->newSchemaName();
+        $code = 'tenant-retry-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
+        $this->schemasToDrop[] = $schemaName;
+
+        $migrationService = new class(app(TenantSchemaService::class)) extends TenantMigrationService
+        {
+            public function runTenantMigrations(string $schemaName, bool $force = false): void
+            {
+                throw new RuntimeException('Falha temporária nas migrations do tenant.');
+            }
+        };
+
+        $failingService = new TenantProvisioningService(
+            tenantSchemaService: app(TenantSchemaService::class),
+            tenantMigrationService: $migrationService,
+            tenantSeederService: app(TenantSeederService::class),
+            logPersistenceService: app(LogPersistenceService::class),
+        );
+
+        try {
+            $failingService->provision(
+                code: $code,
+                name: 'Tenant Retry',
+                schemaName: $schemaName,
+            );
+
+            $this->fail('A falha temporária deveria ter sido relançada.');
+        } catch (RuntimeException) {
+        }
+
+        $failedTenant = Tenant::query()->where('code', $code)->firstOrFail();
+
+        $this->assertSame('error', $failedTenant->status);
+
+        $retriedTenant = app(TenantProvisioningService::class)->provision(
+            code: $code,
+            name: 'Tenant Retry Recuperado',
+            schemaName: $schemaName,
+        );
+
+        $this->assertSame($failedTenant->id, $retriedTenant->id);
+        $this->assertSame('Tenant Retry Recuperado', $retriedTenant->name);
+        $this->assertSame('active', $retriedTenant->status);
+        $this->assertTrue($this->schemaTableExists($schemaName, 'migrations'));
+    }
+
+    public function test_it_rejects_conflicting_tenant_code_or_schema(): void
+    {
+        $schemaName = $this->newSchemaName();
+        $conflictingSchemaName = $this->newSchemaName();
+        $code = 'tenant-conflict-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 8);
+
+        Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => $code,
+            'name' => 'Tenant Existente',
+            'schema_name' => $schemaName,
+            'status' => 'inactive',
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Já existe tenant usando o código ou schema informado.');
+
+        app(TenantProvisioningService::class)->provision(
+            code: $code,
+            name: 'Tenant Conflitante',
+            schemaName: $conflictingSchemaName,
+        );
+    }
+
     private function newSchemaName(): string
     {
         return 'tenant_prov_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 16);

@@ -81,6 +81,7 @@ final class ApiRequestSanitizationTest extends TestCase
         $tenantContext->set($tenant);
         $request = request()->create('/api/v1/fake?api_key=query-secret&safe_query=value', 'GET', server: [
             'HTTP_AUTHORIZATION' => 'Bearer real-token',
+            'HTTP_X_API_KEY' => 'header-secret',
             'HTTP_X_TENANT_ID' => $tenant->code,
         ]);
         $request->attributes->set('request_id', $requestId);
@@ -102,6 +103,9 @@ final class ApiRequestSanitizationTest extends TestCase
         $this->assertSame('***', $log->request_query['api_key']);
         $this->assertSame('value', $log->request_query['safe_query']);
         $this->assertSame('***', $log->request_headers['authorization']);
+        $this->assertSame('***', $log->request_headers['x-api-key']);
+        $this->assertStringNotContainsString('query-secret', $log->uri);
+        $this->assertStringContainsString('api_key=***', $log->uri);
         $this->assertSame('***', $log->response_body['data']['token']);
         $this->assertSame('safe-response', $log->response_body['data']['safe_field']);
     }

@@ -34,16 +34,16 @@ class ApiRequestLogger
             'oauth_client_id' => $this->resolveOauthClientId($request),
             'method' => $request->method(),
             'route' => $request->route()?->uri(),
-            'uri' => $request->getRequestUri(),
+            'uri' => $this->sanitizeText($request->getRequestUri(), 1000),
             'http_status' => $response->getStatusCode(),
             'ip' => $request->ip(),
-            'user_agent' => (string) $request->userAgent(),
+            'user_agent' => $this->sanitizeText((string) $request->userAgent(), 1000),
             'request_headers' => $this->sanitizeHeaders($request->headers->all()),
             'request_query' => $this->sanitizePayload($request->query()),
             'request_body' => $this->sanitizePayload($request->all()),
             'response_body' => $this->sanitizeResponse($response),
             'processing_status' => $status,
-            'message' => $message,
+            'message' => $message !== null ? $this->sanitizeText($message) : null,
             'duration_ms' => $durationMs,
             'created_at' => now(),
         ]);
@@ -67,7 +67,7 @@ class ApiRequestLogger
     }
 
     /**
-     * @param  array<string, array<int, string>>  $headers
+     * @param  array<string, list<string|null>>  $headers
      * @return array<mixed>
      */
     private function sanitizeHeaders(array $headers): array
@@ -100,9 +100,23 @@ class ApiRequestLogger
         if (json_last_error() === JSON_ERROR_NONE) {
             return is_array($decoded)
                 ? $this->sanitizePayload($decoded)
-                : $decoded;
+                : $this->sanitizeScalarResponse($decoded);
         }
 
-        return mb_substr($content, 0, 4000);
+        return $this->sanitizeText($content);
+    }
+
+    private function sanitizeScalarResponse(mixed $decoded): mixed
+    {
+        if (is_string($decoded)) {
+            return $this->sanitizeText($decoded);
+        }
+
+        return $decoded;
+    }
+
+    private function sanitizeText(string $value, int $maxLength = 4000): string
+    {
+        return $this->sensitiveDataSanitizer->sanitizeText($value, maxLength: $maxLength);
     }
 }

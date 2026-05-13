@@ -9,6 +9,13 @@ use InvalidArgumentException;
 
 class TenantSchemaService
 {
+    public function assertValidSchemaName(string $schemaName): void
+    {
+        if (! preg_match('/^[a-z][a-z0-9_]{2,62}$/', $schemaName)) {
+            throw new InvalidArgumentException('Nome de schema inválido.');
+        }
+    }
+
     public function createSchema(string $schemaName): void
     {
         $this->assertValidSchemaName($schemaName);
@@ -42,10 +49,19 @@ class TenantSchemaService
         DB::statement('SET search_path TO public');
     }
 
-    private function assertValidSchemaName(string $schemaName): void
+    public function schemaExists(string $schemaName): bool
     {
-        if (! preg_match('/^[a-z][a-z0-9_]{2,62}$/', $schemaName)) {
-            throw new InvalidArgumentException('Nome de schema inválido.');
-        }
+        $this->assertValidSchemaName($schemaName);
+
+        $row = DB::selectOne(
+            'SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.schemata
+                WHERE schema_name = ?
+            ) AS schema_exists',
+            [$schemaName]
+        );
+
+        return filter_var($row?->schema_exists, FILTER_VALIDATE_BOOLEAN);
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\Admin\SendEmailRequest;
 use App\Http\Resources\Api\V1\EmailDispatchResource;
 use App\Models\EmailDispatch;
 use App\Services\Mail\EmailDispatchService;
+use App\Support\Auth\AuthenticatedUserId;
 use Illuminate\Http\JsonResponse;
 
 final class EmailDispatchController extends Controller
@@ -51,7 +52,7 @@ final class EmailDispatchController extends Controller
     {
         $emailDispatch = $this->emailDispatchService->dispatch(
             payload: $request->validated(),
-            actorId: auth()->id(),
+            actorId: AuthenticatedUserId::resolve(),
             actorRole: auth()->user()?->role?->code,
         );
 
@@ -66,7 +67,7 @@ final class EmailDispatchController extends Controller
     {
         $retried = $this->emailDispatchService->retry(
             emailDispatch: $emailDispatch,
-            actorId: auth()->id(),
+            actorId: AuthenticatedUserId::resolve(),
             actorRole: auth()->user()?->role?->code,
         );
 
