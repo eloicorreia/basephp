@@ -28,6 +28,7 @@ jobs:
           --health-retries 5
 
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       APP_ENV: testing
       APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       APP_DEBUG: "true"
@@ -64,6 +65,9 @@ jobs:
 
       - name: Install Dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Generate Passport Keys
+        run: php artisan passport:keys --force
 
       - name: Audit Dependencies
         run: composer audit
