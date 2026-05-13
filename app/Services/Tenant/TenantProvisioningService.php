@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Tenant;
 
 use App\Models\Tenant;
+use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,74 +27,113 @@ class TenantProvisioningService
         string $schemaName,
         bool $force = false,
     ): Tenant {
-        return DB::transaction(function () use ($code, $name, $schemaName, $force): Tenant {
-            $tenant = Tenant::query()->create([
-                'uuid' => (string) Str::uuid(),
-                'code' => $code,
-                'name' => $name,
-                'schema_name' => $schemaName,
-                'status' => 'provisioning',
+        $tenant = $this->createProvisioningTenant($code, $name, $schemaName);
+
+        try {
+            $this->tenantSchemaService->createSchema($schemaName);
+            $this->tenantSchemaService->setSearchPath($schemaName);
+
+            $this->tenantMigrationService->runTenantMigrations($schemaName, $force);
+            $this->tenantSeederService->runTenantSeeders($force);
+        } catch (Throwable $throwable) {
+            $this->safeResetSearchPath();
+            $this->markTenantAsFailed($tenant, $throwable);
+
+            throw $throwable;
+        } finally {
+            $this->safeResetSearchPath();
+        }
+
+        return $this->markTenantAsActive($tenant);
+    }
+
+    private function createProvisioningTenant(string $code, string $name, string $schemaName): Tenant
+    {
+        return DB::transaction(fn (): Tenant => Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => $code,
+            'name' => $name,
+            'schema_name' => $schemaName,
+            'status' => 'provisioning',
+        ]));
+    }
+
+    private function markTenantAsActive(Tenant $tenant): Tenant
+    {
+        $tenant->update([
+            'status' => 'active',
+        ]);
+
+        $tenant->refresh();
+
+        try {
+            $this->logPersistenceService->logAudit(
+                action: 'tenant.provisioned',
+                auditableType: Tenant::class,
+                auditableId: $tenant->id,
+                beforeData: [
+                    'status' => 'provisioning',
+                ],
+                afterData: [
+                    'code' => $tenant->code,
+                    'schema_name' => $tenant->schema_name,
+                    'status' => $tenant->status,
+                ],
+                userId: auth()->id(),
+                userRole: $this->currentUserRoleCode(),
+            );
+
+            $this->logPersistenceService->logSystemInfo(
+                message: 'Tenant provisionado com sucesso.',
+                category: 'tenant',
+                operation: 'provision',
+                userId: auth()->id(),
+                context: [
+                    'tenant_id' => $tenant->id,
+                    'tenant_code' => $tenant->code,
+                    'schema_name' => $tenant->schema_name,
+                ],
+                processingStatus: 'success',
+            );
+        } catch (Throwable) {
+        }
+
+        return $tenant;
+    }
+
+    private function markTenantAsFailed(Tenant $tenant, Throwable $throwable): void
+    {
+        try {
+            $tenant->update([
+                'status' => 'error',
             ]);
+        } catch (Throwable) {
+        }
 
-            try {
-                $this->tenantSchemaService->createSchema($schemaName);
-                $this->tenantSchemaService->setSearchPath($schemaName);
+        try {
+            $this->logPersistenceService->logSystemError(
+                throwable: $throwable,
+                category: 'tenant',
+                operation: 'provision',
+                userId: auth()->id(),
+                httpStatus: 500,
+            );
+        } catch (Throwable) {
+        }
+    }
 
-                $this->tenantMigrationService->runTenantMigrations($force);
-                $this->tenantSeederService->runTenantSeeders($force);
+    private function safeResetSearchPath(): void
+    {
+        try {
+            $this->tenantSchemaService->resetSearchPath();
+        } catch (Throwable) {
+        }
+    }
 
-                $tenant->update([
-                    'status' => 'active',
-                ]);
+    private function currentUserRoleCode(): ?string
+    {
+        $user = auth()->user();
 
-                $this->logPersistenceService->logAudit(
-                    action: 'tenant.provisioned',
-                    auditableType: Tenant::class,
-                    auditableId: $tenant->id,
-                    beforeData: null,
-                    afterData: [
-                        'code' => $tenant->code,
-                        'schema_name' => $tenant->schema_name,
-                        'status' => $tenant->status,
-                    ],
-                    userId: auth()->id(),
-                    userRole: auth()->user()?->role?->code,
-                );
-
-                $this->logPersistenceService->logSystemInfo(
-                    message: 'Tenant provisionado com sucesso.',
-                    category: 'tenant',
-                    operation: 'provision',
-                    userId: auth()->id(),
-                    context: [
-                        'tenant_id' => $tenant->id,
-                        'tenant_code' => $tenant->code,
-                        'schema_name' => $tenant->schema_name,
-                    ],
-                    processingStatus: 'success',
-                );
-
-                return $tenant;
-            } catch (Throwable $throwable) {
-                $tenant->update([
-                    'status' => 'error',
-                ]);
-
-                try {
-                    $this->logPersistenceService->logSystemError(
-                        throwable: $throwable,
-                        category: 'tenant',
-                        operation: 'provision',
-                        userId: auth()->id(),
-                        httpStatus: 500,
-                    );
-                } catch (Throwable) {
-                }
-
-                throw $throwable;
-            } finally {
-                $this->tenantSchemaService->resetSearchPath();
-            }
-        });
+        return $user instanceof User ? $user->role?->code : null;
     }
 }

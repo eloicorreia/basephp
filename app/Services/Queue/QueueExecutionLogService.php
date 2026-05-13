@@ -22,7 +22,8 @@ final readonly class QueueExecutionLogService
 
     public function logQueued(JobQueued $event): void
     {
-        $payload = is_array($event->payload ?? null) ? $event->payload : [];
+        $decodedPayload = json_decode($event->payload, true);
+        $payload = is_array($decodedPayload) ? $decodedPayload : [];
         $context = $this->extractTechnicalContextFromPayload($payload);
 
         QueueJobLog::query()->create([
@@ -301,7 +302,7 @@ final readonly class QueueExecutionLogService
 
     private function extractQueuedJobClass(JobQueued $event, array $payload): string
     {
-        if (isset($event->job) && is_object($event->job)) {
+        if (is_object($event->job)) {
             return $event->job::class;
         }
 

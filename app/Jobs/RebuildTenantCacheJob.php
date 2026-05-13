@@ -4,24 +4,27 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Jobs\Concerns\InteractsWithTenantContext;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Jobs\Base\AbstractTenantAwareJob;
 
-final class RebuildTenantCacheJob implements ShouldQueue
+final class RebuildTenantCacheJob extends AbstractTenantAwareJob
 {
-    use Dispatchable;
-    use InteractsWithQueue;
-    use Queueable;
-    use SerializesModels;
-    use InteractsWithTenantContext;
-
     public function __construct(
-        protected int|string $tenantId
+        int $tenantId,
+        ?string $requestId = null,
+        ?string $traceId = null,
+        ?int $userId = null,
+        ?int $oauthClientId = null
     ) {
+        parent::__construct(
+            tenantId: $tenantId,
+            requestId: $requestId,
+            traceId: $traceId,
+            userId: $userId,
+            oauthClientId: $oauthClientId
+        );
+
+        $this->onConnection('database');
+        $this->onQueue('maintenance');
     }
 
     public function handle(): void

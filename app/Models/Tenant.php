@@ -17,6 +17,9 @@ class Tenant extends Model
         'status',
     ];
 
+    /**
+     * @return HasMany<TenantUser, $this>
+     */
     public function tenantUsers(): HasMany
     {
         return $this->hasMany(TenantUser::class);

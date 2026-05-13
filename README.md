@@ -757,7 +757,48 @@ Quando o driver não é PostgreSQL, esses testes podem ser ignorados deliberadam
 
 ---
 
-# 14. Regras obrigatórias de desenvolvimento
+# 14. Qualidade automatizada
+
+O projeto usa PHPStan/Larastan como análise estática incremental.
+
+## Análise estática
+
+```bash
+composer analyse
+```
+
+## Gate local de qualidade
+
+```bash
+composer quality
+```
+
+Esse comando executa:
+
+- `composer validate --strict`
+- `composer audit`
+- cache/clear de configuração Laravel
+- geração da documentação OpenAPI
+- PHPStan/Larastan
+- suíte PHPUnit
+
+## Formatação
+
+```bash
+composer format
+```
+
+Para apenas verificar o estilo sem alterar arquivos:
+
+```bash
+composer format:test
+```
+
+O CI executa o gate de qualidade em pushes para `main`, `develop` e em pull requests.
+
+---
+
+# 15. Regras obrigatórias de desenvolvimento
 
 ## Controllers
 
@@ -795,7 +836,7 @@ Quando o driver não é PostgreSQL, esses testes podem ser ignorados deliberadam
 
 ---
 
-# 15. Fluxo recomendado para desenvolvimento de novos módulos
+# 16. Fluxo recomendado para desenvolvimento de novos módulos
 
 Ao iniciar um novo módulo:
 
@@ -812,7 +853,7 @@ Ao iniciar um novo módulo:
 
 ---
 
-# 16. Estado atual da base
+# 17. Estado atual da base
 
 Esta base já fornece:
 
@@ -829,7 +870,7 @@ Ou seja: a base já está pronta para sustentar os primeiros módulos reais do d
 
 ---
 
-# 17. Próximos passos recomendados
+# 18. Próximos passos recomendados
 
 Depois da base estabilizada, os próximos passos naturais são:
 
@@ -840,7 +881,7 @@ Depois da base estabilizada, os próximos passos naturais são:
 
 ---
 
-# 18. Observação final
+# 19. Observação final
 
 Esta base deve ser tratada como **contrato arquitetural do projeto**.
 

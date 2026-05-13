@@ -6,6 +6,7 @@ namespace App\Services\Mail;
 
 use App\DTO\Mail\TenantMailConfigData;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream;
 
 final class RuntimeMailTransportFactory
 {
@@ -26,6 +27,10 @@ final class RuntimeMailTransportFactory
         }
 
         $stream = $transport->getStream();
+        if (! $stream instanceof SocketStream) {
+            return $transport;
+        }
+
         $stream->setTimeout($config->timeoutSeconds);
         $streamOptions = $stream->getStreamOptions();
 

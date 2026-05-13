@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\DTO\Admin\CreateTenantUserDTO;
+use App\Models\User;
 use App\Models\TenantUser;
 use App\Services\Logging\LogPersistenceService;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ class TenantUserService
     public function createOrUpdate(CreateTenantUserDTO $dto): TenantUser
     {
         return DB::transaction(function () use ($dto): TenantUser {
+            $authenticatedUser = auth()->user();
             $tenantUser = TenantUser::query()->updateOrCreate(
                 [
                     'tenant_id' => $dto->tenantId,
@@ -42,7 +44,9 @@ class TenantUserService
                     'is_active' => $tenantUser->is_active,
                 ],
                 userId: auth()->id(),
-                userRole: auth()->user()?->role?->code,
+                userRole: $authenticatedUser instanceof User
+                    ? $authenticatedUser->role?->code
+                    : null,
             );
 
             return $tenantUser;

@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Models\Tenant;
 use App\Services\Logging\LogPersistenceService;
+use App\Services\Tenant\TenantSchemaService;
 use App\Services\Tenant\TenantSearchPathService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
@@ -22,6 +23,7 @@ class TenantMigrateCommand extends Command
 
     public function __construct(
         private readonly TenantSearchPathService $tenantSearchPathService,
+        private readonly TenantSchemaService $tenantSchemaService,
         private readonly LogPersistenceService $logPersistenceService,
     ) {
         parent::__construct();
@@ -49,6 +51,7 @@ class TenantMigrateCommand extends Command
             $this->info(sprintf('Aplicando migrations no schema [%s]...', $resolvedSchema));
 
             $this->tenantSearchPathService->setTenantSchema($resolvedSchema);
+            $this->tenantSchemaService->ensureMigrationRepository($resolvedSchema);
 
             $exitCode = Artisan::call('migrate', [
                 '--path' => 'database/migrations/tenant',

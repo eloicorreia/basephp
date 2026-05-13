@@ -108,9 +108,9 @@ class LogPersistenceService
             'auditable_id' => $auditableId,
             'before_data' => $this->sanitizeArray($beforeData),
             'after_data' => $this->sanitizeArray($afterData),
-            'route' => $request?->path(),
-            'method' => $request?->method(),
-            'ip' => $request?->ip(),
+            'route' => $request->path(),
+            'method' => $request->method(),
+            'ip' => $request->ip(),
             'created_at' => now(),
         ]);
     }
@@ -135,10 +135,10 @@ class LogPersistenceService
             'category' => $category,
             'service' => 'api',
             'operation' => $operation,
-            'route' => $request?->path(),
-            'method' => $request?->method(),
+            'route' => $request->path(),
+            'method' => $request->method(),
             'user_id' => $userId,
-            'ip' => $request?->ip(),
+            'ip' => $request->ip(),
             'message' => $message,
             'context' => $this->sanitizeArray($context),
             'input_payload' => $this->safeInput($request),
@@ -150,12 +150,8 @@ class LogPersistenceService
         ]);
     }
 
-    private function safeInput(?Request $request): ?array
+    private function safeInput(Request $request): ?array
     {
-        if ($request === null) {
-            return null;
-        }
-
         $input = $request->all();
         $sanitized = $this->sanitizeArray($input);
 
@@ -171,14 +167,14 @@ class LogPersistenceService
         return $this->sensitiveDataSanitizer->sanitizeArray($data);
     }
 
-    private function requestId(?Request $request): ?string
+    private function requestId(Request $request): ?string
     {
-        return $request?->attributes->get('request_id');
+        return $request->attributes->get('request_id');
     }
 
-    private function traceId(?Request $request): ?string
+    private function traceId(Request $request): ?string
     {
-        return $request?->attributes->get('trace_id');
+        return $request->attributes->get('trace_id');
     }
 
     private function buildStackTraceSummary(Throwable $throwable): string

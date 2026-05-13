@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  quality:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: basephp_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d basephp_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      APP_DEBUG: "true"
+      APP_URL: http://localhost
+      BCRYPT_ROUNDS: 4
+      CACHE_STORE: array
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: basephp_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_SCHEMA: public
+      DB_SSLMODE: prefer
+      MAIL_MAILER: array
+      QUEUE_CONNECTION: database
+      SESSION_DRIVER: array
+      PASSPORT_ENABLE_PASSWORD_GRANT: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: dom, fileinfo, grpc, mbstring, pdo_pgsql, pgsql
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate Composer
+        run: composer validate --strict
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Audit Dependencies
+        run: composer audit
+
+      - name: Cache Laravel Configuration
+        run: php artisan config:cache
+
+      - name: Clear Laravel Configuration Cache
+        run: php artisan config:clear
+
+      - name: Generate OpenAPI Documentation
+        run: php artisan l5-swagger:generate
+
+      - name: Static Analysis
+        run: composer analyse
+
+      - name: Test
+        run: php artisan test

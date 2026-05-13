@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Laravel\Passport\Client;
 use Symfony\Component\HttpFoundation\Response;
 
 final class EnsureClientCredentials
@@ -32,7 +33,11 @@ final class EnsureClientCredentials
             throw new AuthenticationException();
         }
 
-        if (! method_exists($client, 'hasGrantType') || ! $client->hasGrantType('client_credentials')) {
+        if (! $client instanceof Client) {
+            throw new AuthenticationException();
+        }
+
+        if (! $client->hasGrantType('client_credentials')) {
             throw new AuthorizationException(
                 'O client OAuth informado não possui grant client credentials.'
             );

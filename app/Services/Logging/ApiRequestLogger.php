@@ -8,6 +8,7 @@ use App\Models\ApiRequestLog;
 use App\Support\Logging\SensitiveDataSanitizer;
 use App\Support\Tenant\TenantContext;
 use Illuminate\Http\Request;
+use Laravel\Passport\Token;
 use Symfony\Component\HttpFoundation\Response;
 
 class ApiRequestLogger
@@ -59,7 +60,7 @@ class ApiRequestLogger
 
         $token = $request->user()?->token();
 
-        if ($token === null || $token->client_id === null) {
+        if (! $token instanceof Token || $token->client_id === null) {
             return null;
         }
 

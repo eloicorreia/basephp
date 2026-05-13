@@ -22,6 +22,7 @@ final class SensitiveDataSanitizer
         'token',
         'authorization',
         'bearer_token',
+        'command',
         'secret',
         'api_key',
         'apikey',

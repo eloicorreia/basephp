@@ -16,6 +16,20 @@ class TenantSchemaService
         DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $schemaName));
     }
 
+    public function ensureMigrationRepository(string $schemaName): void
+    {
+        $this->assertValidSchemaName($schemaName);
+
+        DB::statement(sprintf(
+            'CREATE TABLE IF NOT EXISTS "%s"."migrations" (
+                id SERIAL PRIMARY KEY,
+                migration VARCHAR(255) NOT NULL,
+                batch INTEGER NOT NULL
+            )',
+            $schemaName
+        ));
+    }
+
     public function setSearchPath(string $schemaName): void
     {
         $this->assertValidSchemaName($schemaName);

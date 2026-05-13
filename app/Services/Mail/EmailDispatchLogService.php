@@ -26,8 +26,8 @@ final readonly class EmailDispatchLogService
         $tenant = $this->tenantContext->require();
 
         $log = EmailDispatchLog::query()->create([
-            'request_id' => request()?->attributes->get('request_id'),
-            'trace_id' => request()?->attributes->get('trace_id'),
+            'request_id' => request()->attributes->get('request_id'),
+            'trace_id' => request()->attributes->get('trace_id'),
             'tenant_id' => $tenant->id,
             'tenant_code' => $tenant->code,
             'user_id' => $userId,

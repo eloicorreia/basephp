@@ -9,8 +9,15 @@ use RuntimeException;
 
 class TenantMigrationService
 {
-    public function runTenantMigrations(bool $force = false): void
+    public function __construct(
+        private readonly TenantSchemaService $tenantSchemaService,
+    ) {
+    }
+
+    public function runTenantMigrations(string $schemaName, bool $force = false): void
     {
+        $this->tenantSchemaService->ensureMigrationRepository($schemaName);
+
         $exitCode = Artisan::call('migrate', [
             '--path' => 'database/migrations/tenant',
             '--force' => $force,

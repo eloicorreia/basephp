@@ -19,6 +19,7 @@ class UserService
     public function create(CreateUserDTO $dto): User
     {
         return DB::transaction(function () use ($dto): User {
+            $authenticatedUser = auth()->user();
             $user = User::query()->create([
                 'name' => $dto->name,
                 'email' => $dto->email,
@@ -39,7 +40,9 @@ class UserService
                     'is_active' => $user->is_active,
                 ],
                 userId: auth()->id(),
-                userRole: auth()->user()?->role?->code,
+                userRole: $authenticatedUser instanceof User
+                    ? $authenticatedUser->role?->code
+                    : null,
             );
 
             return $user;
