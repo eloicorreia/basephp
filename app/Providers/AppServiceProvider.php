@@ -35,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
             'tenant.users.write' => 'Criação e manutenção de usuários do tenant',
             'tenants.read' => 'Listagem de tenants',
             'tenants.write' => 'Criação e manutenção de tenants',
+            'users.read' => 'Listagem de usuários',
+            'users.write' => 'Criação e manutenção de usuários',
+            'queues.read' => 'Consulta operacional de filas',
+            'queues.write' => 'Ações operacionais em filas',
+            'emails.read' => 'Consulta de envios de e-mail',
+            'emails.write' => 'Envio e reprocessamento de e-mails',
             'system.health' => 'Verificação operacional sistema-a-sistema',
         ]);
 

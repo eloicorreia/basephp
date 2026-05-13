@@ -63,7 +63,11 @@ trait LoadsProjectMigrations
 
     private function resetDatabaseState(): void
     {
+        $this->ensureTestingDatabase();
+
         DB::statement('SET search_path TO public');
+
+        $this->dropNonSystemSchemas();
 
         $tables = $this->publicTablesForCleanup();
 
@@ -80,6 +84,43 @@ trait LoadsProjectMigrations
             'TRUNCATE TABLE %s RESTART IDENTITY CASCADE',
             implode(', ', $qualifiedTables)
         ));
+    }
+
+    private function ensureTestingDatabase(): void
+    {
+        $database = config(sprintf('database.connections.%s.database', (string) config('database.default')));
+        $expectedDatabase = config('database.testing_reset.database');
+        $resetEnabled = (bool) config('database.testing_reset.enabled', false);
+
+        if (
+            ! app()->environment('testing')
+            || ! $resetEnabled
+            || ! is_string($database)
+            || ! is_string($expectedDatabase)
+            || $database !== $expectedDatabase
+        ) {
+            throw new RuntimeException('A limpeza automática do banco só pode ser executada em ambiente de testes.');
+        }
+    }
+
+    private function dropNonSystemSchemas(): void
+    {
+        /** @var array<int, object{schema_name: string}> $rows */
+        $rows = DB::select(
+            "SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name <> 'public'
+            AND schema_name <> 'information_schema'
+            AND schema_name NOT LIKE 'pg_%'
+            ORDER BY schema_name"
+        );
+
+        foreach ($rows as $row) {
+            DB::statement(sprintf(
+                'DROP SCHEMA IF EXISTS %s CASCADE',
+                $this->quoteIdentifier((string) $row->schema_name)
+            ));
+        }
     }
 
     /**

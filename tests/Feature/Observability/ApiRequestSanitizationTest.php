@@ -142,4 +142,69 @@ final class ApiRequestSanitizationTest extends TestCase
         $this->assertSame('***', $log->request_body['profile']['oauth']['client_secret']);
         $this->assertSame('safe-scope', $log->request_body['profile']['oauth']['scope']);
     }
+
+    public function test_api_request_logger_can_disable_request_and_response_payload_persistence(): void
+    {
+        config([
+            'observability.api_request_logging.store_query' => false,
+            'observability.api_request_logging.store_request_body' => false,
+            'observability.api_request_logging.store_response_body' => false,
+        ]);
+
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
+        $requestId = (string) Str::uuid();
+        $traceId = (string) Str::uuid();
+        $tenantContext = app(TenantContext::class);
+        $tenantContext->set($tenant);
+        $request = request()->create('/api/v1/fake?document=12345678900', 'POST', [
+            'document' => '12345678900',
+            'name' => 'Sensitive User',
+        ], server: ['HTTP_X_TENANT_ID' => $tenant->code]);
+        $request->attributes->set('request_id', $requestId);
+        $request->attributes->set('trace_id', $traceId);
+        $response = response()->json(['document' => '12345678900'], 200);
+
+        try {
+            app(ApiRequestLogger::class)->log(request: $request, response: $response, durationMs: 12, status: 'SUCCESS', message: 'teste');
+        } finally {
+            $tenantContext->clear();
+        }
+
+        $log = ApiRequestLog::query()->where('request_id', $requestId)->latest('id')->first();
+
+        $this->assertNotNull($log);
+        $this->assertNull($log->request_query);
+        $this->assertNull($log->request_body);
+        $this->assertNull($log->response_body);
+    }
+
+    public function test_api_request_logger_keeps_only_allowed_or_sensitive_headers(): void
+    {
+        $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
+        $requestId = (string) Str::uuid();
+        $traceId = (string) Str::uuid();
+        $tenantContext = app(TenantContext::class);
+        $tenantContext->set($tenant);
+        $request = request()->create('/api/v1/fake', 'GET', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer real-token',
+            'HTTP_X_CUSTOM_SAFE_HEADER' => 'should-not-be-persisted',
+            'HTTP_X_TENANT_ID' => $tenant->code,
+        ]);
+        $request->attributes->set('request_id', $requestId);
+        $request->attributes->set('trace_id', $traceId);
+        $response = response()->json(['success' => true], 200);
+
+        try {
+            app(ApiRequestLogger::class)->log(request: $request, response: $response, durationMs: 12, status: 'SUCCESS', message: 'teste');
+        } finally {
+            $tenantContext->clear();
+        }
+
+        $log = ApiRequestLog::query()->where('request_id', $requestId)->latest('id')->first();
+
+        $this->assertNotNull($log);
+        $this->assertSame('***', $log->request_headers['authorization']);
+        $this->assertSame([$tenant->code], $log->request_headers['x-tenant-id']);
+        $this->assertArrayNotHasKey('x-custom-safe-header', $log->request_headers);
+    }
 }

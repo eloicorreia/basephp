@@ -14,10 +14,9 @@ parameters:
     excludePaths:
         analyse:
             - app/OpenApi
-            - app/Http/Resources
             - bootstrap/cache
             - storage
             - vendor
 
-    checkModelProperties: false
+    checkModelProperties: true
     treatPhpDocTypesAsCertain: false

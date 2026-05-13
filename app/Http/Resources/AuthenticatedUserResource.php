@@ -4,29 +4,38 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class AuthenticatedUserResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
+        if (! $this->resource instanceof User) {
+            return [];
+        }
+
+        $user = $this->resource;
         $tenantCode = $request->header('X-Tenant-Id');
 
-        $tenantUser = $this->tenantUsers->first(
+        $tenantUser = $user->tenantUsers->first(
             fn ($item) => $item->tenant?->code === $tenantCode
         );
 
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'is_active' => $this->is_active,
-            'must_change_password' => $this->must_change_password,
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'is_active' => $user->is_active,
+            'must_change_password' => $user->must_change_password,
             'global_role' => [
-                'id' => $this->role?->id,
-                'code' => $this->role?->code,
-                'name' => $this->role?->name,
+                'id' => $user->role?->id,
+                'code' => $user->role?->code,
+                'name' => $user->role?->name,
             ],
             'tenant_role' => $tenantUser?->role ? [
                 'id' => $tenantUser->role->id,

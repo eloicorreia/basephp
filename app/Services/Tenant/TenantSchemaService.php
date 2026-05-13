@@ -64,4 +64,36 @@ class TenantSchemaService
 
         return filter_var($row?->schema_exists, FILTER_VALIDATE_BOOLEAN);
     }
+
+    /**
+     * @param  array<int, string>  $tableNames
+     */
+    public function schemaHasTables(string $schemaName, array $tableNames): bool
+    {
+        foreach ($tableNames as $tableName) {
+            if (! $this->tableExists($schemaName, $tableName)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function tableExists(string $schemaName, string $tableName): bool
+    {
+        $this->assertValidSchemaName($schemaName);
+        $this->assertValidTableName($tableName);
+
+        $qualifiedTableName = sprintf('"%s"."%s"', $schemaName, $tableName);
+        $row = DB::selectOne('SELECT to_regclass(?) AS relation', [$qualifiedTableName]);
+
+        return $row?->relation !== null;
+    }
+
+    private function assertValidTableName(string $tableName): void
+    {
+        if (! preg_match('/^[a-z][a-z0-9_]{0,62}$/', $tableName)) {
+            throw new InvalidArgumentException('Nome de tabela inválido.');
+        }
+    }
 }

@@ -4,25 +4,35 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
+        if (! $this->resource instanceof User) {
+            return [];
+        }
+
+        $user = $this->resource;
+
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'is_active' => $this->is_active,
-            'must_change_password' => $this->must_change_password,
-            'role' => $this->role ? [
-                'id' => $this->role->id,
-                'code' => $this->role->code,
-                'name' => $this->role->name,
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'is_active' => $user->is_active,
+            'must_change_password' => $user->must_change_password,
+            'role' => $user->role ? [
+                'id' => $user->role->id,
+                'code' => $user->role->code,
+                'name' => $user->role->name,
             ] : null,
-            'created_at' => $this->created_at,
+            'created_at' => $user->created_at,
         ];
     }
 }

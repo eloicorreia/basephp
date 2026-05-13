@@ -113,14 +113,8 @@ tests/
 
 ## Documentação arquitetural
 
-A pasta `docs/architecture` contém os contratos oficiais da base.
-
-Arquivos principais:
-
-- `authentication-and-tenancy-contract.md`
-- `logging-and-observability-contract.md`
-
-Esses documentos devem ser tratados como referência arquitetural obrigatória do projeto.
+O **README.md é a fonte central de configuração e operação da base**.
+A pasta `docs/architecture` pode existir como material complementar, mas qualquer regra obrigatória de segurança, OAuth, tenancy, logging, CI, testes ou deploy deve estar refletida aqui para evitar configuração perdida entre arquivos.
 
 ---
 
@@ -229,6 +223,30 @@ Esse fluxo exige redirecionamento para a camada web/sessão que autentica o usu�
 ### Client credentials
 Use para integração sistema-a-sistema, quando não houver usuário humano autenticado.
 
+## Escopos oficiais
+
+Os escopos são registrados em `App\Providers\AppServiceProvider` e aplicados diretamente nas rotas. Ao criar um client OAuth, conceda somente os escopos necessários.
+
+| Escopo | Uso |
+| --- | --- |
+| `user.profile` | Consultar o usuário autenticado em `/api/v1/auth/me`. |
+| `user.password.change` | Alterar a própria senha em `/api/v1/auth/change-password`. |
+| `tenant.access` | Acessar qualquer rota tenant-aware de usuário. |
+| `admin.full` | Acesso administrativo amplo, usado como escopo guarda-chuva. |
+| `tenants.read` / `tenants.write` | Consultar/criar/manter tenants. |
+| `users.read` / `users.write` | Consultar/criar/manter usuários globais. |
+| `tenant.users.read` / `tenant.users.write` | Consultar/criar/manter vínculos usuário x tenant. |
+| `queues.read` / `queues.write` | Consultar filas e executar ações operacionais. |
+| `emails.read` / `emails.write` | Consultar, enviar e reprocessar e-mails. |
+| `system.health` | Acesso sistema-a-sistema ao endpoint `/api/v1/system/ping`. |
+
+Regras importantes:
+
+- rotas tenant-aware exigem `tenant.access`
+- rotas administrativas exigem role `admin` e escopo específico ou `admin.full`
+- rotas client credentials não podem depender de usuário humano
+- `system.health` deve ser usado apenas com client credentials
+
 ---
 
 # 7. Como instalar e subir localmente
@@ -276,7 +294,34 @@ DB_USERNAME=postgres
 DB_PASSWORD=postgres
 DB_SCHEMA=public
 DB_SSLMODE=prefer
+
+PASSPORT_ENABLE_PASSWORD_GRANT=false
+
+API_REQUEST_LOGGING_ENABLED=true
+API_REQUEST_LOGGING_STORE_HEADERS=true
+API_REQUEST_LOGGING_STORE_QUERY=true
+API_REQUEST_LOGGING_STORE_REQUEST_BODY=true
+API_REQUEST_LOGGING_STORE_RESPONSE_BODY=true
+API_REQUEST_LOGGING_MAX_TEXT_LENGTH=2000
+
+LOG_PRUNING_ENABLED=true
+LOG_PRUNING_SCHEDULE_TIME=02:15
+LOG_RETENTION_API_REQUEST_DAYS=30
+LOG_RETENTION_SYSTEM_DAYS=90
+LOG_RETENTION_AUTHENTICATION_DAYS=180
+LOG_RETENTION_AUDIT_DAYS=365
+LOG_RETENTION_QUEUE_EXECUTION_DAYS=30
+LOG_RETENTION_QUEUE_JOB_DAYS=30
+LOG_RETENTION_QUEUE_WORKER_DAYS=30
+
+L5_SWAGGER_PUBLIC=true
+L5_SWAGGER_ALLOWED_IPS=127.0.0.1,::1
+L5_SWAGGER_UI_PERSIST_AUTHORIZATION=false
+
+FILESYSTEM_LOCAL_SERVE=false
 ```
+
+Em produção, mantenha `APP_DEBUG=false`, `PASSPORT_ENABLE_PASSWORD_GRANT=false`, `L5_SWAGGER_PUBLIC=false`, `FILESYSTEM_LOCAL_SERVE=false` e evite persistir bodies completos de request/response salvo necessidade auditável.
 
 ## 7.6. Rodar migrations
 
@@ -350,6 +395,29 @@ php artisan db:seed --class=TenantSeeder
 php artisan serve
 ```
 
+## 7.11. Gerar documentação OpenAPI
+
+```bash
+php artisan l5-swagger:generate
+```
+
+A documentação fica disponível em:
+
+```text
+/docs
+/api/documentation
+```
+
+Por padrão, a documentação é pública apenas em `local` e `testing`. Em produção, use:
+
+```env
+L5_SWAGGER_PUBLIC=false
+L5_SWAGGER_ALLOWED_IPS=10.0.0.10,10.0.0.11
+L5_SWAGGER_UI_PERSIST_AUTHORIZATION=false
+```
+
+Se `L5_SWAGGER_PUBLIC=false` e o IP não estiver permitido, a documentação responde `404` para não expor sua existência.
+
 ---
 
 # 8. Como autenticar e gerar token OAuth
@@ -372,6 +440,18 @@ Parâmetros principais:
 - `scope=user.profile tenant.access`
 - `code_challenge`
 - `code_challenge_method=S256`
+
+Para rotas administrativas, inclua apenas os escopos necessários. Exemplo:
+
+```text
+scope=tenant.access users.read users.write
+```
+
+Ou, para um client administrativo interno e altamente confiável:
+
+```text
+scope=tenant.access admin.full
+```
 
 ## Token endpoint
 
@@ -644,6 +724,27 @@ A API grava request logging persistido por:
 - `ApiRequestLoggingMiddleware`
 - `ApiRequestLogger`
 
+O logger sempre preserva metadados operacionais úteis (`request_id`, `trace_id`, status, rota, duração, usuário e tenant quando houver), mas a persistência de payloads é configurável para reduzir risco de PII em produção.
+
+Variáveis oficiais:
+
+```env
+API_REQUEST_LOGGING_ENABLED=true
+API_REQUEST_LOGGING_STORE_HEADERS=true
+API_REQUEST_LOGGING_STORE_QUERY=false
+API_REQUEST_LOGGING_STORE_REQUEST_BODY=false
+API_REQUEST_LOGGING_STORE_RESPONSE_BODY=false
+API_REQUEST_LOGGING_MAX_TEXT_LENGTH=2000
+```
+
+Recomendação para produção:
+
+- manter headers técnicos habilitados
+- desabilitar query/body/response body por padrão
+- habilitar body logging apenas em rotas/casos com justificativa explícita
+- nunca usar logs de request como armazenamento funcional
+- não persistir XML/documentos fiscais completos em logs operacionais
+
 ## Campos principais de request log
 
 - `request_id`
@@ -686,6 +787,40 @@ Nunca persistir em claro:
 - credenciais
 
 Os loggers da base já fazem sanitização desses campos.
+
+Além da sanitização, a base possui limites de profundidade, quantidade de itens e tamanho de texto para evitar payloads excessivos.
+
+## Retenção de logs
+
+Logs em banco precisam de retenção explícita. O command oficial é:
+
+```bash
+php artisan logs:prune
+```
+
+Para simular sem apagar:
+
+```bash
+php artisan logs:prune --dry-run
+```
+
+O agendamento padrão roda diariamente em `LOG_PRUNING_SCHEDULE_TIME`.
+
+Variáveis oficiais:
+
+```env
+LOG_PRUNING_ENABLED=true
+LOG_PRUNING_SCHEDULE_TIME=02:15
+LOG_RETENTION_API_REQUEST_DAYS=30
+LOG_RETENTION_SYSTEM_DAYS=90
+LOG_RETENTION_AUTHENTICATION_DAYS=180
+LOG_RETENTION_AUDIT_DAYS=365
+LOG_RETENTION_QUEUE_EXECUTION_DAYS=30
+LOG_RETENTION_QUEUE_JOB_DAYS=30
+LOG_RETENTION_QUEUE_WORKER_DAYS=30
+```
+
+Use valores `<= 0` apenas quando quiser desabilitar pruning de uma tabela conscientemente.
 
 ---
 
@@ -755,6 +890,19 @@ Alguns testes exigem PostgreSQL real, especialmente os que validam:
 
 Quando o driver não é PostgreSQL, esses testes podem ser ignorados deliberadamente.
 
+## Proteção contra reset acidental
+
+A suíte de testes limpa tabelas públicas e remove schemas tenant criados durante os testes. Para impedir execução destrutiva fora do banco correto, o reset exige:
+
+```env
+APP_ENV=testing
+ALLOW_TEST_DATABASE_RESET=true
+TEST_DATABASE_NAME=basephp_test
+DB_DATABASE=basephp_test
+```
+
+Se `DB_DATABASE` não for exatamente igual a `TEST_DATABASE_NAME`, a limpeza falha antes de truncar tabelas ou dropar schemas.
+
 ---
 
 # 14. Qualidade automatizada
@@ -779,6 +927,7 @@ Esse comando executa:
 - `composer audit`
 - cache/clear de configuração Laravel
 - geração da documentação OpenAPI
+- teste de formatação com Pint
 - PHPStan/Larastan
 - suíte PHPUnit
 
@@ -795,6 +944,19 @@ composer format:test
 ```
 
 O CI executa o gate de qualidade em pushes para `main`, `develop` e em pull requests.
+
+O workflow oficial fica em `.github/workflows/ci.yml` e executa:
+
+1. checkout
+2. setup do PHP 8.3
+3. instalação das dependências
+4. geração das chaves Passport
+5. `composer audit`
+6. cache/clear de configuração
+7. geração OpenAPI
+8. Pint
+9. PHPStan/Larastan
+10. PHPUnit
 
 ---
 
@@ -833,6 +995,14 @@ O CI executa o gate de qualidade em pushes para `main`, `develop` e em pull requ
 
 - sempre via serviços de logging
 - nunca improvisado em controller/service de domínio
+- payload completo de request/response deve ser exceção, não padrão de produção
+- toda tabela de log precisa ter política de retenção
+
+## Documentação e storage
+
+- Swagger/OpenAPI deve ficar público somente em `local`/`testing` ou atrás de allowlist/autenticação
+- `L5_SWAGGER_UI_PERSIST_AUTHORIZATION=false` deve ser o padrão
+- `FILESYSTEM_LOCAL_SERVE=false` deve permanecer desabilitado para não expor storage privado
 
 ---
 
@@ -860,13 +1030,16 @@ Esta base já fornece:
 - infraestrutura de autenticação OAuth2
 - infraestrutura de multitenancy por schema
 - request context
-- request logging
+- request logging configurável
 - logging persistido
+- retenção de logs operacionais
 - commands tenant-aware
+- proteção de Swagger/OpenAPI por ambiente/IP
+- storage privado sem rota pública por padrão
 - testes para infraestrutura principal
-- documentação arquitetural oficial
+- README como documentação operacional central
 
-Ou seja: a base já está pronta para sustentar os primeiros módulos reais do domínio com segurança.
+Ou seja: a base já está pronta para sustentar os primeiros módulos reais do domínio com segurança, desde que os novos projetos mantenham as configurações obrigatórias deste README.
 
 ---
 
@@ -874,10 +1047,10 @@ Ou seja: a base já está pronta para sustentar os primeiros módulos reais do d
 
 Depois da base estabilizada, os próximos passos naturais são:
 
-- colocar a suíte em CI
 - endurecer cobertura de módulos reais
 - definir contratos gRPC
 - implementar o primeiro módulo de negócio em cima da infraestrutura já criada
+- revisar periodicamente `composer audit`, escopos OAuth e políticas de retenção
 
 ---
 

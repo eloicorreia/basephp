@@ -48,7 +48,10 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -128,7 +131,9 @@
                 },
                 "security": [
                     {
-                        "passport": []
+                        "passport": [
+                            "user.password.change"
+                        ]
                     }
                 ]
             }
@@ -188,7 +193,10 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "user.profile"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -254,7 +262,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "emails.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -303,7 +321,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "emails.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -374,7 +402,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "emails.write"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -423,7 +461,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "emails.write"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -474,7 +522,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -502,7 +560,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -559,7 +627,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -608,7 +686,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -665,7 +753,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -714,7 +812,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -761,7 +869,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.write"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -810,7 +928,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "queues.write"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -935,7 +1063,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "tenants.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1004,7 +1142,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "tenants.write"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1053,7 +1201,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "tenants.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1119,7 +1277,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "tenant.users.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1187,7 +1355,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "tenant.users.write"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1244,7 +1422,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "users.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1319,7 +1507,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "users.write"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1368,7 +1566,17 @@
                 },
                 "security": [
                     {
-                        "passport": [],
+                        "passport": [
+                            "tenant.access",
+                            "admin.full"
+                        ],
+                        "tenantHeader": []
+                    },
+                    {
+                        "passport": [
+                            "tenant.access",
+                            "users.read"
+                        ],
                         "tenantHeader": []
                     }
                 ]
@@ -1823,8 +2031,19 @@
                         "refreshUrl": "http://localhost/oauth/token",
                         "scopes": {
                             "user.profile": "Permite consultar dados do usuário autenticado.",
+                            "user.password.change": "Permite alterar a própria senha.",
                             "tenant.access": "Permite acessar recursos vinculados a tenant.",
-                            "admin.full": "Permite acessar rotas administrativas."
+                            "admin.full": "Permite acessar rotas administrativas.",
+                            "tenants.read": "Permite consultar tenants.",
+                            "tenants.write": "Permite criar e manter tenants.",
+                            "users.read": "Permite consultar usuários globais.",
+                            "users.write": "Permite criar e manter usuários globais.",
+                            "tenant.users.read": "Permite consultar vínculos usuário x tenant.",
+                            "tenant.users.write": "Permite criar e manter vínculos usuário x tenant.",
+                            "queues.read": "Permite consultar filas, jobs e falhas.",
+                            "queues.write": "Permite executar ações operacionais em filas.",
+                            "emails.read": "Permite consultar envios de e-mail.",
+                            "emails.write": "Permite enviar e reprocessar e-mails."
                         }
                     },
                     "clientCredentials": {

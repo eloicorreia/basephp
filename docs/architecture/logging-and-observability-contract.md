@@ -1,5 +1,7 @@
 # Contrato oficial de logging e observabilidade
 
+> O README.md é a fonte central de configuração e operação. Este arquivo é material complementar e deve permanecer alinhado ao README.
+
 ## 1. Correlação
 Toda requisição deve possuir:
 - request_id

@@ -15,6 +15,17 @@ use Throwable;
 
 class TenantProvisioningService
 {
+    /**
+     * @var array<int, string>
+     */
+    private const REQUIRED_TENANT_TABLES = [
+        'migrations',
+        'business_logs',
+        'integration_logs',
+        'mail_configs',
+        'email_dispatch_logs',
+    ];
+
     public function __construct(
         private readonly TenantSchemaService $tenantSchemaService,
         private readonly TenantMigrationService $tenantMigrationService,
@@ -34,7 +45,7 @@ class TenantProvisioningService
 
         if (
             $tenant->status === Tenant::STATUS_ACTIVE
-            && $this->tenantSchemaService->schemaExists($tenant->schema_name)
+            && $this->tenantSchemaIsReady($tenant->schema_name)
         ) {
             return $tenant;
         }
@@ -50,6 +61,10 @@ class TenantProvisioningService
 
             $this->tenantMigrationService->runTenantMigrations($schemaName, $force);
             $this->tenantSeederService->runTenantSeeders($force);
+
+            if (! $this->tenantSchemaIsReady($schemaName)) {
+                throw new RuntimeException('Schema do tenant não ficou estruturalmente consistente após o provisionamento.');
+            }
         } catch (Throwable $throwable) {
             $this->safeResetSearchPath();
             $this->markTenantAsFailed($tenant, $throwable);
@@ -60,6 +75,12 @@ class TenantProvisioningService
         }
 
         return $this->markTenantAsActive($tenant);
+    }
+
+    private function tenantSchemaIsReady(string $schemaName): bool
+    {
+        return $this->tenantSchemaService->schemaExists($schemaName)
+            && $this->tenantSchemaService->schemaHasTables($schemaName, self::REQUIRED_TENANT_TABLES);
     }
 
     private function reserveTenantForProvisioning(string $code, string $name, string $schemaName): Tenant

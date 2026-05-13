@@ -26,7 +26,7 @@ final class EnsureUserIsActiveMiddlewareTest extends TestCase
     {
         $user = $this->createUser(isActive: false);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/middleware/user-active')
             ->assertStatus(403)
@@ -41,7 +41,7 @@ final class EnsureUserIsActiveMiddlewareTest extends TestCase
     {
         $user = $this->createUser(isActive: true);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/middleware/user-active')
             ->assertOk()

@@ -15,7 +15,8 @@ final class ApiV1EmailPaths
         description: 'Lista e-mails registrados pela aplicação, incluindo status de envio e retentativas.',
         tags: ['Emails'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'emails.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -36,7 +37,8 @@ final class ApiV1EmailPaths
         description: 'Retorna detalhes de um registro de envio de e-mail.',
         tags: ['Emails'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'emails.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'emailDispatch', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -55,7 +57,8 @@ final class ApiV1EmailPaths
         description: 'Solicita envio de e-mail pela infraestrutura tenant-aware da aplicação.',
         tags: ['Emails'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'emails.write'], 'tenantHeader' => []],
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -83,7 +86,8 @@ final class ApiV1EmailPaths
         description: 'Solicita retentativa de envio para um e-mail já registrado.',
         tags: ['Emails'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'emails.write'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'emailDispatch', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),

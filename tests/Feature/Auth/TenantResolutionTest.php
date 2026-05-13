@@ -16,14 +16,14 @@ final class TenantResolutionTest extends TestCase
     public function test_it_requires_tenant_header(): void
     {
         $user = $this->createUser();
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me')->assertStatus(400)->assertJson(['success' => false, 'message' => 'Tenant não informado.', 'errors' => []]);
     }
 
     public function test_it_rejects_unknown_tenant_code(): void
     {
         $user = $this->createUser();
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => 'tenant-inexistente-'.str_replace('-', '', (string) Str::uuid())])
             ->assertStatus(404)->assertJson(['success' => false, 'message' => 'Tenant não encontrado.', 'errors' => []]);
     }
@@ -32,7 +32,7 @@ final class TenantResolutionTest extends TestCase
     {
         $tenant = $this->createTenant(code: 'tenant-inactive-'.str_replace('-', '', (string) Str::uuid()), status: 'inactive');
         $user = $this->createUser();
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])
             ->assertStatus(404)->assertJson(['success' => false, 'message' => 'Tenant não encontrado.', 'errors' => []]);
     }
@@ -43,7 +43,7 @@ final class TenantResolutionTest extends TestCase
         $user = $this->createUser();
         $tenantRole = $this->createRole('tenant-role-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])->assertOk();
     }
 }

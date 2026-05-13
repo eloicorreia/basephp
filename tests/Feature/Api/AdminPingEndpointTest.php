@@ -36,7 +36,7 @@ final class AdminPingEndpointTest extends TestCase
         $user = $this->createUser(role: $adminRole);
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/admin/ping', [
             'X-Tenant-Id' => $tenant->code,
@@ -66,7 +66,7 @@ final class AdminPingEndpointTest extends TestCase
         $user = $this->createUser(role: $userRole);
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/admin/ping', [
             'X-Tenant-Id' => $tenant->code,

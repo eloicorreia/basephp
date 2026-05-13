@@ -15,7 +15,8 @@ final class ApiV1UserPaths
         description: 'Lista usuários globais da aplicação com paginação.',
         tags: ['Users'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'users.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -35,7 +36,8 @@ final class ApiV1UserPaths
         description: 'Cria um usuário global da aplicação.',
         tags: ['Users'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'users.write'], 'tenantHeader' => []],
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -64,7 +66,8 @@ final class ApiV1UserPaths
         description: 'Retorna os dados de um usuário específico.',
         tags: ['Users'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'users.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'user', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),

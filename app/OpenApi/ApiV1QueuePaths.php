@@ -15,7 +15,8 @@ final class ApiV1QueuePaths
         description: 'Retorna o catálogo operacional das filas conhecidas pela aplicação.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.read'], 'tenantHeader' => []],
         ],
         responses: [
             new OA\Response(response: 200, description: 'Catálogo recuperado com sucesso.', content: new OA\JsonContent(ref: '#/components/schemas/ApiSuccessResponse')),
@@ -30,7 +31,8 @@ final class ApiV1QueuePaths
         description: 'Retorna contadores operacionais das filas, incluindo jobs pendentes, processados ou falhos conforme implementação.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.read'], 'tenantHeader' => []],
         ],
         responses: [
             new OA\Response(response: 200, description: 'Resumo recuperado com sucesso.', content: new OA\JsonContent(ref: '#/components/schemas/ApiSuccessResponse')),
@@ -45,7 +47,8 @@ final class ApiV1QueuePaths
         description: 'Lista jobs registrados no backend de filas.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -65,7 +68,8 @@ final class ApiV1QueuePaths
         description: 'Retorna detalhes de um job específico.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'job', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -84,7 +88,8 @@ final class ApiV1QueuePaths
         description: 'Lista jobs que falharam na infraestrutura de filas.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -104,7 +109,8 @@ final class ApiV1QueuePaths
         description: 'Retorna detalhes de um job falho específico.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'failedJob', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -123,7 +129,8 @@ final class ApiV1QueuePaths
         description: 'Solicita nova tentativa de execução para um job falho.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.write'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'failedJob', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -142,7 +149,8 @@ final class ApiV1QueuePaths
         description: 'Remove o registro de um job falho da tabela operacional.',
         tags: ['Queues'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'queues.write'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'failedJob', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),

@@ -36,7 +36,7 @@ final class FailedApiRequestLoggingTest extends TestCase
         $user = $this->createUser();
         $tenantRole = $this->createRole($tenantRoleCode, 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/test/boom-for-request-log', ['X-Tenant-Id' => $tenant->code, 'X-Request-Id' => $requestId, 'X-Trace-Id' => $traceId])->assertStatus(500)->assertJson(['success' => false]);
         $log = ApiRequestLog::query()->where('request_id', $requestId)->latest('id')->first();
         $this->assertNotNull($log);
@@ -80,7 +80,7 @@ final class FailedApiRequestLoggingTest extends TestCase
         $user = $this->createUser();
         $tenantRole = $this->createRole($tenantRoleCode, 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/boom-for-request-log', [
             'X-Tenant-Id' => $tenant->code,

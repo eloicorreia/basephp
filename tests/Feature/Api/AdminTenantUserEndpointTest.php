@@ -132,7 +132,7 @@ final class AdminTenantUserEndpointTest extends TestCase
         $user = $this->createUser(role: $adminRole);
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         return [
             'tenant' => $tenant,

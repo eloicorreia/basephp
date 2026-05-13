@@ -15,7 +15,7 @@ final class ApiV1AuthPaths
         description: 'Endpoint protegido por OAuth2. Usado quando o usuário precisa trocar a senha antes de acessar recursos tenant-aware.',
         tags: ['Authentication'],
         security: [
-            ['passport' => []],
+            ['passport' => ['user.password.change']],
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -43,7 +43,7 @@ final class ApiV1AuthPaths
         description: 'Endpoint tenant-aware. Exige token OAuth2 válido, usuário ativo, senha já alterada e tenant informado no header X-Tenant-Id.',
         tags: ['Authentication'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'user.profile'], 'tenantHeader' => []],
         ],
         responses: [
             new OA\Response(

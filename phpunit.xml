@@ -38,6 +38,8 @@
         <env name="DB_SCHEMA" value="public"/>
         <env name="DB_SSLMODE" value="prefer"/>
         <env name="DB_URL" value=""/>
+        <env name="ALLOW_TEST_DATABASE_RESET" value="true"/>
+        <env name="TEST_DATABASE_NAME" value="basephp_test"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="database"/>
         <env name="SESSION_DRIVER" value="array"/>

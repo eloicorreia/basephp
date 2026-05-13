@@ -15,7 +15,7 @@ final class ApiV1AdminPaths
         description: 'Endpoint simples para validar autenticação, tenant e role admin.',
         tags: ['Admin'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
         ],
         responses: [
             new OA\Response(response: 200, description: 'Acesso administrativo válido.', content: new OA\JsonContent(ref: '#/components/schemas/ApiSuccessResponse')),

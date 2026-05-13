@@ -15,7 +15,8 @@ final class ApiV1TenantUserPaths
         description: 'Lista os vínculos entre usuários e tenants.',
         tags: ['Tenant Users'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'tenant.users.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -36,7 +37,8 @@ final class ApiV1TenantUserPaths
         description: 'Vincula um usuário global a um tenant, permitindo acesso tenant-aware.',
         tags: ['Tenant Users'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'tenant.users.write'], 'tenantHeader' => []],
         ],
         requestBody: new OA\RequestBody(
             required: true,

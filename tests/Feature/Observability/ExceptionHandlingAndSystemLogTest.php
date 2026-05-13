@@ -38,7 +38,7 @@ final class ExceptionHandlingAndSystemLogTest extends TestCase
         $bundle = $this->tenantBundle();
         $requestId = (string) Str::uuid();
         $traceId = (string) Str::uuid();
-        Passport::actingAs($bundle['user'], ['user.profile']);
+        Passport::actingAs($bundle['user'], ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/test/boom', ['X-Tenant-Id' => $bundle['tenant']->code, 'X-Request-Id' => $requestId, 'X-Trace-Id' => $traceId])
             ->assertStatus(500)->assertJson(['success' => false, 'message' => 'Erro ao processar a requisição.', 'errors' => []]);
         $this->assertTrue(SystemLog::query()->where(['request_id' => $requestId, 'trace_id' => $traceId, 'user_id' => $bundle['user']->id, 'route' => 'api/v1/test/boom', 'method' => 'GET'])->exists());
@@ -49,7 +49,7 @@ final class ExceptionHandlingAndSystemLogTest extends TestCase
         $bundle = $this->tenantBundle();
         $requestId = (string) Str::uuid();
         $traceId = (string) Str::uuid();
-        Passport::actingAs($bundle['user'], ['user.profile']);
+        Passport::actingAs($bundle['user'], ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->postJson('/api/v1/test/validation-error', ['name' => 'a'], ['X-Tenant-Id' => $bundle['tenant']->code, 'X-Request-Id' => $requestId, 'X-Trace-Id' => $traceId])
             ->assertStatus(422)->assertJsonStructure(['success', 'message', 'errors']);
         $this->assertTrue(SystemLog::query()->where(['request_id' => $requestId, 'trace_id' => $traceId, 'user_id' => $bundle['user']->id, 'route' => 'api/v1/test/validation-error', 'method' => 'POST'])->exists());
@@ -60,7 +60,7 @@ final class ExceptionHandlingAndSystemLogTest extends TestCase
         $bundle = $this->tenantBundle();
         $requestId = (string) Str::uuid();
         $traceId = (string) Str::uuid();
-        Passport::actingAs($bundle['user'], ['user.profile']);
+        Passport::actingAs($bundle['user'], ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/boom', [
             'X-Tenant-Id' => $bundle['tenant']->code,
@@ -80,7 +80,7 @@ final class ExceptionHandlingAndSystemLogTest extends TestCase
     {
         $bundle = $this->tenantBundle();
         $requestId = (string) Str::uuid();
-        Passport::actingAs($bundle['user'], ['user.profile']);
+        Passport::actingAs($bundle['user'], ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/boom', [
             'X-Tenant-Id' => $bundle['tenant']->code,

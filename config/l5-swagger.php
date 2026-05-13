@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\EnsureDocumentationAccess;
 use L5Swagger\Generator;
+
+$environment = (string) env('APP_ENV', 'production');
 
 return [
     'default' => 'default',
@@ -40,10 +43,10 @@ return [
             'oauth2_callback' => 'api/oauth2-callback',
 
             'middleware' => [
-                'api' => [],
-                'asset' => [],
-                'docs' => [],
-                'oauth2_callback' => [],
+                'api' => [EnsureDocumentationAccess::class],
+                'asset' => [EnsureDocumentationAccess::class],
+                'docs' => [EnsureDocumentationAccess::class],
+                'oauth2_callback' => [EnsureDocumentationAccess::class],
             ],
 
             'group_options' => [],
@@ -81,8 +84,19 @@ return [
                             'refreshUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/token',
                             'scopes' => [
                                 'user.profile' => 'Permite consultar dados do usuário autenticado.',
+                                'user.password.change' => 'Permite alterar a própria senha.',
                                 'tenant.access' => 'Permite acessar recursos vinculados a tenant.',
                                 'admin.full' => 'Permite acessar rotas administrativas.',
+                                'tenants.read' => 'Permite consultar tenants.',
+                                'tenants.write' => 'Permite criar e manter tenants.',
+                                'users.read' => 'Permite consultar usuários globais.',
+                                'users.write' => 'Permite criar e manter usuários globais.',
+                                'tenant.users.read' => 'Permite consultar vínculos usuário x tenant.',
+                                'tenant.users.write' => 'Permite criar e manter vínculos usuário x tenant.',
+                                'queues.read' => 'Permite consultar filas, jobs e falhas.',
+                                'queues.write' => 'Permite executar ações operacionais em filas.',
+                                'emails.read' => 'Permite consultar envios de e-mail.',
+                                'emails.write' => 'Permite enviar e reprocessar e-mails.',
                             ],
                         ],
                         'clientCredentials' => [
@@ -93,7 +107,6 @@ return [
                         ],
                     ],
                 ],
-
                 'tenantHeader' => [
                     'type' => 'apiKey',
                     'description' => 'Código do tenant ativo. Exemplo: tenant-main.',
@@ -103,6 +116,14 @@ return [
             ],
 
             'security' => [],
+        ],
+
+        'access' => [
+            'public' => env('L5_SWAGGER_PUBLIC', in_array($environment, ['local', 'testing'], true)),
+            'allowed_ips' => array_values(array_filter(array_map(
+                static fn (string $ip): string => trim($ip),
+                explode(',', (string) env('L5_SWAGGER_ALLOWED_IPS', '127.0.0.1,::1'))
+            ))),
         ],
 
         'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', false),
@@ -120,7 +141,7 @@ return [
             ],
 
             'authorization' => [
-                'persist_authorization' => env('L5_SWAGGER_UI_PERSIST_AUTHORIZATION', true),
+                'persist_authorization' => env('L5_SWAGGER_UI_PERSIST_AUTHORIZATION', false),
 
                 'oauth2' => [
                     'use_pkce_with_authorization_code_grant' => true,

@@ -1,5 +1,7 @@
 # Contrato oficial de autenticação e multi-tenant
 
+> O README.md é a fonte central de configuração e operação. Este arquivo é material complementar e deve permanecer alinhado ao README.
+
 ## 1. Autenticação oficial
 - O projeto utiliza Laravel Passport.
 - O guard oficial da API é `api`.
@@ -31,11 +33,13 @@
 ## 5. Ordem de execução esperada
 1. RequestContextMiddleware
 2. auth:api
-3. user.active
-4. tenant.resolve
-5. tenant.access
-6. password.changed
-7. role, quando aplicável
+3. throttle:api
+4. user.active
+5. escopos OAuth aplicáveis (`tenant.access`, `admin.full`, escopos granulares)
+6. tenant.resolve
+7. tenant.access
+8. password.changed
+9. role, quando aplicável
 
 ## 6. Headers técnicos oficiais
 - `X-Request-Id`

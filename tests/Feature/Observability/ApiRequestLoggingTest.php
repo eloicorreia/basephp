@@ -38,7 +38,7 @@ final class ApiRequestLoggingTest extends TestCase
         $requestId = (string) Str::uuid();
         $traceId = (string) Str::uuid();
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code, 'X-Request-Id' => $requestId, 'X-Trace-Id' => $traceId])->assertOk();
         $log = ApiRequestLog::query()->where('request_id', $requestId)->latest('id')->first();
         $this->assertNotNull($log);
@@ -53,7 +53,7 @@ final class ApiRequestLoggingTest extends TestCase
         $user = $this->createUser();
         $requestId = (string) Str::uuid();
         $traceId = (string) Str::uuid();
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => 'tenant-inexistente-'.str_replace('-', '', (string) Str::uuid()),
@@ -76,7 +76,7 @@ final class ApiRequestLoggingTest extends TestCase
         $user = $this->createUser();
         $requestId = (string) Str::uuid();
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => $tenant->code,

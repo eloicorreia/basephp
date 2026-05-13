@@ -19,7 +19,7 @@ final class UserStatusAuthorizationTest extends TestCase
         $user = $this->createUser(isActive: false);
         $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])->assertStatus(403);
     }
 
@@ -29,7 +29,7 @@ final class UserStatusAuthorizationTest extends TestCase
         $user = $this->createUser(mustChangePassword: true);
         $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])->assertStatus(403);
     }
 
@@ -39,7 +39,7 @@ final class UserStatusAuthorizationTest extends TestCase
         $user = $this->createUser();
         $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])->assertOk();
     }
 }

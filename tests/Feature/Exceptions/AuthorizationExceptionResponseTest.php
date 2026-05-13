@@ -20,7 +20,7 @@ final class AuthorizationExceptionResponseTest extends TestCase
         );
         $user = $this->createUser();
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => $tenant->code,
@@ -38,7 +38,7 @@ final class AuthorizationExceptionResponseTest extends TestCase
         );
         $user = $this->createUser();
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => $tenant->code,

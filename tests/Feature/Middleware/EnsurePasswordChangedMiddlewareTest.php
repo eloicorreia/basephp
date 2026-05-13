@@ -26,7 +26,7 @@ final class EnsurePasswordChangedMiddlewareTest extends TestCase
     {
         $user = $this->createUser(mustChangePassword: true);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/middleware/password-changed')
             ->assertStatus(403)
@@ -41,7 +41,7 @@ final class EnsurePasswordChangedMiddlewareTest extends TestCase
     {
         $user = $this->createUser(mustChangePassword: false);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/middleware/password-changed')
             ->assertOk()

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,14 +15,21 @@ final class TenantResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        if (! $this->resource instanceof Tenant) {
+            return [];
+        }
+
+        $tenant = $this->resource;
+
         return [
-            'id' => $this->id,
-            'code' => $this->code,
-            'name' => $this->name,
-            'schema_name' => $this->schema_name,
-            'is_active' => $this->is_active,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'id' => $tenant->id,
+            'code' => $tenant->code,
+            'name' => $tenant->name,
+            'schema_name' => $tenant->schema_name,
+            'status' => $tenant->status,
+            'is_active' => $tenant->status === Tenant::STATUS_ACTIVE,
+            'created_at' => $tenant->created_at,
+            'updated_at' => $tenant->updated_at,
         ];
     }
 }

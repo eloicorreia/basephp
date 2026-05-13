@@ -42,6 +42,8 @@ jobs:
       DB_PASSWORD: postgres
       DB_SCHEMA: public
       DB_SSLMODE: prefer
+      ALLOW_TEST_DATABASE_RESET: "true"
+      TEST_DATABASE_NAME: basephp_test
       MAIL_MAILER: array
       QUEUE_CONNECTION: database
       SESSION_DRIVER: array

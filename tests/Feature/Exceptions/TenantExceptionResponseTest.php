@@ -16,7 +16,7 @@ final class TenantExceptionResponseTest extends TestCase
     public function test_tenant_required_exception_returns_standard_bad_request_response(): void
     {
         $user = $this->createUser();
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me')
             ->assertStatus(400)
@@ -30,7 +30,7 @@ final class TenantExceptionResponseTest extends TestCase
     public function test_tenant_not_found_exception_returns_standard_not_found_response(): void
     {
         $user = $this->createUser();
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => 'tenant-inexistente',
@@ -49,7 +49,7 @@ final class TenantExceptionResponseTest extends TestCase
         );
         $user = $this->createUser();
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => $tenant->code,

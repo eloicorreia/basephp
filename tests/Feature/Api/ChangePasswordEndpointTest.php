@@ -28,13 +28,32 @@ final class ChangePasswordEndpointTest extends TestCase
             'password' => 'SenhaAtual@123',
         ]);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->postJson('/api/v1/auth/change-password', [
             'current_password' => '',
             'new_password' => 'curta',
             'new_password_confirmation' => 'diferente',
         ])->assertStatus(422);
+    }
+
+    public function test_change_password_requires_password_change_scope(): void
+    {
+        $user = $this->createUser(overrides: [
+            'password' => 'SenhaAtual@123',
+        ]);
+
+        Passport::actingAs($user, ['user.profile']);
+
+        $this->postJson('/api/v1/auth/change-password', [
+            'current_password' => 'SenhaAtual@123',
+            'new_password' => 'NovaSenhaMuitoForte@123',
+            'new_password_confirmation' => 'NovaSenhaMuitoForte@123',
+        ])->assertStatus(403)->assertJson([
+            'success' => false,
+            'message' => 'Acesso negado.',
+            'errors' => [],
+        ]);
     }
 
     public function test_change_password_rejects_invalid_current_password(): void
@@ -44,7 +63,7 @@ final class ChangePasswordEndpointTest extends TestCase
             'must_change_password' => true,
         ]);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->postJson('/api/v1/auth/change-password', [
             'current_password' => 'SenhaErrada@123',
@@ -62,7 +81,7 @@ final class ChangePasswordEndpointTest extends TestCase
             'must_change_password' => true,
         ]);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->postJson('/api/v1/auth/change-password', [
             'current_password' => 'SenhaAtual@123',

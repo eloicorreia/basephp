@@ -15,7 +15,8 @@ final class ApiV1TenantPaths
         description: 'Lista tenants cadastrados no schema público. Suporta paginação e filtros conforme implementação do controller.',
         tags: ['Tenants'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'tenants.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
@@ -37,7 +38,8 @@ final class ApiV1TenantPaths
         description: 'Cria um novo tenant global. A criação deve respeitar unicidade de code e schema_name.',
         tags: ['Tenants'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'tenants.write'], 'tenantHeader' => []],
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -65,7 +67,8 @@ final class ApiV1TenantPaths
         description: 'Retorna os dados de um tenant específico pelo identificador.',
         tags: ['Tenants'],
         security: [
-            ['passport' => [], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'admin.full'], 'tenantHeader' => []],
+            ['passport' => ['tenant.access', 'tenants.read'], 'tenantHeader' => []],
         ],
         parameters: [
             new OA\Parameter(name: 'tenant', in: 'path', required: true, schema: new OA\Schema(type: 'integer', example: 1)),

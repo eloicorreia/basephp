@@ -9,14 +9,19 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 final class QueueSummaryResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
+        $resource = is_array($this->resource) ? $this->resource : [];
+
         return [
-            'queue' => $this['queue'],
-            'pending_jobs' => $this['pending_jobs'],
-            'running_jobs' => $this['running_jobs'],
-            'failed_jobs' => $this['failed_jobs'],
-            'generated_at' => $this['generated_at'],
+            'queue' => $resource['queue'] ?? null,
+            'pending_jobs' => $resource['pending_jobs'] ?? null,
+            'running_jobs' => $resource['running_jobs'] ?? null,
+            'failed_jobs' => $resource['failed_jobs'] ?? null,
+            'generated_at' => $resource['generated_at'] ?? null,
         ];
     }
 }

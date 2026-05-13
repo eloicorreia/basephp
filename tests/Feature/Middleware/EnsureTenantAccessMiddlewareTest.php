@@ -28,7 +28,7 @@ final class EnsureTenantAccessMiddlewareTest extends TestCase
         $tenant = $this->createTenant(code: $this->tenantCode('no-membership'));
         $user = $this->createUser();
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/middleware/tenant-access', [
             'X-Tenant-Id' => $tenant->code,
@@ -46,7 +46,7 @@ final class EnsureTenantAccessMiddlewareTest extends TestCase
         $tenantRole = $this->createRole($this->roleCode('tenant-user'), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, false);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/middleware/tenant-access', [
             'X-Tenant-Id' => $tenant->code,
@@ -60,7 +60,7 @@ final class EnsureTenantAccessMiddlewareTest extends TestCase
         $tenantRole = $this->createRole($this->roleCode('tenant-user'), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/middleware/tenant-access', [
             'X-Tenant-Id' => $tenant->code,

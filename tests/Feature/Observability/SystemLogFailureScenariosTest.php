@@ -73,7 +73,7 @@ final class SystemLogFailureScenariosTest extends TestCase
         $traceId = (string) Str::uuid();
         $user = $this->createUser();
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/test/system-log/authorization', [
             'X-Request-Id' => $requestId,

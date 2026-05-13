@@ -17,7 +17,7 @@ final class TenantMembershipAuthorizationTest extends TestCase
     {
         $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
         $user = $this->createUser();
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])
             ->assertStatus(403)->assertJson(['success' => false, 'message' => 'Acesso negado.', 'errors' => []]);
     }
@@ -28,7 +28,7 @@ final class TenantMembershipAuthorizationTest extends TestCase
         $user = $this->createUser();
         $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $this->grantTenantAccess($user, $tenant, $tenantRole, false);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])->assertStatus(403);
     }
 
@@ -39,7 +39,7 @@ final class TenantMembershipAuthorizationTest extends TestCase
         $tenantRole = $this->createRole('tenant-user-'.str_replace('-', '', (string) Str::uuid()), 'Tenant User');
         $user = $this->createUser(role: $role);
         $this->grantTenantAccess($user, $tenant, $tenantRole, true);
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
         $this->getJson('/api/v1/auth/me', ['X-Tenant-Id' => $tenant->code])->assertOk();
     }
 
@@ -48,7 +48,7 @@ final class TenantMembershipAuthorizationTest extends TestCase
         $tenant = $this->createTenant(code: 'tenant-main-'.str_replace('-', '', (string) Str::uuid()));
         $user = $this->createUser();
 
-        Passport::actingAs($user, ['user.profile']);
+        Passport::actingAs($user, ['user.profile', 'tenant.access', 'admin.full', 'user.password.change']);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => $tenant->code,

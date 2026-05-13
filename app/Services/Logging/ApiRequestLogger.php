@@ -25,6 +25,10 @@ class ApiRequestLogger
         string $status,
         ?string $message = null
     ): void {
+        if (! $this->loggingEnabled()) {
+            return;
+        }
+
         ApiRequestLog::query()->create([
             'request_id' => $request->attributes->get('request_id'),
             'trace_id' => $request->attributes->get('trace_id'),
@@ -39,8 +43,8 @@ class ApiRequestLogger
             'ip' => $request->ip(),
             'user_agent' => $this->sanitizeText((string) $request->userAgent(), 1000),
             'request_headers' => $this->sanitizeHeaders($request->headers->all()),
-            'request_query' => $this->sanitizePayload($request->query()),
-            'request_body' => $this->sanitizePayload($request->all()),
+            'request_query' => $this->sanitizeOptionalPayload($request->query(), 'store_query'),
+            'request_body' => $this->sanitizeOptionalPayload($request->all(), 'store_request_body'),
             'response_body' => $this->sanitizeResponse($response),
             'processing_status' => $status,
             'message' => $message !== null ? $this->sanitizeText($message) : null,
@@ -68,11 +72,29 @@ class ApiRequestLogger
 
     /**
      * @param  array<string, list<string|null>>  $headers
-     * @return array<mixed>
+     * @return array<mixed>|null
      */
-    private function sanitizeHeaders(array $headers): array
+    private function sanitizeHeaders(array $headers): ?array
     {
-        return $this->sanitizePayload($headers);
+        if (! $this->shouldStore('store_headers')) {
+            return null;
+        }
+
+        $allowedHeaders = $this->allowedHeaders();
+        $filteredHeaders = [];
+
+        foreach ($headers as $name => $value) {
+            $normalizedName = mb_strtolower($name);
+
+            if (
+                in_array($normalizedName, $allowedHeaders, true)
+                || $this->sensitiveDataSanitizer->isSensitiveKey($normalizedName)
+            ) {
+                $filteredHeaders[$name] = $value;
+            }
+        }
+
+        return $this->sanitizePayload($filteredHeaders);
     }
 
     /**
@@ -85,10 +107,27 @@ class ApiRequestLogger
     }
 
     /**
+     * @param  array<mixed>  $payload
+     * @return array<mixed>|null
+     */
+    private function sanitizeOptionalPayload(array $payload, string $configKey): ?array
+    {
+        if (! $this->shouldStore($configKey)) {
+            return null;
+        }
+
+        return $this->sanitizePayload($payload);
+    }
+
+    /**
      * @return array<mixed>|string|null
      */
     private function sanitizeResponse(Response $response): array|string|null
     {
+        if (! $this->shouldStore('store_response_body')) {
+            return null;
+        }
+
         $content = $response->getContent();
 
         if ($content === false || $content === '') {
@@ -117,6 +156,43 @@ class ApiRequestLogger
 
     private function sanitizeText(string $value, int $maxLength = 4000): string
     {
-        return $this->sensitiveDataSanitizer->sanitizeText($value, maxLength: $maxLength);
+        return $this->sensitiveDataSanitizer->sanitizeText(
+            $value,
+            maxLength: min($maxLength, $this->maxTextLength())
+        );
+    }
+
+    private function loggingEnabled(): bool
+    {
+        return (bool) config('observability.api_request_logging.enabled', true);
+    }
+
+    private function shouldStore(string $configKey): bool
+    {
+        return (bool) config('observability.api_request_logging.'.$configKey, true);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function allowedHeaders(): array
+    {
+        $headers = config('observability.api_request_logging.allowed_headers', []);
+
+        if (! is_array($headers)) {
+            return [];
+        }
+
+        return array_map(
+            static fn (mixed $header): string => mb_strtolower((string) $header),
+            $headers
+        );
+    }
+
+    private function maxTextLength(): int
+    {
+        $configuredLength = (int) config('observability.api_request_logging.max_text_length', 2000);
+
+        return max(200, min($configuredLength, 4000));
     }
 }

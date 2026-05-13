@@ -1,5 +1,7 @@
 # Contrato oficial de filas e processamento assíncrono
 
+> O README.md é a fonte central de configuração e operação. Este arquivo é material complementar e deve permanecer alinhado ao README.
+
 ## 1. Objetivo
 
 Este documento define o padrão oficial de filas e processamento assíncrono do projeto.

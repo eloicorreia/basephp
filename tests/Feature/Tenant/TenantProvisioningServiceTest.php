@@ -121,6 +121,37 @@ final class TenantProvisioningServiceTest extends TestCase
         $this->assertSame(1, Tenant::query()->where('code', $code)->count());
     }
 
+    public function test_it_rebuilds_active_tenant_when_schema_is_incomplete(): void
+    {
+        $schemaName = $this->newSchemaName();
+        $code = 'tenant-rebuild-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 10);
+        $this->schemasToDrop[] = $schemaName;
+
+        DB::statement(sprintf('CREATE SCHEMA IF NOT EXISTS "%s"', $schemaName));
+
+        $tenant = Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => $code,
+            'name' => 'Tenant Incompleto',
+            'schema_name' => $schemaName,
+            'status' => 'active',
+        ]);
+
+        $rebuiltTenant = app(TenantProvisioningService::class)->provision(
+            code: $code,
+            name: 'Tenant Incompleto',
+            schemaName: $schemaName,
+        );
+
+        $this->assertSame($tenant->id, $rebuiltTenant->id);
+        $this->assertSame('active', $rebuiltTenant->status);
+        $this->assertTrue($this->schemaTableExists($schemaName, 'migrations'));
+        $this->assertTrue($this->schemaTableExists($schemaName, 'mail_configs'));
+        $this->assertTrue($this->schemaTableExists($schemaName, 'business_logs'));
+        $this->assertTrue($this->schemaTableExists($schemaName, 'integration_logs'));
+        $this->assertTrue($this->schemaTableExists($schemaName, 'email_dispatch_logs'));
+    }
+
     public function test_it_retries_failed_tenant_provisioning_with_same_code_and_schema(): void
     {
         $schemaName = $this->newSchemaName();

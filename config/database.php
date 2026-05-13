@@ -134,6 +134,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Test Database Reset Guard
+    |--------------------------------------------------------------------------
+    |
+    | Feature tests intentionally truncate public tables and drop tenant schemas.
+    | Keep this behind an explicit flag and an exact database-name match.
+    |
+    */
+
+    'testing_reset' => [
+        'enabled' => env('ALLOW_TEST_DATABASE_RESET', false),
+        'database' => env('TEST_DATABASE_NAME', 'basephp_test'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Redis Databases
     |--------------------------------------------------------------------------
     |
