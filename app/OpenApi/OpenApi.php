@@ -16,16 +16,16 @@ use OpenApi\Attributes as OA;
 
 Esta API foi construída em PHP 8.3, Laravel 12 e PostgreSQL, com autenticação OAuth2 via Laravel Passport, multitenancy por schema, logs persistidos em banco e rastreabilidade por request_id e trace_id.
 
-Fluxo de uso no Swagger UI com password grant legado:
+Fluxo de uso no Swagger UI com Authorization Code + PKCE:
 1. Clique em Authorize.
-2. Em passport, informe client_id, client_secret, username e password.
+2. Em passport, selecione authorizationCode, informe client_id público e siga o callback OAuth.
 3. Em tenantHeader, informe o código do tenant, por exemplo tenant-main.
 4. Execute os endpoints protegidos diretamente pela interface.
 
-Diretriz de longo prazo:
-- O password grant é compatibilidade transitória para first-party clients legados.
-- Novos clients com usuário humano devem usar Authorization Code + PKCE.
-- Integrações sistema-a-sistema devem usar client credentials.
+Fluxo sistema-a-sistema:
+- Use clientCredentials com client_id, client_secret e escopos operacionais explícitos.
+- Tokens client credentials não representam usuário humano e não devem acessar rotas tenant-aware de usuário.
+- Password grant é desabilitado por padrão e só pode ser reabilitado temporariamente para clients legados.
 
 Endpoints tenant-aware exigem:
 - Authorization: Bearer {access_token}
@@ -54,6 +54,10 @@ Observações de segurança:
 #[OA\Tag(
     name: 'Authentication',
     description: 'Endpoints relacionados ao usuário autenticado, sessão OAuth2 e alteração de senha.'
+)]
+#[OA\Tag(
+    name: 'System',
+    description: 'Endpoints operacionais protegidos por client credentials.'
 )]
 #[OA\Tag(
     name: 'Admin',

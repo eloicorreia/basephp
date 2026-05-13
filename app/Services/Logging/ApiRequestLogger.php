@@ -51,6 +51,12 @@ class ApiRequestLogger
 
     private function resolveOauthClientId(Request $request): ?string
     {
+        $attributeClientId = $request->attributes->get('oauth_client_id');
+
+        if ($attributeClientId !== null) {
+            return (string) $attributeClientId;
+        }
+
         $token = $request->user()?->token();
 
         if ($token === null || $token->client_id === null) {

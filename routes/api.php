@@ -23,6 +23,18 @@ Route::prefix('v1')->group(function (): void {
     });
 
     Route::middleware([
+        'client.credentials',
+        'throttle:api',
+        'scope:system.health',
+    ])->get('/system/ping', function () {
+        return response()->json([
+            'success' => true,
+            'message' => 'Operação realizada com sucesso.',
+            'data' => ['area' => 'system'],
+        ]);
+    });
+
+    Route::middleware([
         'throttle:api',
         'auth:api',
         'user.active',

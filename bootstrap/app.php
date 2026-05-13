@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Exceptions\ApiException;
+use App\Http\Middleware\EnsureClientCredentials;
 use App\Http\Middleware\EnsurePasswordChangedMiddleware;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureTenantAccessMiddleware;
@@ -18,6 +19,8 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Laravel\Passport\Http\Middleware\CheckToken;
+use Laravel\Passport\Http\Middleware\CheckTokenForAnyScope;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use App\Http\Middleware\ApiRequestLoggingMiddleware;
 
@@ -34,6 +37,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.resolve' => ResolveTenantMiddleware::class,
             'tenant.access' => EnsureTenantAccessMiddleware::class,
             'password.changed' => EnsurePasswordChangedMiddleware::class,
+            'client.credentials' => EnsureClientCredentials::class,
+            'scope' => CheckToken::class,
+            'scopes' => CheckToken::class,
+            'any_scope' => CheckTokenForAnyScope::class,
         ]);
 
         $middleware->appendToGroup('api', [

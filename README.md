@@ -197,14 +197,17 @@ Ele utiliza:
 
 A base está preparada para autenticação via OAuth2 com Laravel Passport.
 
-Atualmente, o **password grant** pode ser habilitado como compatibilidade transitória para first-party clients existentes.
+O fluxo oficial para usuários humanos é **Authorization Code Grant com PKCE**.
+O fluxo oficial para integrações sistema-a-sistema é **Client Credentials**.
 
-Para longo prazo, o fluxo recomendado para usuários humanos é **Authorization Code Grant com PKCE**. O password grant não deve ser usado para novos clientes, pois expõe a senha do usuário diretamente ao client e dificulta adoção de MFA, WebAuthn e autenticações com múltiplas etapas.
+O **password grant** fica desabilitado por padrão e deve ser tratado apenas como compatibilidade excepcional para clients legados.
 
 ## Quando usar
 
 ### Password grant
-Use apenas como ponte de compatibilidade para aplicação first-party já existente e controlada pela própria plataforma.
+Não use para novos clients.
+
+Pode ser reabilitado temporariamente apenas como ponte de compatibilidade para aplicação first-party legada e controlada pela própria plataforma.
 
 O uso fica condicionado à variável:
 
@@ -212,7 +215,7 @@ O uso fica condicionado à variável:
 PASSPORT_ENABLE_PASSWORD_GRANT=true
 ```
 
-Quando todos os clientes migrarem para PKCE, defina:
+Em novos ambientes, mantenha:
 
 ```env
 PASSPORT_ENABLE_PASSWORD_GRANT=false
@@ -220,6 +223,8 @@ PASSPORT_ENABLE_PASSWORD_GRANT=false
 
 ### Authorization Code + PKCE
 Use para aplicações com usuário humano, incluindo SPAs, mobile apps e frontends first-party que não devem manipular senha diretamente no client.
+
+Esse fluxo exige redirecionamento para a camada web/sessão que autentica o usuário e aprova a autorização. A API não deve receber senha diretamente de SPA ou aplicação mobile.
 
 ### Client credentials
 Use para integração sistema-a-sistema, quando não houver usuário humano autenticado.
@@ -293,33 +298,37 @@ Se precisar recriar:
 php artisan passport:keys --force
 ```
 
-## 7.8. Criar client OAuth password grant
+## 7.8. Criar clients OAuth
 
 ```bash
-php artisan passport:client --password
+php artisan passport:client --public
 ```
 
-Este passo é necessário apenas se `PASSPORT_ENABLE_PASSWORD_GRANT=true`.
-Para novos clients com usuário humano, prefira criar um client público para Authorization Code + PKCE.
+Use esse formato para clients com usuário humano que usarão Authorization Code + PKCE.
 
 Esse command vai solicitar:
 
 - nome do client
-- provider
 - redirect
 
 Para ambiente local, normalmente:
 
-- nome: `Local Password Client`
-- provider: `users`
-- redirect: `http://localhost`
+- nome: `Local PKCE Client`
+- redirect: `http://localhost:3000/oauth/callback`
 
 Ao final, ele retorna:
 
 - `client_id`
-- `client_secret`
 
-Esses dados são usados no endpoint `/oauth/token`.
+Clients públicos usados com PKCE não possuem `client_secret`.
+
+Para integração sistema-a-sistema, crie um client credentials:
+
+```bash
+php artisan passport:client --client
+```
+
+Esse command retorna `client_id` e `client_secret`. Guarde o secret em cofre de segredo ou variável de ambiente segura.
 
 ## 7.9. Seeders
 
@@ -345,6 +354,45 @@ php artisan serve
 
 # 8. Como autenticar e gerar token OAuth
 
+## 8.1. Usuário humano com Authorization Code + PKCE
+
+O client deve gerar `code_verifier` e `code_challenge` no padrão PKCE.
+
+## Authorization endpoint
+
+```text
+GET /oauth/authorize
+```
+
+Parâmetros principais:
+
+- `response_type=code`
+- `client_id`
+- `redirect_uri`
+- `scope=user.profile tenant.access`
+- `code_challenge`
+- `code_challenge_method=S256`
+
+## Token endpoint
+
+```text
+POST /oauth/token
+```
+
+Exemplo de payload:
+
+```json
+{
+  "grant_type": "authorization_code",
+  "client_id": "SEU_CLIENT_ID_PUBLICO",
+  "redirect_uri": "http://localhost:3000/oauth/callback",
+  "code_verifier": "CODE_VERIFIER_ORIGINAL",
+  "code": "CODIGO_RECEBIDO_NO_CALLBACK"
+}
+```
+
+## 8.2. Integração sistema-a-sistema com Client Credentials
+
 ## Endpoint
 
 ```text
@@ -355,12 +403,10 @@ POST /oauth/token
 
 ```json
 {
-  "grant_type": "password",
+  "grant_type": "client_credentials",
   "client_id": "SEU_CLIENT_ID",
   "client_secret": "SEU_CLIENT_SECRET",
-  "username": "usuario@local.test",
-  "password": "senha-do-usuario",
-  "scope": "user.profile tenant.access"
+  "scope": "system.health"
 }
 ```
 
@@ -371,12 +417,10 @@ curl --request POST \
   --url http://localhost:8000/oauth/token \
   --header 'Content-Type: application/json' \
   --data '{
-    "grant_type": "password",
+    "grant_type": "client_credentials",
     "client_id": "SEU_CLIENT_ID",
     "client_secret": "SEU_CLIENT_SECRET",
-    "username": "usuario@local.test",
-    "password": "senha-do-usuario",
-    "scope": "user.profile tenant.access"
+    "scope": "system.health"
   }'
 ```
 
@@ -386,20 +430,29 @@ curl --request POST \
 {
   "token_type": "Bearer",
   "expires_in": 31536000,
-  "access_token": "...",
-  "refresh_token": "..."
+  "access_token": "..."
 }
 ```
 
+O grant `client_credentials` não emite `refresh_token`; quando expirar, o integrador solicita um novo token com `client_id` e `client_secret`.
+
 ## Como consumir rota protegida
 
-Depois de obter o token:
+Depois de obter um token de usuário via PKCE:
 
 ```bash
 curl --request GET \
   --url http://localhost:8000/api/v1/auth/me \
   --header 'Authorization: Bearer SEU_ACCESS_TOKEN' \
   --header 'X-Tenant-Id: tenant-main'
+```
+
+Depois de obter um token client credentials:
+
+```bash
+curl --request GET \
+  --url http://localhost:8000/api/v1/system/ping \
+  --header 'Authorization: Bearer SEU_ACCESS_TOKEN'
 ```
 
 ---
@@ -523,10 +576,13 @@ Executa seeders da aplicação.
 
 Gera as chaves do Passport.
 
-## `php artisan passport:client --password`
+## `php artisan passport:client --public`
 
-Cria client OAuth2 do tipo password grant apenas para compatibilidade legada.
-Para novos clients com usuário humano, prefira `php artisan passport:client --public` e Authorization Code + PKCE.
+Cria client OAuth2 público para Authorization Code + PKCE.
+
+## `php artisan passport:client --client`
+
+Cria client OAuth2 confidencial para integrações sistema-a-sistema com Client Credentials.
 
 ## `php artisan tenant:reprocess {tenant_id?} {--all}`
 

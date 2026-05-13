@@ -24,12 +24,12 @@ return [
     |
     | OAuth 2.0 security best current practice no longer recommends the
     | resource owner password credentials grant. Keep this enabled only as a
-    | temporary compatibility bridge for trusted first-party clients while the
-    | project migrates interactive users to Authorization Code + PKCE.
+    | temporary compatibility bridge for trusted first-party clients only.
+    | New interactive clients must use Authorization Code + PKCE instead.
     |
     */
 
-    'enable_password_grant' => env('PASSPORT_ENABLE_PASSWORD_GRANT', true),
+    'enable_password_grant' => env('PASSPORT_ENABLE_PASSWORD_GRANT', false),
 
     /*
     |--------------------------------------------------------------------------

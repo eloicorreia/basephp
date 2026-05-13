@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "BasePHP API",
-        "description": "Documentação oficial da API backend-only BasePHP.\n\nEsta API foi construída em PHP 8.3, Laravel 12 e PostgreSQL, com autenticação OAuth2 via Laravel Passport, multitenancy por schema, logs persistidos em banco e rastreabilidade por request_id e trace_id.\n\nFluxo de uso no Swagger UI:\n1. Clique em Authorize.\n2. Em passport, informe client_id, client_secret, username e password.\n3. Em tenantHeader, informe o código do tenant, por exemplo tenant-main.\n4. Execute os endpoints protegidos diretamente pela interface.\n\nEndpoints tenant-aware exigem:\n- Authorization: Bearer {access_token}\n- X-Tenant-Id: {tenant-code}\n\nEndpoints administrativos exigem usuário autenticado, tenant válido e permissão administrativa.\n\nObservações de segurança:\n- Nunca informe token real, senha real ou client_secret real em exemplos públicos.\n- O header Authorization não deve ser persistido em logs.\n- O header X-Tenant-Id é obrigatório para endpoints tenant-aware.\n- Payloads sensíveis devem ser mascarados nos logs persistidos.",
+        "description": "Documentação oficial da API backend-only BasePHP.\n\nEsta API foi construída em PHP 8.3, Laravel 12 e PostgreSQL, com autenticação OAuth2 via Laravel Passport, multitenancy por schema, logs persistidos em banco e rastreabilidade por request_id e trace_id.\n\nFluxo de uso no Swagger UI com Authorization Code + PKCE:\n1. Clique em Authorize.\n2. Em passport, selecione authorizationCode, informe client_id público e siga o callback OAuth.\n3. Em tenantHeader, informe o código do tenant, por exemplo tenant-main.\n4. Execute os endpoints protegidos diretamente pela interface.\n\nFluxo sistema-a-sistema:\n- Use clientCredentials com client_id, client_secret e escopos operacionais explícitos.\n- Tokens client credentials não representam usuário humano e não devem acessar rotas tenant-aware de usuário.\n- Password grant é desabilitado por padrão e só pode ser reabilitado temporariamente para clients legados.\n\nEndpoints tenant-aware exigem:\n- Authorization: Bearer {access_token}\n- X-Tenant-Id: {tenant-code}\n\nEndpoints administrativos exigem usuário autenticado, tenant válido e permissão administrativa.\n\nObservações de segurança:\n- Nunca informe token real, senha real ou client_secret real em exemplos públicos.\n- O header Authorization não deve ser persistido em logs.\n- O header X-Tenant-Id é obrigatório para endpoints tenant-aware.\n- Payloads sensíveis devem ser mascarados nos logs persistidos.",
         "version": "1.0.0"
     },
     "servers": [
@@ -812,6 +812,55 @@
                     {
                         "passport": [],
                         "tenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/system/ping": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Verifica acesso sistema-a-sistema.",
+                "description": "Endpoint operacional protegido por OAuth2 Client Credentials e escopo system.health.",
+                "operationId": "systemPing",
+                "responses": {
+                    "200": {
+                        "description": "Token client credentials válido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiSuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token ausente ou inválido.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Escopo insuficiente ou token de usuário humano.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "passport": [
+                            "system.health"
+                        ]
                     }
                 ]
             }
@@ -1766,15 +1815,22 @@
         "securitySchemes": {
             "passport": {
                 "type": "oauth2",
-                "description": "Autenticação OAuth2 via Laravel Passport usando password grant.",
+                "description": "Autenticação OAuth2 via Laravel Passport usando Authorization Code + PKCE para usuários humanos e Client Credentials para integrações sistema-a-sistema.",
                 "flows": {
-                    "password": {
+                    "authorizationCode": {
+                        "authorizationUrl": "http://localhost/oauth/authorize",
                         "tokenUrl": "http://localhost/oauth/token",
                         "refreshUrl": "http://localhost/oauth/token",
                         "scopes": {
                             "user.profile": "Permite consultar dados do usuário autenticado.",
                             "tenant.access": "Permite acessar recursos vinculados a tenant.",
-                            "admin": "Permite acessar rotas administrativas."
+                            "admin.full": "Permite acessar rotas administrativas."
+                        }
+                    },
+                    "clientCredentials": {
+                        "tokenUrl": "http://localhost/oauth/token",
+                        "scopes": {
+                            "system.health": "Permite consultar endpoints operacionais sistema-a-sistema."
                         }
                     }
                 }
@@ -1795,6 +1851,10 @@
         {
             "name": "Authentication",
             "description": "Endpoints relacionados ao usuário autenticado, sessão OAuth2 e alteração de senha."
+        },
+        {
+            "name": "System",
+            "description": "Endpoints operacionais protegidos por client credentials."
         },
         {
             "name": "Admin",

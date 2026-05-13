@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
             'tenant.users.write' => 'Criação e manutenção de usuários do tenant',
             'tenants.read' => 'Listagem de tenants',
             'tenants.write' => 'Criação e manutenção de tenants',
+            'system.health' => 'Verificação operacional sistema-a-sistema',
         ]);
 
         RateLimiter::for('auth', function (Request $request): array {
@@ -42,7 +43,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('api', function (Request $request): array {
-            $identifier = (string) ($request->user()?->id ?? $request->ip());
+            $oauthClientId = $request->attributes->get('oauth_client_id');
+            $identifier = $oauthClientId !== null
+                ? 'oauth-client:' . $oauthClientId
+                : 'user-or-ip:' . ($request->user()?->id ?? $request->ip());
 
             return [
                 Limit::perMinute(60)->by($identifier),

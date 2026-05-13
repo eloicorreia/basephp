@@ -73,15 +73,22 @@ return [
             'securitySchemes' => [
                 'passport' => [
                     'type' => 'oauth2',
-                    'description' => 'Autenticação OAuth2 via Laravel Passport. O password grant é mantido apenas como compatibilidade transitória para clients first-party legados; novos clients com usuário humano devem migrar para Authorization Code + PKCE.',
+                    'description' => 'Autenticação OAuth2 via Laravel Passport usando Authorization Code + PKCE para usuários humanos e Client Credentials para integrações sistema-a-sistema.',
                     'flows' => [
-                        'password' => [
+                        'authorizationCode' => [
+                            'authorizationUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/authorize',
                             'tokenUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/token',
                             'refreshUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/token',
                             'scopes' => [
                                 'user.profile' => 'Permite consultar dados do usuário autenticado.',
                                 'tenant.access' => 'Permite acessar recursos vinculados a tenant.',
-                                'admin' => 'Permite acessar rotas administrativas.',
+                                'admin.full' => 'Permite acessar rotas administrativas.',
+                            ],
+                        ],
+                        'clientCredentials' => [
+                            'tokenUrl' => env('APP_URL', 'http://localhost:8000') . '/oauth/token',
+                            'scopes' => [
+                                'system.health' => 'Permite consultar endpoints operacionais sistema-a-sistema.',
                             ],
                         ],
                     ],
@@ -116,7 +123,7 @@ return [
                 'persist_authorization' => env('L5_SWAGGER_UI_PERSIST_AUTHORIZATION', true),
 
                 'oauth2' => [
-                    'use_pkce_with_authorization_code_grant' => false,
+                    'use_pkce_with_authorization_code_grant' => true,
                 ],
             ],
         ],

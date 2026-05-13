@@ -9,10 +9,12 @@
 ## 2. OAuth clients
 - Cada aplicação consumidora deve possuir seu próprio client OAuth.
 - Não é permitido compartilhar o mesmo client entre múltiplas aplicações.
-- Password grant é suportado apenas como compatibilidade transitória para aplicações first-party já controladas pela plataforma.
-- Novos fluxos com usuário humano devem priorizar Authorization Code Grant com PKCE.
+- Password grant é desabilitado por padrão e só pode ser reabilitado temporariamente para aplicações first-party legadas.
+- Fluxos com usuário humano devem usar Authorization Code Grant com PKCE.
 - Integrações sistema-a-sistema devem usar client credentials.
-- O uso de password grant deve permanecer isolado atrás da configuração `PASSPORT_ENABLE_PASSWORD_GRANT` e deve ser removido quando os clientes first-party migrarem para PKCE.
+- Rotas client credentials não podem usar middlewares que dependem de usuário humano, como `user.active`, `tenant.access`, `password.changed` ou `role`.
+- Rotas client credentials devem usar `client.credentials` e escopos explícitos, como `scope:system.health`.
+- O uso excepcional de password grant deve permanecer isolado atrás da configuração `PASSPORT_ENABLE_PASSWORD_GRANT`.
 
 ## 3. Tenant
 - O tenant é obrigatório nas rotas que dependem de contexto tenant.
