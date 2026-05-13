@@ -18,7 +18,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Passport::enablePasswordGrant();
+        if ((bool) config('passport.enable_password_grant', false)) {
+            Passport::enablePasswordGrant();
+        }
 
         Passport::tokensCan([
             'admin.full' => 'Acesso administrativo total',

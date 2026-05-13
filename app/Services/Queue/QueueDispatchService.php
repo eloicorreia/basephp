@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Queue;
 
 use App\DTO\Queue\DispatchContextDTO;
-use App\Exceptions\InvalidQueueDispatchModeException;
+use App\Exceptions\Queue\InvalidQueueDispatchModeException;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 

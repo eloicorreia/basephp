@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Support\Tenant;
 
+use App\Contracts\Multitenancy\TenantContextInterface;
 use App\Exceptions\TenantContextNotDefinedException;
 use App\Models\Tenant;
 
-final class TenantContext
+final class TenantContext implements TenantContextInterface
 {
     private ?Tenant $tenant = null;
 

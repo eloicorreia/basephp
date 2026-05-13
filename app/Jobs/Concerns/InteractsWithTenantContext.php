@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\Concerns;
 
-use App\Exceptions\TenantNotAvailableForAsyncExecutionException;
+use App\Exceptions\Tenant\TenantNotAvailableForAsyncExecutionException;
 use App\Models\Tenant;
 use App\Services\Tenant\TenantExecutionManager;
 use Closure;

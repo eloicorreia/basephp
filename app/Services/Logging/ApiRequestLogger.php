@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Logging;
 
 use App\Models\ApiRequestLog;
+use App\Support\Logging\SensitiveDataSanitizer;
 use App\Support\Tenant\TenantContext;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,7 +13,8 @@ use Symfony\Component\HttpFoundation\Response;
 class ApiRequestLogger
 {
     public function __construct(
-        private readonly TenantContext $tenantContext
+        private readonly TenantContext $tenantContext,
+        private readonly SensitiveDataSanitizer $sensitiveDataSanitizer,
     ) {
     }
 
@@ -37,7 +39,7 @@ class ApiRequestLogger
             'ip' => $request->ip(),
             'user_agent' => (string) $request->userAgent(),
             'request_headers' => $this->sanitizeHeaders($request->headers->all()),
-            'request_query' => $request->query(),
+            'request_query' => $this->sanitizePayload($request->query()),
             'request_body' => $this->sanitizePayload($request->all()),
             'response_body' => $this->sanitizeResponse($response),
             'processing_status' => $status,
@@ -60,26 +62,12 @@ class ApiRequestLogger
 
     private function sanitizeHeaders(array $headers): array
     {
-        unset($headers['authorization']);
-
-        return $headers;
+        return $this->sanitizePayload($headers);
     }
 
     private function sanitizePayload(array $payload): array
     {
-        foreach ([
-            'password',
-            'current_password',
-            'new_password',
-            'new_password_confirmation',
-            'client_secret',
-        ] as $field) {
-            if (array_key_exists($field, $payload)) {
-                $payload[$field] = '***';
-            }
-        }
-
-        return $payload;
+        return $this->sensitiveDataSanitizer->sanitizeArray($payload) ?? [];
     }
 
     private function sanitizeResponse(Response $response): array|string|null
@@ -93,7 +81,9 @@ class ApiRequestLogger
         $decoded = json_decode($content, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
-            return $decoded;
+            return is_array($decoded)
+                ? $this->sanitizePayload($decoded)
+                : $decoded;
         }
 
         return mb_substr($content, 0, 4000);

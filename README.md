@@ -197,15 +197,32 @@ Ele utiliza:
 
 A base está preparada para autenticação via OAuth2 com Laravel Passport.
 
-Atualmente, o fluxo principal suportado é o **password grant** para first-party clients, respeitando a arquitetura atual do projeto.
+Atualmente, o **password grant** pode ser habilitado como compatibilidade transitória para first-party clients existentes.
+
+Para longo prazo, o fluxo recomendado para usuários humanos é **Authorization Code Grant com PKCE**. O password grant não deve ser usado para novos clientes, pois expõe a senha do usuário diretamente ao client e dificulta adoção de MFA, WebAuthn e autenticações com múltiplas etapas.
 
 ## Quando usar
 
 ### Password grant
-Use quando a aplicação cliente é controlada pela própria plataforma e precisa autenticar usuário + senha.
+Use apenas como ponte de compatibilidade para aplicação first-party já existente e controlada pela própria plataforma.
+
+O uso fica condicionado à variável:
+
+```env
+PASSPORT_ENABLE_PASSWORD_GRANT=true
+```
+
+Quando todos os clientes migrarem para PKCE, defina:
+
+```env
+PASSPORT_ENABLE_PASSWORD_GRANT=false
+```
+
+### Authorization Code + PKCE
+Use para aplicações com usuário humano, incluindo SPAs, mobile apps e frontends first-party que não devem manipular senha diretamente no client.
 
 ### Client credentials
-Pode ser utilizado futuramente para integração sistema-a-sistema, quando não houver usuário humano autenticado.
+Use para integração sistema-a-sistema, quando não houver usuário humano autenticado.
 
 ---
 
@@ -281,6 +298,9 @@ php artisan passport:keys --force
 ```bash
 php artisan passport:client --password
 ```
+
+Este passo é necessário apenas se `PASSPORT_ENABLE_PASSWORD_GRANT=true`.
+Para novos clients com usuário humano, prefira criar um client público para Authorization Code + PKCE.
 
 Esse command vai solicitar:
 
@@ -505,7 +525,8 @@ Gera as chaves do Passport.
 
 ## `php artisan passport:client --password`
 
-Cria client OAuth2 do tipo password grant.
+Cria client OAuth2 do tipo password grant apenas para compatibilidade legada.
+Para novos clients com usuário humano, prefira `php artisan passport:client --public` e Authorization Code + PKCE.
 
 ## `php artisan tenant:reprocess {tenant_id?} {--all}`
 

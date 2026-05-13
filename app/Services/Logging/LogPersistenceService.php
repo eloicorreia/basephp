@@ -6,29 +6,16 @@ namespace App\Services\Logging;
 
 use App\Models\AuditLog;
 use App\Models\SystemLog;
+use App\Support\Logging\SensitiveDataSanitizer;
 use Illuminate\Http\Request;
 use Throwable;
 
 class LogPersistenceService
 {
-    /**
-     * @var array<int, string>
-     */
-    private const SENSITIVE_KEYS = [
-        'password',
-        'password_confirmation',
-        'current_password',
-        'new_password',
-        'new_password_confirmation',
-        'client_secret',
-        'access_token',
-        'refresh_token',
-        'token',
-        'authorization',
-        'bearer_token',
-        'secret',
-        'api_key',
-    ];
+    public function __construct(
+        private readonly SensitiveDataSanitizer $sensitiveDataSanitizer,
+    ) {
+    }
 
     public function logSystemInfo(
         string $message,
@@ -181,32 +168,7 @@ class LogPersistenceService
      */
     private function sanitizeArray(?array $data): ?array
     {
-        if ($data === null) {
-            return null;
-        }
-
-        $sanitized = [];
-
-        foreach ($data as $key => $value) {
-            $normalizedKey = is_string($key) ? mb_strtolower($key) : $key;
-
-            if (
-                is_string($normalizedKey)
-                && in_array($normalizedKey, self::SENSITIVE_KEYS, true)
-            ) {
-                $sanitized[$key] = '***';
-                continue;
-            }
-
-            if (is_array($value)) {
-                $sanitized[$key] = $this->sanitizeArray($value);
-                continue;
-            }
-
-            $sanitized[$key] = $value;
-        }
-
-        return $sanitized;
+        return $this->sensitiveDataSanitizer->sanitizeArray($data);
     }
 
     private function requestId(?Request $request): ?string
