@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\Admin\StoreTenantRequest;
 use App\Http\Resources\TenantResource;
 use App\Models\Tenant;
 use App\Services\Tenant\TenantProvisioningService;
+use App\Support\Http\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -24,17 +25,10 @@ class TenantController extends Controller
             ->orderBy('id', 'desc')
             ->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => TenantResource::collection($tenants->items()),
-            'meta' => [
-                'page' => $tenants->currentPage(),
-                'per_page' => $tenants->perPage(),
-                'total' => $tenants->total(),
-                'last_page' => $tenants->lastPage(),
-            ],
-        ]);
+        return ApiResponse::paginated(
+            paginator: $tenants,
+            data: TenantResource::collection($tenants->items()),
+        );
     }
 
     public function store(StoreTenantRequest $request): JsonResponse
@@ -45,19 +39,15 @@ class TenantController extends Controller
             schemaName: $request->validated('schema_name'),
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Tenant provisionado com sucesso.',
-            'data' => new TenantResource($tenant),
-        ], 201);
+        return ApiResponse::success(
+            data: new TenantResource($tenant),
+            message: 'Tenant provisionado com sucesso.',
+            status: 201,
+        );
     }
 
     public function show(Tenant $tenant): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => new TenantResource($tenant),
-        ]);
+        return ApiResponse::retrieved(new TenantResource($tenant));
     }
 }

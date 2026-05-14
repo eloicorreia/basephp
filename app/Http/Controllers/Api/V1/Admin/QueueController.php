@@ -14,6 +14,7 @@ use App\Services\Logging\LogPersistenceService;
 use App\Services\Queue\QueueCatalogService;
 use App\Services\Queue\QueueMonitoringService;
 use App\Support\Auth\AuthenticatedUserId;
+use App\Support\Http\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 final class QueueController extends Controller
@@ -37,11 +38,7 @@ final class QueueController extends Controller
             processingStatus: 'success',
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => QueueCatalogResource::collection($items),
-        ]);
+        return ApiResponse::retrieved(QueueCatalogResource::collection($items));
     }
 
     public function summary(QueueListRequest $request): JsonResponse
@@ -62,11 +59,7 @@ final class QueueController extends Controller
             processingStatus: 'success',
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => new QueueSummaryResource($summary),
-        ]);
+        return ApiResponse::retrieved(new QueueSummaryResource($summary));
     }
 
     public function index(QueueListRequest $request): JsonResponse
@@ -76,27 +69,16 @@ final class QueueController extends Controller
             perPage: (int) $request->validated('per_page', 15),
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => QueueJobResource::collection($jobs->items()),
-            'meta' => [
-                'page' => $jobs->currentPage(),
-                'per_page' => $jobs->perPage(),
-                'total' => $jobs->total(),
-                'last_page' => $jobs->lastPage(),
-            ],
-        ]);
+        return ApiResponse::paginated(
+            paginator: $jobs,
+            data: QueueJobResource::collection($jobs->items()),
+        );
     }
 
     public function show(Job $job): JsonResponse
     {
         $payload = $this->queueMonitoringService->detail($job);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => new QueueJobResource($payload),
-        ]);
+        return ApiResponse::retrieved(new QueueJobResource($payload));
     }
 }

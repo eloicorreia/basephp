@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\Admin\StoreUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Admin\UserService;
+use App\Support\Http\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,17 +27,10 @@ class UserController extends Controller
             ->orderBy('id', 'desc')
             ->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => UserResource::collection($users->items()),
-            'meta' => [
-                'page' => $users->currentPage(),
-                'per_page' => $users->perPage(),
-                'total' => $users->total(),
-                'last_page' => $users->lastPage(),
-            ],
-        ]);
+        return ApiResponse::paginated(
+            paginator: $users,
+            data: UserResource::collection($users->items()),
+        );
     }
 
     public function store(StoreUserRequest $request): JsonResponse
@@ -44,21 +38,17 @@ class UserController extends Controller
         $dto = CreateUserDTO::fromArray($request->validated());
         $user = $this->userService->create($dto)->load('role');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuário criado com sucesso.',
-            'data' => new UserResource($user),
-        ], 201);
+        return ApiResponse::success(
+            data: new UserResource($user),
+            message: 'Usuário criado com sucesso.',
+            status: 201,
+        );
     }
 
     public function show(User $user): JsonResponse
     {
         $user->load('role');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => new UserResource($user),
-        ]);
+        return ApiResponse::retrieved(new UserResource($user));
     }
 }

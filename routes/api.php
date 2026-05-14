@@ -10,27 +10,21 @@ use App\Http\Controllers\Api\V1\Admin\TenantUserController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
+use App\Support\Auth\OAuthScopes;
+use App\Support\Http\ApiResponse;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::get('/health', function () {
-        return response()->json([
-            'success' => true,
-            'message' => 'Operação realizada com sucesso.',
-            'data' => ['status' => 'ok'],
-        ]);
+        return ApiResponse::success(['status' => 'ok']);
     });
 
     Route::middleware([
         'client.credentials',
         'throttle:api',
-        'scope:system.health',
+        OAuthScopes::scope(OAuthScopes::SYSTEM_HEALTH),
     ])->get('/system/ping', function () {
-        return response()->json([
-            'success' => true,
-            'message' => 'Operação realizada com sucesso.',
-            'data' => ['area' => 'system'],
-        ]);
+        return ApiResponse::success(['area' => 'system']);
     });
 
     Route::middleware([
@@ -39,75 +33,71 @@ Route::prefix('v1')->group(function (): void {
         'user.active',
     ])->group(function (): void {
         Route::post('/auth/change-password', ChangePasswordController::class)
-            ->middleware(['throttle:strict', 'scope:user.password.change']);
+            ->middleware(['throttle:strict', OAuthScopes::scope(OAuthScopes::USER_PASSWORD_CHANGE)]);
     });
 
     Route::middleware([
         'auth:api',
         'throttle:api',
         'user.active',
-        'scope:tenant.access',
+        OAuthScopes::scope(OAuthScopes::TENANT_ACCESS),
         'tenant.resolve',
         'tenant.access',
         'password.changed',
     ])->group(function (): void {
         Route::get('/auth/me', MeController::class)
-            ->middleware('scope:user.profile');
+            ->middleware(OAuthScopes::scope(OAuthScopes::USER_PROFILE));
 
         Route::middleware(['role:admin'])->group(function (): void {
             Route::get('/admin/ping', function () {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Operação realizada com sucesso.',
-                    'data' => ['area' => 'admin'],
-                ]);
-            })->middleware('scope:admin.full');
+                return ApiResponse::success(['area' => 'admin']);
+            })->middleware(OAuthScopes::scope(OAuthScopes::ADMIN_FULL));
 
             Route::get('/admin/tenants', [TenantController::class, 'index'])
-                ->middleware('any_scope:admin.full,tenants.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::TENANTS_READ));
             Route::post('/admin/tenants', [TenantController::class, 'store'])
-                ->middleware('any_scope:admin.full,tenants.write');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::TENANTS_WRITE));
             Route::get('/admin/tenants/{tenant}', [TenantController::class, 'show'])
-                ->middleware('any_scope:admin.full,tenants.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::TENANTS_READ));
 
             Route::get('/admin/users', [UserController::class, 'index'])
-                ->middleware('any_scope:admin.full,users.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_READ));
             Route::post('/admin/users', [UserController::class, 'store'])
-                ->middleware('any_scope:admin.full,users.write');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_WRITE));
             Route::get('/admin/users/{user}', [UserController::class, 'show'])
-                ->middleware('any_scope:admin.full,users.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_READ));
 
             Route::get('/admin/tenant-users', [TenantUserController::class, 'index'])
-                ->middleware('any_scope:admin.full,tenant.users.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::TENANT_USERS_READ));
             Route::post('/admin/tenant-users', [TenantUserController::class, 'store'])
-                ->middleware('any_scope:admin.full,tenant.users.write');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::TENANT_USERS_WRITE));
 
             Route::get('/admin/queues/catalog', [QueueController::class, 'catalog'])
-                ->middleware('any_scope:admin.full,queues.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_READ));
             Route::get('/admin/queues/summary', [QueueController::class, 'summary'])
-                ->middleware('any_scope:admin.full,queues.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_READ));
             Route::get('/admin/queues/jobs', [QueueController::class, 'index'])
-                ->middleware('any_scope:admin.full,queues.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_READ));
             Route::get('/admin/queues/jobs/{job}', [QueueController::class, 'show'])
-                ->middleware('any_scope:admin.full,queues.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_READ));
 
             Route::get('/admin/queues/failed-jobs', [FailedJobController::class, 'index'])
-                ->middleware('any_scope:admin.full,queues.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_READ));
             Route::get('/admin/queues/failed-jobs/{failedJob}', [FailedJobController::class, 'show'])
-                ->middleware('any_scope:admin.full,queues.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_READ));
             Route::post('/admin/queues/failed-jobs/{failedJob}/retry', [FailedJobController::class, 'retry'])
-                ->middleware('any_scope:admin.full,queues.write');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_WRITE));
             Route::delete('/admin/queues/failed-jobs/{failedJob}', [FailedJobController::class, 'destroy'])
-                ->middleware('any_scope:admin.full,queues.write');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::QUEUES_WRITE));
 
             Route::get('/admin/emails', [EmailDispatchController::class, 'index'])
-                ->middleware('any_scope:admin.full,emails.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::EMAILS_READ));
             Route::get('/admin/emails/{emailDispatch}', [EmailDispatchController::class, 'show'])
-                ->middleware('any_scope:admin.full,emails.read');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::EMAILS_READ));
             Route::post('/admin/emails/send', [EmailDispatchController::class, 'send'])
-                ->middleware('any_scope:admin.full,emails.write');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::EMAILS_WRITE));
             Route::post('/admin/emails/{emailDispatch}/retry', [EmailDispatchController::class, 'retry'])
-                ->middleware('any_scope:admin.full,emails.write');
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::EMAILS_WRITE));
         });
     });
 });

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Contracts\Multitenancy\TenantContextInterface;
+use App\Support\Auth\OAuthScopes;
 use App\Support\Tenant\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -26,23 +27,7 @@ class AppServiceProvider extends ServiceProvider
             Passport::enablePasswordGrant();
         }
 
-        Passport::tokensCan([
-            'admin.full' => 'Acesso administrativo total',
-            'tenant.access' => 'Acesso ao tenant autenticado',
-            'user.profile' => 'Acesso ao perfil autenticado',
-            'user.password.change' => 'Alteração da própria senha',
-            'tenant.users.read' => 'Listagem de usuários do tenant',
-            'tenant.users.write' => 'Criação e manutenção de usuários do tenant',
-            'tenants.read' => 'Listagem de tenants',
-            'tenants.write' => 'Criação e manutenção de tenants',
-            'users.read' => 'Listagem de usuários',
-            'users.write' => 'Criação e manutenção de usuários',
-            'queues.read' => 'Consulta operacional de filas',
-            'queues.write' => 'Ações operacionais em filas',
-            'emails.read' => 'Consulta de envios de e-mail',
-            'emails.write' => 'Envio e reprocessamento de e-mails',
-            'system.health' => 'Verificação operacional sistema-a-sistema',
-        ]);
+        Passport::tokensCan(OAuthScopes::descriptions());
 
         RateLimiter::for('auth', function (Request $request): array {
             $identifier = (string) ($request->input('username') ?? $request->ip());

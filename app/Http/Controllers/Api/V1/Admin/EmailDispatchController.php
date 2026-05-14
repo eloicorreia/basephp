@@ -11,6 +11,7 @@ use App\Http\Resources\Api\V1\EmailDispatchResource;
 use App\Models\EmailDispatch;
 use App\Services\Mail\EmailDispatchService;
 use App\Support\Auth\AuthenticatedUserId;
+use App\Support\Http\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 final class EmailDispatchController extends Controller
@@ -26,26 +27,15 @@ final class EmailDispatchController extends Controller
             perPage: (int) $request->validated('per_page', 15),
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => EmailDispatchResource::collection($items->items()),
-            'meta' => [
-                'page' => $items->currentPage(),
-                'per_page' => $items->perPage(),
-                'total' => $items->total(),
-                'last_page' => $items->lastPage(),
-            ],
-        ]);
+        return ApiResponse::paginated(
+            paginator: $items,
+            data: EmailDispatchResource::collection($items->items()),
+        );
     }
 
     public function show(EmailDispatch $emailDispatch): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => new EmailDispatchResource($emailDispatch),
-        ]);
+        return ApiResponse::retrieved(new EmailDispatchResource($emailDispatch));
     }
 
     public function send(SendEmailRequest $request): JsonResponse
@@ -56,11 +46,11 @@ final class EmailDispatchController extends Controller
             actorRole: auth()->user()?->role?->code,
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'E-mail enviado para processamento com sucesso.',
-            'data' => new EmailDispatchResource($emailDispatch),
-        ], 202);
+        return ApiResponse::success(
+            data: new EmailDispatchResource($emailDispatch),
+            message: 'E-mail enviado para processamento com sucesso.',
+            status: 202,
+        );
     }
 
     public function retry(EmailDispatch $emailDispatch): JsonResponse
@@ -71,10 +61,10 @@ final class EmailDispatchController extends Controller
             actorRole: auth()->user()?->role?->code,
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Reenvio de e-mail solicitado com sucesso.',
-            'data' => new EmailDispatchResource($retried),
-        ], 202);
+        return ApiResponse::success(
+            data: new EmailDispatchResource($retried),
+            message: 'Reenvio de e-mail solicitado com sucesso.',
+            status: 202,
+        );
     }
 }

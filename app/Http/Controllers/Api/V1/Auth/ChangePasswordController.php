@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\ChangePasswordRequest;
 use App\Models\User;
 use App\Services\Auth\AuthService;
+use App\Support\Http\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 
@@ -31,10 +32,8 @@ class ChangePasswordController extends Controller
             newPassword: $request->validated('new_password'),
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Senha alterada com sucesso.',
-            'data' => [],
-        ]);
+        return ApiResponse::success(
+            message: 'Senha alterada com sucesso.',
+        );
     }
 }

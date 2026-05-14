@@ -74,6 +74,55 @@ A base segue estes princípios obrigatórios:
 - Logs são persistidos em tabela
 - Execuções tenant-aware não manipulam schema manualmente fora do executor oficial
 
+## Contratos rígidos da base oficial
+
+Esta base pode ser usada como origem de novos projetos, mas os itens abaixo devem ser tratados como contrato rígido. Mudanças nesses pontos precisam vir acompanhadas de revisão arquitetural, atualização do README e ajuste dos testes de contrato em `tests/Feature/Architecture/BaseContractArchitectureTest.php`.
+
+### Contrato REST
+
+- toda API funcional deve ficar sob `/api/v1`
+- controllers de API devem responder por `App\Support\Http\ApiResponse`
+- controllers não devem usar `response()->json()` diretamente
+- respostas de sucesso, erro e paginação devem manter os envelopes documentados na seção **APIs REST**
+- erro global deve sair pelo exception handler central em `bootstrap/app.php`
+
+### Contrato OAuth2
+
+- todos os scopes oficiais ficam em `App\Support\Auth\OAuthScopes`
+- `App\Providers\AppServiceProvider` registra scopes a partir de `OAuthScopes`
+- `config/l5-swagger.php` documenta scopes a partir de `OAuthScopes`
+- rotas devem usar `OAuthScopes::scope()` ou `OAuthScopes::any()`, sem string solta de scope
+- usuários humanos usam Authorization Code + PKCE
+- integrações sistema-a-sistema usam Client Credentials
+- password grant fica desabilitado por padrão
+
+### Contrato de tenancy
+
+- rotas tenant-aware exigem `auth:api`, `tenant.access`, `tenant.resolve`, `tenant.access` e `password.changed`
+- controllers não leem `X-Tenant-Id`, não manipulam `TenantContext` e não executam `SET search_path`
+- troca de `search_path` fica restrita aos serviços de infraestrutura de tenancy
+- execuções fora do HTTP devem passar por `TenantExecutionManager`
+
+### Contrato de logging e observabilidade
+
+- request logging passa por `ApiRequestLoggingMiddleware` e `ApiRequestLogger`
+- payloads sensíveis devem passar pela sanitização recursiva oficial
+- persistência de query/body/response body deve ser exceção consciente em produção
+- toda tabela operacional de log precisa ter retenção configurada
+- `request_id` e `trace_id` devem existir em toda requisição HTTP
+
+### Contrato de exception handler
+
+- validação, autenticação, autorização, exceções de domínio, HTTP exceptions e falhas inesperadas devem ser convertidas no envelope JSON padrão
+- exception handler não deve expor detalhes internos em erro 500
+- toda exceção relevante deve tentar persistir log técnico sem impedir a resposta da API
+
+### Contrato de testes
+
+- testes de arquitetura são parte da base, não documentação opcional
+- qualquer novo módulo deve ter testes de feature cobrindo autenticação, autorização, tenancy e envelope de resposta
+- mudanças em OAuth, tenancy, logging, exception handler ou responses devem atualizar os testes de contrato antes de serem aceitas
+
 ---
 
 # 4. Estrutura do projeto
@@ -225,7 +274,7 @@ Use para integração sistema-a-sistema, quando não houver usuário humano aute
 
 ## Escopos oficiais
 
-Os escopos são registrados em `App\Providers\AppServiceProvider` e aplicados diretamente nas rotas. Ao criar um client OAuth, conceda somente os escopos necessários.
+Os escopos são centralizados em `App\Support\Auth\OAuthScopes`, registrados em `App\Providers\AppServiceProvider`, documentados em `config/l5-swagger.php` e aplicados diretamente nas rotas. Ao criar um client OAuth, conceda somente os escopos necessários.
 
 | Escopo | Uso |
 | --- | --- |
@@ -851,6 +900,7 @@ A suíte de testes da base cobre a infraestrutura principal do projeto.
 ```text
 tests/
 ├── Feature/
+│   ├── Architecture/
 │   ├── Auth/
 │   ├── Console/
 │   ├── Listeners/
@@ -902,6 +952,22 @@ DB_DATABASE=basephp_test
 ```
 
 Se `DB_DATABASE` não for exatamente igual a `TEST_DATABASE_NAME`, a limpeza falha antes de truncar tabelas ou dropar schemas.
+
+## Testes de contrato arquitetural
+
+Os testes em `tests/Feature/Architecture/BaseContractArchitectureTest.php` protegem a base contra regressões estruturais. Eles validam:
+
+- rotas públicas, rotas client credentials, rotas de usuário e rotas admin com middlewares corretos
+- scopes usados nas rotas presentes em `OAuthScopes`
+- Swagger/OpenAPI sincronizado com `OAuthScopes`
+- controllers de API usando `ApiResponse`
+- exception handler usando o contrato de erro padrão
+- controllers sem manipulação direta de tenancy
+- `SET search_path` restrito à infraestrutura de tenancy
+- configuração mínima de logging e retenção
+- presença desta documentação de contratos no README
+
+Se um novo projeto derivado precisar mudar algum desses pontos, ajuste o contrato deliberadamente. Não remova o teste para silenciar falha pontual.
 
 ---
 
@@ -967,6 +1033,7 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 - não contêm regra de negócio
 - não manipulam schema
 - não persistem logs manualmente
+- retornam respostas por `ApiResponse`
 
 ## Requests
 

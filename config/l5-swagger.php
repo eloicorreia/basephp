@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\EnsureDocumentationAccess;
+use App\Support\Auth\OAuthScopes;
 use L5Swagger\Generator;
 
 $environment = (string) env('APP_ENV', 'production');
@@ -82,28 +83,11 @@ return [
                             'authorizationUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/authorize',
                             'tokenUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/token',
                             'refreshUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/token',
-                            'scopes' => [
-                                'user.profile' => 'Permite consultar dados do usuário autenticado.',
-                                'user.password.change' => 'Permite alterar a própria senha.',
-                                'tenant.access' => 'Permite acessar recursos vinculados a tenant.',
-                                'admin.full' => 'Permite acessar rotas administrativas.',
-                                'tenants.read' => 'Permite consultar tenants.',
-                                'tenants.write' => 'Permite criar e manter tenants.',
-                                'users.read' => 'Permite consultar usuários globais.',
-                                'users.write' => 'Permite criar e manter usuários globais.',
-                                'tenant.users.read' => 'Permite consultar vínculos usuário x tenant.',
-                                'tenant.users.write' => 'Permite criar e manter vínculos usuário x tenant.',
-                                'queues.read' => 'Permite consultar filas, jobs e falhas.',
-                                'queues.write' => 'Permite executar ações operacionais em filas.',
-                                'emails.read' => 'Permite consultar envios de e-mail.',
-                                'emails.write' => 'Permite enviar e reprocessar e-mails.',
-                            ],
+                            'scopes' => OAuthScopes::authorizationCodeDescriptions(),
                         ],
                         'clientCredentials' => [
                             'tokenUrl' => env('APP_URL', 'http://localhost:8000').'/oauth/token',
-                            'scopes' => [
-                                'system.health' => 'Permite consultar endpoints operacionais sistema-a-sistema.',
-                            ],
+                            'scopes' => OAuthScopes::clientCredentialsDescriptions(),
                         ],
                     ],
                 ],

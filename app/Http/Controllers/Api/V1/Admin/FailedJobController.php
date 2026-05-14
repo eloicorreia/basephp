@@ -10,6 +10,7 @@ use App\Http\Resources\Api\V1\FailedJobResource;
 use App\Models\FailedJob;
 use App\Services\Queue\FailedJobService;
 use App\Support\Auth\AuthenticatedUserId;
+use App\Support\Http\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 final class FailedJobController extends Controller
@@ -25,26 +26,15 @@ final class FailedJobController extends Controller
             perPage: (int) $request->validated('per_page', 15),
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => FailedJobResource::collection($items->items()),
-            'meta' => [
-                'page' => $items->currentPage(),
-                'per_page' => $items->perPage(),
-                'total' => $items->total(),
-                'last_page' => $items->lastPage(),
-            ],
-        ]);
+        return ApiResponse::paginated(
+            paginator: $items,
+            data: FailedJobResource::collection($items->items()),
+        );
     }
 
     public function show(FailedJob $failedJob): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => new FailedJobResource($failedJob),
-        ]);
+        return ApiResponse::retrieved(new FailedJobResource($failedJob));
     }
 
     public function retry(FailedJob $failedJob): JsonResponse
@@ -54,11 +44,10 @@ final class FailedJobController extends Controller
             userId: AuthenticatedUserId::resolve(),
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Retry do job solicitado com sucesso.',
-            'data' => [],
-        ], 202);
+        return ApiResponse::success(
+            message: 'Retry do job solicitado com sucesso.',
+            status: 202,
+        );
     }
 
     public function destroy(FailedJob $failedJob): JsonResponse
@@ -68,10 +57,8 @@ final class FailedJobController extends Controller
             userId: AuthenticatedUserId::resolve(),
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Job falho removido com sucesso.',
-            'data' => [],
-        ]);
+        return ApiResponse::success(
+            message: 'Job falho removido com sucesso.',
+        );
     }
 }

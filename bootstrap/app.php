@@ -13,6 +13,7 @@ use App\Http\Middleware\RequestContextMiddleware;
 use App\Http\Middleware\ResolveTenantMiddleware;
 use App\Services\Logging\LogPersistenceService;
 use App\Support\Http\ApiErrorFormatter;
+use App\Support\Http\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -63,11 +64,11 @@ return Application::configure(basePath: dirname(__DIR__))
             } catch (Throwable) {
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro de validação.',
-                'errors' => ApiErrorFormatter::fromValidation($e->errors()),
-            ], $status);
+            return ApiResponse::error(
+                message: 'Erro de validação.',
+                errors: ApiErrorFormatter::fromValidation($e->errors()),
+                status: $status,
+            );
         });
 
         $exceptions->render(function (AuthenticationException $e, Request $request) {
@@ -84,11 +85,10 @@ return Application::configure(basePath: dirname(__DIR__))
             } catch (Throwable) {
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Não autenticado.',
-                'errors' => [],
-            ], $status);
+            return ApiResponse::error(
+                message: 'Não autenticado.',
+                status: $status,
+            );
         });
 
         $exceptions->render(function (AuthorizationException $e, Request $request) {
@@ -105,11 +105,10 @@ return Application::configure(basePath: dirname(__DIR__))
             } catch (Throwable) {
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Acesso negado.',
-                'errors' => [],
-            ], $status);
+            return ApiResponse::error(
+                message: 'Acesso negado.',
+                status: $status,
+            );
         });
 
         $exceptions->render(function (ApiException $e, Request $request) {
@@ -126,11 +125,11 @@ return Application::configure(basePath: dirname(__DIR__))
             } catch (Throwable) {
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'errors' => $e->errors(),
-            ], $status);
+            return ApiResponse::error(
+                message: $e->getMessage(),
+                errors: $e->errors(),
+                status: $status,
+            );
         });
 
         $exceptions->render(function (HttpExceptionInterface $e, Request $request) {
@@ -159,11 +158,10 @@ return Application::configure(basePath: dirname(__DIR__))
             } catch (Throwable) {
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => $message,
-                'errors' => [],
-            ], $status);
+            return ApiResponse::error(
+                message: $message,
+                status: $status,
+            );
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {
@@ -180,11 +178,10 @@ return Application::configure(basePath: dirname(__DIR__))
             } catch (Throwable) {
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao processar a requisição.',
-                'errors' => [],
-            ], $status);
+            return ApiResponse::error(
+                message: 'Erro ao processar a requisição.',
+                status: $status,
+            );
         });
     })
     ->create();

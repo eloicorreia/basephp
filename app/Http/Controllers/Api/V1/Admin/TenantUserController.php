@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\Admin\StoreTenantUserRequest;
 use App\Http\Resources\Api\V1\TenantUserResource;
 use App\Models\TenantUser;
 use App\Services\Admin\TenantUserService;
+use App\Support\Http\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,17 +27,10 @@ class TenantUserController extends Controller
             ->orderBy('id', 'desc')
             ->paginate(15);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => TenantUserResource::collection($items->items()),
-            'meta' => [
-                'page' => $items->currentPage(),
-                'per_page' => $items->perPage(),
-                'total' => $items->total(),
-                'last_page' => $items->lastPage(),
-            ],
-        ]);
+        return ApiResponse::paginated(
+            paginator: $items,
+            data: TenantUserResource::collection($items->items()),
+        );
     }
 
     public function store(StoreTenantUserRequest $request): JsonResponse
@@ -47,10 +41,10 @@ class TenantUserController extends Controller
             ->createOrUpdate($dto)
             ->load(['tenant', 'user', 'role']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Vínculo salvo com sucesso.',
-            'data' => new TenantUserResource($tenantUser),
-        ], 201);
+        return ApiResponse::success(
+            data: new TenantUserResource($tenantUser),
+            message: 'Vínculo salvo com sucesso.',
+            status: 201,
+        );
     }
 }

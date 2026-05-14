@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AuthenticatedUserResource;
 use App\Services\Logging\LogPersistenceService;
+use App\Support\Http\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,10 +34,6 @@ class MeController extends Controller
             processingStatus: 'success',
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Dados recuperados com sucesso.',
-            'data' => new AuthenticatedUserResource($user),
-        ]);
+        return ApiResponse::retrieved(new AuthenticatedUserResource($user));
     }
 }
