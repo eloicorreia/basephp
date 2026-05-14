@@ -98,7 +98,9 @@ Esta base pode ser usada como origem de novos projetos, mas os itens abaixo deve
 
 ### Contrato de tenancy
 
-- rotas tenant-aware exigem `auth:api`, `tenant.access`, `tenant.resolve`, `tenant.access` e `password.changed`
+- rotas tenant-aware exigem `auth:api`, o scope OAuth `tenant.access`, o middleware `tenant.resolve`, o middleware `tenant.access` e `password.changed`
+- o scope OAuth `tenant.access` autoriza o token a acessar área tenant-aware
+- o middleware `tenant.access` valida o vínculo ativo entre usuário autenticado e tenant resolvido
 - controllers não leem `X-Tenant-Id`, não manipulam `TenantContext` e não executam `SET search_path`
 - troca de `search_path` fica restrita aos serviços de infraestrutura de tenancy
 - execuções fora do HTTP devem passar por `TenantExecutionManager`
@@ -291,7 +293,7 @@ Os escopos são centralizados em `App\Support\Auth\OAuthScopes`, registrados em 
 
 Regras importantes:
 
-- rotas tenant-aware exigem `tenant.access`
+- rotas tenant-aware exigem o scope OAuth `tenant.access` e o middleware `tenant.access`
 - rotas administrativas exigem role `admin` e escopo específico ou `admin.full`
 - rotas client credentials não podem depender de usuário humano
 - `system.health` deve ser usado apenas com client credentials
@@ -449,6 +451,8 @@ php artisan serve
 ```bash
 php artisan l5-swagger:generate
 ```
+
+Os artefatos gerados em `storage/api-docs`, como `api-docs.json` e `api-docs.yaml`, **não são versionados**. Eles devem ser gerados localmente quando necessário e sempre no CI, evitando manutenção manual de documentação compilada.
 
 A documentação fica disponível em:
 

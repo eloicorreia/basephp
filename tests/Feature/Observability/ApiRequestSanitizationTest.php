@@ -207,4 +207,31 @@ final class ApiRequestSanitizationTest extends TestCase
         $this->assertSame([$tenant->code], $log->request_headers['x-tenant-id']);
         $this->assertArrayNotHasKey('x-custom-safe-header', $log->request_headers);
     }
+
+    public function test_api_request_logging_middleware_masks_authorization_and_x_api_key_headers_in_persisted_logs(): void
+    {
+        $requestId = (string) Str::uuid();
+        $traceId = (string) Str::uuid();
+
+        $this->getJson('/api/v1/health', [
+            'Authorization' => 'Bearer real-token-from-request',
+            'X-Api-Key' => 'real-api-key-from-request',
+            'X-Request-Id' => $requestId,
+            'X-Trace-Id' => $traceId,
+        ])->assertOk();
+
+        $log = ApiRequestLog::query()
+            ->where('request_id', $requestId)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertSame('***', $log->request_headers['authorization']);
+        $this->assertSame('***', $log->request_headers['x-api-key']);
+
+        $headersAsJson = json_encode($log->request_headers, JSON_THROW_ON_ERROR);
+
+        $this->assertStringNotContainsString('real-token-from-request', $headersAsJson);
+        $this->assertStringNotContainsString('real-api-key-from-request', $headersAsJson);
+    }
 }
