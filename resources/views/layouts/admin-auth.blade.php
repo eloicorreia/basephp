@@ -3,17 +3,7 @@
 @endphp
 <!doctype html>
 <html lang="pt-BR" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg">
-<head>
-    <meta charset="utf-8">
-    <title>@yield('title', 'Login administrativo') | {{ config('app.name', 'BasePHP') }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="shortcut icon" href="{{ $templateAssets }}/images/favicon.ico">
-    <script src="{{ $templateAssets }}/js/layout.js"></script>
-    <link href="{{ $templateAssets }}/css/bootstrap.min.css" rel="stylesheet" type="text/css">
-    <link href="{{ $templateAssets }}/css/app.min.css" rel="stylesheet" type="text/css">
-    <link href="{{ $templateAssets }}/css/custom.min.css" rel="stylesheet" type="text/css">
-</head>
+@include('admin.partials.auth-head')
 <body>
     <div class="auth-page-wrapper pt-5">
         <div class="auth-one-bg-position auth-one-bg">
@@ -51,6 +41,6 @@
         </footer>
     </div>
 
-    <script src="{{ $templateAssets }}/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    @include('admin.partials.auth-scripts')
 </body>
 </html>

@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Web\Admin\ApiRequestLogController;
+use App\Http\Controllers\Web\Admin\Auth\ForgotPasswordController;
 use App\Http\Controllers\Web\Admin\Auth\LoginController;
+use App\Http\Controllers\Web\Admin\Auth\ResetPasswordController;
 use App\Http\Controllers\Web\Admin\DashboardController;
 use App\Support\Web\WebAdminPermissions;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +25,16 @@ Route::get('/', function () {
 Route::middleware('guest:web')->group(function (): void {
     Route::get('/admin/login', [LoginController::class, 'show'])->name('login');
     Route::post('/admin/login', [LoginController::class, 'store'])->name('admin.login.store');
+
+    Route::get('/admin/forgot-password', [ForgotPasswordController::class, 'show'])->name('password.request');
+    Route::post('/admin/forgot-password', [ForgotPasswordController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('password.email');
+
+    Route::get('/admin/reset-password/{token}', [ResetPasswordController::class, 'show'])->name('password.reset');
+    Route::post('/admin/reset-password', [ResetPasswordController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('password.update');
 });
 
 Route::middleware([

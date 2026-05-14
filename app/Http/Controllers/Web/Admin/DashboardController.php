@@ -17,10 +17,50 @@ final class DashboardController extends Controller
     {
         return view('admin.dashboard', [
             'metrics' => [
-                'users' => User::query()->count(),
-                'tenants' => Tenant::query()->count(),
-                'api_request_logs' => ApiRequestLog::query()->count(),
-                'system_logs' => SystemLog::query()->count(),
+                [
+                    'label' => 'Usuários',
+                    'value' => User::query()->count(),
+                    'icon' => 'ri-user-3-line',
+                    'tone' => 'primary',
+                    'meta' => 'Base pública',
+                ],
+                [
+                    'label' => 'Tenants',
+                    'value' => Tenant::query()->count(),
+                    'icon' => 'ri-building-4-line',
+                    'tone' => 'success',
+                    'meta' => 'Ambientes cadastrados',
+                ],
+                [
+                    'label' => 'Logs da API',
+                    'value' => ApiRequestLog::query()->count(),
+                    'icon' => 'ri-file-list-3-line',
+                    'tone' => 'info',
+                    'meta' => 'Registros operacionais',
+                ],
+                [
+                    'label' => 'Logs de sistema',
+                    'value' => SystemLog::query()->count(),
+                    'icon' => 'ri-shield-check-line',
+                    'tone' => 'warning',
+                    'meta' => 'Eventos internos',
+                ],
+            ],
+            'quickActions' => [
+                [
+                    'title' => 'Logs da API',
+                    'description' => 'Consulta administrativa paginada, filtrada por período e com payload sensível protegido.',
+                    'href' => route('admin.logs.api-requests.index'),
+                    'icon' => 'ri-file-search-line',
+                    'button' => 'Abrir logs',
+                ],
+                [
+                    'title' => 'Base administrativa',
+                    'description' => 'Estrutura inicial para módulos internos com navegação, métricas e ações de rotina.',
+                    'href' => route('admin.dashboard'),
+                    'icon' => 'ri-layout-3-line',
+                    'button' => 'Abrir base',
+                ],
             ],
         ]);
     }

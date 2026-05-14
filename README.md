@@ -258,6 +258,10 @@ O módulo web administrativo existe para visualizações operacionais internas, 
 ```text
 GET  /admin/login
 POST /admin/login
+GET  /admin/forgot-password
+POST /admin/forgot-password
+GET  /admin/reset-password/{token}
+POST /admin/reset-password
 POST /admin/logout
 GET  /admin
 GET  /admin/logs/api-requests
@@ -300,6 +304,17 @@ composer web:check
 
 O projeto ainda mantém Vite para assets gerais do Laravel. Por isso o CI executa `npm ci` e `npm run build`. Se o painel administrativo passar a usar Vite no futuro, a decisão deve ser formalizada no README, no CI e no contrato de assets.
 
+O contrato visual atual usa as fontes `HKGrotesk` do template e os pacotes de ícones referenciados por `css/icons.min.css`, incluindo `Remix Icon`, `Material Design Icons`, `Boxicons` e `Line Awesome`. A folha `css/admin-contract.css` centraliza a escolha de fonte e ajustes pequenos da base, para evitar personalizações espalhadas pelas views.
+
+O dashboard administrativo foi separado para servir como base de composição das próximas telas:
+
+- `resources/views/layouts/admin.blade.php`
+- `resources/views/layouts/admin-auth.blade.php`
+- `resources/views/admin/partials/*`
+- `resources/views/components/admin/page-title.blade.php`
+- `resources/views/components/admin/metric-card.blade.php`
+- `resources/views/components/admin/action-card.blade.php`
+
 ## Separação entre autenticação API e Web
 
 API e Web usam mecanismos diferentes:
@@ -316,6 +331,7 @@ Regras obrigatórias:
 - sessão web não autentica API
 - token OAuth não autentica painel Blade
 - login web administrativo é exclusivo para usuários ativos com permissão web administrativa
+- recuperação de senha do painel administrativo usa rotas `guest:web`, resposta genérica e só envia/redefine senha para usuários permitidos por `WebAdminPermissions::ACCESS`
 
 ## Permissões web oficiais
 
@@ -392,6 +408,8 @@ Ações já contratadas:
 - tentativa negada por falta de permissão web
 - acesso ao detalhe de log
 - acesso ao payload detalhado de log
+- solicitação de recuperação de senha administrativa
+- redefinição de senha administrativa concluída
 
 Ações administrativas futuras sobre filas, tenants, usuários e configurações devem seguir o mesmo padrão antes de entrar na base oficial.
 
@@ -1197,17 +1215,19 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 
 1. checkout
 2. setup do PHP 8.3
-3. instalação das dependências
-4. geração das chaves Passport
-5. instalação das dependências web
-6. build Vite/NPM
-7. `composer audit`
-8. cache/clear de configuração
-9. geração OpenAPI
-10. validação do módulo web com `composer web:check`
-11. Pint
-12. PHPStan/Larastan
-13. PHPUnit
+3. validação do Composer
+4. instalação das dependências PHP
+5. setup do Node 24
+6. instalação das dependências web
+7. build Vite/NPM
+8. geração das chaves Passport
+9. `composer audit`
+10. cache/clear de configuração
+11. geração OpenAPI
+12. validação do módulo web com `composer web:check`
+13. Pint
+14. PHPStan/Larastan
+15. PHPUnit
 
 `composer web:check` executa:
 
@@ -1271,6 +1291,7 @@ O comando `web:assets:check` valida a presença dos assets oficiais do `template
 - `composer web:check` valida assets estáticos e compilação das views
 - telas administrativas devem ser operacionais, compactas e baseadas em tabelas/cards funcionais
 - ações sensíveis devem registrar auditoria via `AdminWebAuditService`
+- login, logout e recuperação de senha administrativa devem permanecer separados do OAuth da API
 
 ## Documentação e storage
 

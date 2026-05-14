@@ -23,6 +23,10 @@ final readonly class AdminWebAuditService
 
     public const LOG_PAYLOAD_VIEW = 'web_admin_log_payload_view';
 
+    public const PASSWORD_RESET_REQUESTED = 'web_admin_password_reset_requested';
+
+    public const PASSWORD_RESET_SUCCEEDED = 'web_admin_password_reset_succeeded';
+
     private const AUDITABLE_TYPE = 'web_admin';
 
     public function __construct(
@@ -107,6 +111,37 @@ final readonly class AdminWebAuditService
             request: $request,
             user: $user,
             log: $log,
+        );
+    }
+
+    public function passwordResetRequested(Request $request, ?User $user, string $email, string $status): void
+    {
+        $this->record(
+            action: self::PASSWORD_RESET_REQUESTED,
+            auditableType: $user instanceof User ? User::class : self::AUDITABLE_TYPE,
+            auditableId: $user?->id,
+            user: $user,
+            afterData: [
+                'guard' => 'web',
+                'email' => $email,
+                'status' => $status,
+                'route' => $request->path(),
+            ],
+        );
+    }
+
+    public function passwordResetSucceeded(Request $request, User $user): void
+    {
+        $this->record(
+            action: self::PASSWORD_RESET_SUCCEEDED,
+            auditableType: User::class,
+            auditableId: $user->id,
+            user: $user,
+            afterData: [
+                'guard' => 'web',
+                'email' => $user->email,
+                'route' => $request->path(),
+            ],
         );
     }
 

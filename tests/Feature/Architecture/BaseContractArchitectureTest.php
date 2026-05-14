@@ -81,6 +81,28 @@ final class BaseContractArchitectureTest extends TestCase
 
     public function test_web_admin_routes_keep_expected_session_permission_contracts(): void
     {
+        foreach ([
+            ['GET', 'admin/login'],
+            ['POST', 'admin/login'],
+            ['GET', 'admin/forgot-password'],
+            ['POST', 'admin/forgot-password'],
+            ['GET', 'admin/reset-password/{token}'],
+            ['POST', 'admin/reset-password'],
+        ] as [$method, $uri]) {
+            $middleware = $this->middlewareFor($method, $uri);
+
+            $this->assertRouteHasMiddleware($middleware, 'guest:web', $uri);
+            $this->assertRouteDoesNotHaveMiddleware($middleware, 'auth:web', $uri);
+            $this->assertRouteDoesNotHaveMiddleware($middleware, 'auth:api', $uri);
+        }
+
+        foreach ([
+            ['POST', 'admin/forgot-password'],
+            ['POST', 'admin/reset-password'],
+        ] as [$method, $uri]) {
+            $this->assertRouteHasMiddleware($this->middlewareFor($method, $uri), 'throttle:6,1', $uri);
+        }
+
         $dashboardMiddleware = $this->middlewareFor('GET', 'admin');
 
         $this->assertRouteHasMiddleware($dashboardMiddleware, 'auth:web', 'admin');
@@ -127,9 +149,18 @@ final class BaseContractArchitectureTest extends TestCase
 
         $this->assertDirectoryExists(public_path('vendor/templateweb/master/assets'));
         $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/bootstrap.min.css'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/icons.min.css'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/icons.min.css.map'));
         $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/app.min.css'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/admin-contract.css'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/js/pages/password-addon.init.js'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/fonts/hkgrotesk-regular.woff2'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/fonts/remixicon.woff2'));
         $this->assertContains('css/bootstrap.min.css', config('admin_web.template.required_assets'));
+        $this->assertContains('css/icons.min.css', config('admin_web.template.required_assets'));
+        $this->assertContains('css/admin-contract.css', config('admin_web.template.required_assets'));
         $this->assertContains('js/layout.js', config('admin_web.template.required_assets'));
+        $this->assertContains('js/pages/password-addon.init.js', config('admin_web.template.required_assets'));
     }
 
     public function test_all_route_oauth_scopes_are_registered_in_the_central_contract(): void

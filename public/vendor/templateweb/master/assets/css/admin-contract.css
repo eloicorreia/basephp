@@ -1,0 +1,65 @@
+@font-face {
+    font-family: "hkgrotesk";
+    src: url("../fonts/hkgrotesk-regular.woff2") format("woff2"),
+        url("../fonts/hkgrotesk-regular.woff") format("woff");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "hkgrotesk";
+    src: url("../fonts/hkgrotesk-medium.woff2") format("woff2"),
+        url("../fonts/hkgrotesk-medium.woff") format("woff");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "hkgrotesk";
+    src: url("../fonts/hkgrotesk-semibold.woff2") format("woff2"),
+        url("../fonts/hkgrotesk-semibold.woff") format("woff");
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "hkgrotesk";
+    src: url("../fonts/hkgrotesk-bold.woff2") format("woff2"),
+        url("../fonts/hkgrotesk-bold.woff") format("woff");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    --vz-font-sans-serif: "hkgrotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --vz-body-font-family: var(--vz-font-sans-serif);
+}
+
+body,
+button,
+input,
+select,
+textarea {
+    font-family: var(--vz-font-sans-serif);
+}
+
+.admin-stat-icon {
+    align-items: center;
+    border-radius: 8px;
+    display: inline-flex;
+    height: 42px;
+    justify-content: center;
+    width: 42px;
+}
+
+.admin-dashboard-shell .card {
+    min-height: 100%;
+}
+
+.admin-template-preview {
+    border: 1px dashed var(--vz-border-color);
+}
