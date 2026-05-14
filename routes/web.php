@@ -40,6 +40,10 @@ Route::middleware([
             ->middleware('web.permission:'.WebAdminPermissions::API_REQUEST_LOGS_VIEW)
             ->name('api-requests.index');
 
+        Route::get('/api-requests/{apiRequestLog}/payload', [ApiRequestLogController::class, 'payload'])
+            ->middleware('web.permission:'.WebAdminPermissions::API_REQUEST_LOG_PAYLOADS_VIEW)
+            ->name('api-requests.payload');
+
         Route::get('/api-requests/{apiRequestLog}', [ApiRequestLogController::class, 'show'])
             ->middleware('web.permission:'.WebAdminPermissions::API_REQUEST_LOGS_VIEW)
             ->name('api-requests.show');

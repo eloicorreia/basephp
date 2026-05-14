@@ -262,6 +262,7 @@ POST /admin/logout
 GET  /admin
 GET  /admin/logs/api-requests
 GET  /admin/logs/api-requests/{apiRequestLog}
+GET  /admin/logs/api-requests/{apiRequestLog}/payload
 ```
 
 ## Template oficial
@@ -289,6 +290,15 @@ O contrato do template também fica em:
 ```text
 config/admin_web.php
 ```
+
+O painel administrativo usa os assets estáticos do `templateweb/master` em `public/vendor/templateweb/master/assets`. As views administrativas não devem usar `@vite`; esse contrato é validado por:
+
+```bash
+php artisan web:assets:check
+composer web:check
+```
+
+O projeto ainda mantém Vite para assets gerais do Laravel. Por isso o CI executa `npm ci` e `npm run build`. Se o painel administrativo passar a usar Vite no futuro, a decisão deve ser formalizada no README, no CI e no contrato de assets.
 
 ## Separação entre autenticação API e Web
 
@@ -322,6 +332,7 @@ Permissões iniciais:
 | `admin.web.access` | Acesso ao módulo web administrativo. |
 | `admin.dashboard.view` | Visualização do dashboard administrativo. |
 | `admin.logs.api_requests.view` | Consulta de logs de requisições da API. |
+| `admin.logs.api_requests.payloads.view` | Visualização detalhada de payloads mascarados dos logs da API. |
 
 O middleware oficial é:
 
@@ -358,6 +369,31 @@ Regras obrigatórias:
 - aplicar mascaramento novamente na visualização, mesmo que o dado já tenha sido sanitizado na escrita
 - `Authorization`, `X-Api-Key`, tokens, senhas, cookies, secrets e credenciais devem aparecer como `***`
 - views Blade devem usar escaping padrão `{{ }}` para qualquer dado vindo de log
+- listagens de logs devem exigir filtro de período, com período padrão e limite máximo definidos em `config/admin_web.php`
+- listagens de logs devem usar paginação obrigatória e limite máximo de itens por página
+- detalhe do log não deve renderizar payload completo automaticamente
+- payload detalhado deve ficar em rota própria, protegido por `admin.logs.api_requests.payloads.view`
+- acesso ao detalhe do log e ao payload detalhado deve gerar registro em `audit_logs`
+- campos longos exibidos na interface devem ser truncados pelo service de visualização
+
+## Auditoria web administrativa
+
+Ações sensíveis no painel administrativo devem gerar trilha em `audit_logs` via:
+
+```text
+App\Services\Admin\Web\AdminWebAuditService
+```
+
+Ações já contratadas:
+
+- login administrativo com sucesso
+- tentativa de login administrativo inválida
+- logout administrativo
+- tentativa negada por falta de permissão web
+- acesso ao detalhe de log
+- acesso ao payload detalhado de log
+
+Ações administrativas futuras sobre filas, tenants, usuários e configurações devem seguir o mesmo padrão antes de entrar na base oficial.
 
 ---
 
@@ -1138,7 +1174,7 @@ Esse comando executa:
 - `composer audit`
 - cache/clear de configuração Laravel
 - geração da documentação OpenAPI
-- validação de views Blade com `composer web:check`
+- validação do módulo web com `composer web:check`
 - teste de formatação com Pint
 - PHPStan/Larastan
 - suíte PHPUnit
@@ -1163,13 +1199,23 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 2. setup do PHP 8.3
 3. instalação das dependências
 4. geração das chaves Passport
-5. `composer audit`
-6. cache/clear de configuração
-7. geração OpenAPI
-8. validação das views Blade
-9. Pint
-10. PHPStan/Larastan
-11. PHPUnit
+5. instalação das dependências web
+6. build Vite/NPM
+7. `composer audit`
+8. cache/clear de configuração
+9. geração OpenAPI
+10. validação do módulo web com `composer web:check`
+11. Pint
+12. PHPStan/Larastan
+13. PHPUnit
+
+`composer web:check` executa:
+
+- `php artisan web:assets:check`
+- `php artisan view:cache`
+- `php artisan view:clear`
+
+O comando `web:assets:check` valida a presença dos assets oficiais do `templateweb/master` e impede `@vite` dentro das views administrativas. O build Vite/NPM continua no CI para validar os assets gerais do Laravel e evitar regressões de frontend.
 
 ---
 
@@ -1214,6 +1260,7 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 - payload completo de request/response deve ser exceção, não padrão de produção
 - toda tabela de log precisa ter política de retenção
 - visualização web de logs deve aplicar mascaramento antes de renderizar
+- acesso a detalhe de log e payload detalhado no painel administrativo deve ser auditado
 
 ## Web administrativo
 
@@ -1221,7 +1268,9 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 - não aceita Bearer token OAuth como autenticação do painel
 - permissões ficam em `WebAdminPermissions`
 - assets seguem o template `templateweb/master`
+- `composer web:check` valida assets estáticos e compilação das views
 - telas administrativas devem ser operacionais, compactas e baseadas em tabelas/cards funcionais
+- ações sensíveis devem registrar auditoria via `AdminWebAuditService`
 
 ## Documentação e storage
 

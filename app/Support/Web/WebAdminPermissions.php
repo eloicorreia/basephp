@@ -15,6 +15,8 @@ final class WebAdminPermissions
 
     public const API_REQUEST_LOGS_VIEW = 'admin.logs.api_requests.view';
 
+    public const API_REQUEST_LOG_PAYLOADS_VIEW = 'admin.logs.api_requests.payloads.view';
+
     /**
      * @return array<string, string>
      */
@@ -24,6 +26,7 @@ final class WebAdminPermissions
             self::ACCESS => 'Acesso ao módulo web administrativo.',
             self::DASHBOARD_VIEW => 'Visualização do dashboard administrativo.',
             self::API_REQUEST_LOGS_VIEW => 'Consulta de logs de requisições da API.',
+            self::API_REQUEST_LOG_PAYLOADS_VIEW => 'Visualização detalhada de payloads mascarados dos logs da API.',
         ];
     }
 

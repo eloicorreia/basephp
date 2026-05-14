@@ -50,7 +50,7 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php artisan migrate --force",
-            "npm install",
+            "npm ci",
             "npm run build"
         ],
         "dev": [
@@ -71,6 +71,7 @@
             "pint --test"
         ],
         "web:check": [
+            "@php artisan web:assets:check",
             "@php artisan view:cache",
             "@php artisan view:clear"
         ],

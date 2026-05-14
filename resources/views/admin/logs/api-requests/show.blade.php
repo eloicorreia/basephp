@@ -4,15 +4,16 @@
 @section('page-title', 'Detalhe do log da API')
 
 @section('content')
-    @php
-        $json = static fn (mixed $value): string => (string) json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    @endphp
-
     <div class="row">
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                 <h4 class="mb-sm-0">Log #{{ $log['id'] }}</h4>
-                <a href="{{ route('admin.logs.api-requests.index') }}" class="btn btn-outline-secondary btn-sm">Voltar</a>
+                <div class="d-flex gap-2">
+                    @if ($canViewPayload)
+                        <a href="{{ route('admin.logs.api-requests.payload', $log['id']) }}" class="btn btn-primary btn-sm">Ver payload detalhado</a>
+                    @endif
+                    <a href="{{ route('admin.logs.api-requests.index') }}" class="btn btn-outline-secondary btn-sm">Voltar</a>
+                </div>
             </div>
         </div>
     </div>
@@ -29,25 +30,24 @@
                 <div class="col-md-6"><strong>Tenant:</strong> {{ $log['tenant_code'] ?? '-' }}</div>
                 <div class="col-md-6"><strong>IP:</strong> {{ $log['ip'] ?? '-' }}</div>
                 <div class="col-12"><strong>URI:</strong> {{ $log['uri'] }}</div>
+                <div class="col-12"><strong>User-Agent:</strong> {{ $log['user_agent'] ?? '-' }}</div>
             </div>
         </div>
     </div>
 
-    @foreach ([
-        'Headers da requisição' => $log['request_headers'],
-        'Query da requisição' => $log['request_query'],
-        'Body da requisição' => $log['request_body'],
-        'Body da resposta' => $log['response_body'],
-    ] as $title => $payload)
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">{{ $title }}</h5>
+    <div class="card">
+        <div class="card-body d-sm-flex align-items-center justify-content-between">
+            <div>
+                <h5 class="card-title mb-1">Payload</h5>
+                <p class="text-muted mb-0">Visualização detalhada restrita e auditada.</p>
             </div>
-            <div class="card-body">
-                <pre class="mb-0 p-3 bg-light rounded small">{{ $json($payload) }}</pre>
-            </div>
+            @if ($canViewPayload)
+                <a href="{{ route('admin.logs.api-requests.payload', $log['id']) }}" class="btn btn-primary btn-sm mt-3 mt-sm-0">Ver payload detalhado</a>
+            @else
+                <span class="badge bg-warning-subtle text-warning mt-3 mt-sm-0">Permissão extra necessária</span>
+            @endif
         </div>
-    @endforeach
+    </div>
 
     @if ($log['message'])
         <div class="card">

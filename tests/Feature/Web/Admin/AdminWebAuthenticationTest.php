@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Web\Admin;
 
 use App\Enums\RoleCode;
+use App\Models\User;
+use App\Services\Admin\Web\AdminWebAuditService;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
 use Tests\TestCase;
@@ -37,12 +39,19 @@ final class AdminWebAuthenticationTest extends TestCase
 
         $this->assertAuthenticatedAs($user, 'web');
         $this->assertNotNull($user->refresh()->last_login_at);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => AdminWebAuditService::LOGIN_SUCCESS,
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'user_id' => $user->id,
+        ]);
     }
 
     public function test_non_admin_user_cannot_login_to_admin_web_module(): void
     {
         $role = $this->createRole(RoleCode::USUARIO->value, 'Usuário');
-        $this->createUser(role: $role, overrides: [
+        $user = $this->createUser(role: $role, overrides: [
             'email' => 'user-web@example.com',
             'password' => 'secret-password',
         ]);
@@ -53,6 +62,72 @@ final class AdminWebAuthenticationTest extends TestCase
         ])->assertSessionHasErrors('email');
 
         $this->assertGuest('web');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => AdminWebAuditService::PERMISSION_DENIED,
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_failed_admin_login_is_audited(): void
+    {
+        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
+        $user = $this->createUser(role: $role, overrides: [
+            'email' => 'failed-admin-web@example.com',
+            'password' => 'secret-password',
+        ]);
+
+        $this->post('/admin/login', [
+            'email' => 'failed-admin-web@example.com',
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest('web');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => AdminWebAuditService::LOGIN_FAILED,
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_admin_logout_is_audited(): void
+    {
+        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
+        $user = $this->createUser(role: $role);
+
+        $this->actingAs($user, 'web')
+            ->post(route('admin.logout'))
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest('web');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => AdminWebAuditService::LOGOUT,
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_authenticated_non_admin_denial_is_audited(): void
+    {
+        $role = $this->createRole(RoleCode::USUARIO->value, 'Usuário');
+        $user = $this->createUser(role: $role);
+
+        $this->actingAs($user, 'web')
+            ->get('/admin')
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => AdminWebAuditService::PERMISSION_DENIED,
+            'auditable_type' => User::class,
+            'auditable_id' => $user->id,
+            'user_id' => $user->id,
+        ]);
     }
 
     public function test_web_session_does_not_authenticate_api_guard(): void

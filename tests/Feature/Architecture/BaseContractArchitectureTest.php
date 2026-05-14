@@ -108,6 +108,15 @@ final class BaseContractArchitectureTest extends TestCase
             );
             $this->assertRouteDoesNotHaveMiddleware($middleware, 'auth:api', $uri);
         }
+
+        $payloadMiddleware = $this->middlewareFor('GET', 'admin/logs/api-requests/{apiRequestLog}/payload');
+        $this->assertRouteHasMiddleware($payloadMiddleware, 'auth:web', 'admin/logs/api-requests/{apiRequestLog}/payload');
+        $this->assertRouteHasMiddleware(
+            $payloadMiddleware,
+            'web.permission:'.WebAdminPermissions::API_REQUEST_LOG_PAYLOADS_VIEW,
+            'admin/logs/api-requests/{apiRequestLog}/payload'
+        );
+        $this->assertRouteDoesNotHaveMiddleware($payloadMiddleware, 'auth:api', 'admin/logs/api-requests/{apiRequestLog}/payload');
     }
 
     public function test_web_admin_template_contract_is_configured(): void
@@ -119,6 +128,8 @@ final class BaseContractArchitectureTest extends TestCase
         $this->assertDirectoryExists(public_path('vendor/templateweb/master/assets'));
         $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/bootstrap.min.css'));
         $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/app.min.css'));
+        $this->assertContains('css/bootstrap.min.css', config('admin_web.template.required_assets'));
+        $this->assertContains('js/layout.js', config('admin_web.template.required_assets'));
     }
 
     public function test_all_route_oauth_scopes_are_registered_in_the_central_contract(): void

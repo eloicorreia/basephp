@@ -67,6 +67,18 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install Web Dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build Web Assets
+        run: npm run build
+
       - name: Generate Passport Keys
         run: php artisan passport:keys --force
 
@@ -82,7 +94,7 @@ jobs:
       - name: Generate OpenAPI Documentation
         run: php artisan l5-swagger:generate
 
-      - name: Validate Blade Views
+      - name: Validate Web Module
         run: composer web:check
 
       - name: Code Style

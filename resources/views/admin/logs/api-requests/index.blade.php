@@ -16,22 +16,43 @@
     <div class="card">
         <div class="card-body">
             <form method="GET" action="{{ route('admin.logs.api-requests.index') }}" class="row g-3 align-items-end mb-4">
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label" for="date_from">De</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ $filters['date_from'] }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="date_to">Até</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ $filters['date_to'] }}">
+                </div>
+                <div class="col-md-2">
                     <label class="form-label" for="method">Método</label>
                     <input class="form-control" id="method" name="method" value="{{ $filters['method'] ?? '' }}" placeholder="GET">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label" for="status">Status técnico</label>
                     <input class="form-control" id="status" name="status" value="{{ $filters['status'] ?? '' }}" placeholder="SUCCESS">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label class="form-label" for="search">Busca</label>
                     <input class="form-control" id="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="request_id, trace_id, tenant, rota ou URI">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
+                    <label class="form-label" for="per_page">Itens</label>
+                    <select class="form-select" id="per_page" name="per_page">
+                        @foreach ([15, 30, 50] as $perPage)
+                            <option value="{{ $perPage }}" @selected((int) $filters['per_page'] === $perPage)>{{ $perPage }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-1">
                     <button class="btn btn-primary w-100" type="submit">Filtrar</button>
                 </div>
             </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <small class="text-muted">Período máximo: {{ $maxPeriodDays }} dias.</small>
+                <small class="text-muted">{{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }} de {{ $logs->total() }}</small>
+            </div>
 
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle">
