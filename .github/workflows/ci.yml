@@ -82,6 +82,9 @@ jobs:
       - name: Generate OpenAPI Documentation
         run: php artisan l5-swagger:generate
 
+      - name: Validate Blade Views
+        run: composer web:check
+
       - name: Code Style
         run: composer format:test
 

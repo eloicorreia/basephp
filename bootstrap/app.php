@@ -9,6 +9,7 @@ use App\Http\Middleware\EnsurePasswordChangedMiddleware;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureTenantAccessMiddleware;
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\EnsureWebAdminPermission;
 use App\Http\Middleware\RequestContextMiddleware;
 use App\Http\Middleware\ResolveTenantMiddleware;
 use App\Services\Logging\LogPersistenceService;
@@ -27,6 +28,7 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
@@ -39,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.access' => EnsureTenantAccessMiddleware::class,
             'password.changed' => EnsurePasswordChangedMiddleware::class,
             'client.credentials' => EnsureClientCredentials::class,
+            'web.permission' => EnsureWebAdminPermission::class,
             'scope' => CheckToken::class,
             'scopes' => CheckToken::class,
             'any_scope' => CheckTokenForAnyScope::class,
@@ -83,6 +86,10 @@ return Application::configure(basePath: dirname(__DIR__))
                     httpStatus: $status,
                 );
             } catch (Throwable) {
+            }
+
+            if (! $request->expectsJson() && ! $request->is('api/*')) {
+                return redirect()->guest('/admin/login');
             }
 
             return ApiResponse::error(

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Architecture;
 
 use App\Support\Auth\OAuthScopes;
+use App\Support\Web\WebAdminPermissions;
 use Illuminate\Routing\Route as LaravelRoute;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
@@ -76,6 +77,48 @@ final class BaseContractArchitectureTest extends TestCase
                 sprintf('Route [%s] must allow the [%s] scope.', $route->uri(), OAuthScopes::ADMIN_FULL)
             );
         }
+    }
+
+    public function test_web_admin_routes_keep_expected_session_permission_contracts(): void
+    {
+        $dashboardMiddleware = $this->middlewareFor('GET', 'admin');
+
+        $this->assertRouteHasMiddleware($dashboardMiddleware, 'auth:web', 'admin');
+        $this->assertRouteHasMiddleware(
+            $dashboardMiddleware,
+            'web.permission:'.WebAdminPermissions::ACCESS,
+            'admin'
+        );
+        $this->assertRouteHasMiddleware(
+            $dashboardMiddleware,
+            'web.permission:'.WebAdminPermissions::DASHBOARD_VIEW,
+            'admin'
+        );
+        $this->assertRouteDoesNotHaveMiddleware($dashboardMiddleware, 'auth:api', 'admin');
+
+        foreach (['admin/logs/api-requests', 'admin/logs/api-requests/{apiRequestLog}'] as $uri) {
+            $middleware = $this->middlewareFor('GET', $uri);
+
+            $this->assertRouteHasMiddleware($middleware, 'auth:web', $uri);
+            $this->assertRouteHasMiddleware($middleware, 'web.permission:'.WebAdminPermissions::ACCESS, $uri);
+            $this->assertRouteHasMiddleware(
+                $middleware,
+                'web.permission:'.WebAdminPermissions::API_REQUEST_LOGS_VIEW,
+                $uri
+            );
+            $this->assertRouteDoesNotHaveMiddleware($middleware, 'auth:api', $uri);
+        }
+    }
+
+    public function test_web_admin_template_contract_is_configured(): void
+    {
+        $this->assertSame('https://github.com/eloicorreia/templateweb', config('admin_web.template.source'));
+        $this->assertSame('master', config('admin_web.template.variant'));
+        $this->assertSame('vendor/templateweb/master/assets', config('admin_web.template.asset_path'));
+
+        $this->assertDirectoryExists(public_path('vendor/templateweb/master/assets'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/bootstrap.min.css'));
+        $this->assertFileExists(public_path('vendor/templateweb/master/assets/css/app.min.css'));
     }
 
     public function test_all_route_oauth_scopes_are_registered_in_the_central_contract(): void
@@ -197,6 +240,7 @@ final class BaseContractArchitectureTest extends TestCase
         foreach ([
             'Contratos rígidos da base oficial',
             'Contrato REST',
+            'Contrato Web Administrativo',
             'Contrato OAuth2',
             'Contrato de tenancy',
             'Contrato de logging e observabilidade',

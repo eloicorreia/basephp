@@ -2,9 +2,10 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "basephp/laravel-api-base",
     "type": "project",
-    "description": "Base Laravel para APIs multi-tenant com OAuth2, filas, observabilidade e qualidade automatizada.",
+    "description": "Base Laravel para APIs multi-tenant e módulo web administrativo com OAuth2, filas, observabilidade e qualidade automatizada.",
     "keywords": [
         "api",
+        "blade",
         "laravel",
         "multitenancy",
         "oauth2",
@@ -69,12 +70,17 @@
         "format:test": [
             "pint --test"
         ],
+        "web:check": [
+            "@php artisan view:cache",
+            "@php artisan view:clear"
+        ],
         "quality": [
             "composer validate --strict",
             "composer audit",
             "@php artisan config:cache",
             "@php artisan config:clear",
             "@php artisan l5-swagger:generate",
+            "@web:check",
             "@format:test",
             "@analyse",
             "@test"

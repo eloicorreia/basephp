@@ -1,9 +1,11 @@
 # BasePHP
 
-Base arquitetural para APIs backend-only em **PHP 8.3 + Laravel 12 + PostgreSQL**, preparada para:
+Base arquitetural para APIs e módulo web administrativo em **PHP 8.3 + Laravel 12 + PostgreSQL**, preparada para:
 
 - APIs REST versionadas
+- frontend administrativo em Blade
 - autenticação OAuth2 com Laravel Passport
+- autenticação web por sessão
 - multitenancy por **schema no PostgreSQL**
 - logging persistido em banco
 - observabilidade com `request_id` e `trace_id`
@@ -14,7 +16,7 @@ Base arquitetural para APIs backend-only em **PHP 8.3 + Laravel 12 + PostgreSQL*
 
 # 1. Objetivo do projeto
 
-Este projeto é uma base técnica para construção de aplicações **backend-only**, sem frontend obrigatório, orientadas à exposição de APIs e serviços para consumo por outras aplicações.
+Este projeto é uma base técnica para construção de aplicações Laravel com **APIs REST** e **módulo web administrativo em Blade**, orientadas à exposição de serviços para consumo por outras aplicações e à operação administrativa segura.
 
 A base foi estruturada para priorizar:
 
@@ -40,6 +42,7 @@ Ela já define regras arquiteturais, contratos de execução, middlewares obriga
 - **Laravel 12**
 - **PostgreSQL**
 - **Laravel Passport**
+- **Blade** para o módulo web administrativo
 - **gRPC / protobuf** preparado na base
 - **PHPUnit** para testes
 
@@ -52,9 +55,10 @@ Ela já define regras arquiteturais, contratos de execução, middlewares obriga
 
 ## Estilo de aplicação
 
-- backend-only
 - APIs REST versionadas
+- módulo web administrativo em Blade
 - autenticação OAuth2
+- autenticação web por sessão
 - multitenancy por schema
 - serviços orientados a integração
 
@@ -85,6 +89,16 @@ Esta base pode ser usada como origem de novos projetos, mas os itens abaixo deve
 - controllers não devem usar `response()->json()` diretamente
 - respostas de sucesso, erro e paginação devem manter os envelopes documentados na seção **APIs REST**
 - erro global deve sair pelo exception handler central em `bootstrap/app.php`
+
+### Contrato Web Administrativo
+
+- o módulo web administrativo usa Blade e rotas em `/admin`
+- autenticação web usa o guard `web` com sessão, nunca token OAuth
+- controllers web retornam views ou redirects, não envelopes JSON de API
+- permissões web ficam em `App\Support\Web\WebAdminPermissions`
+- rotas web administrativas usam middleware `auth:web` e `web.permission`
+- o padrão visual oficial é o template `master` de `https://github.com/eloicorreia/templateweb`
+- visualização de logs deve passar por service próprio e mascaramento antes de renderizar
 
 ### Contrato OAuth2
 
@@ -146,9 +160,12 @@ app/
 │   └── Concerns/
 ├── Models/
 ├── Services/
+│   ├── Admin/
+│   │   └── Web/
 │   ├── Logging/
 │   └── Tenant/
 ├── Support/
+│   ├── Web/
 │   └── Tenant/
 bootstrap/
 config/
@@ -158,6 +175,10 @@ database/
 │   └── tenant/
 docs/
 └── architecture/
+public/
+└── vendor/templateweb/master/
+resources/
+└── views/admin/
 routes/
 tests/
 ```
@@ -226,7 +247,121 @@ Todas as rotas REST devem usar versionamento:
 
 ---
 
-# 6. Autenticação OAuth2 com Passport
+# 6. Módulo web administrativo
+
+## Objetivo
+
+O módulo web administrativo existe para visualizações operacionais internas, como dashboard e consulta de logs. Ele é parte oficial da base e deve evoluir separado da API pública.
+
+## Rotas oficiais
+
+```text
+GET  /admin/login
+POST /admin/login
+POST /admin/logout
+GET  /admin
+GET  /admin/logs/api-requests
+GET  /admin/logs/api-requests/{apiRequestLog}
+```
+
+## Template oficial
+
+O padrão visual do módulo web deve usar como base:
+
+```text
+https://github.com/eloicorreia/templateweb
+```
+
+A pasta oficial de referência é:
+
+```text
+master
+```
+
+No projeto, os assets mínimos ficam em:
+
+```text
+public/vendor/templateweb/master/assets
+```
+
+O contrato do template também fica em:
+
+```text
+config/admin_web.php
+```
+
+## Separação entre autenticação API e Web
+
+API e Web usam mecanismos diferentes:
+
+| Área | Guard | Credencial | Uso |
+| --- | --- | --- | --- |
+| API | `api` | Bearer token Passport | Clients externos, SPAs, mobile, integrações |
+| Web admin | `web` | Sessão Laravel | Painel administrativo Blade |
+
+Regras obrigatórias:
+
+- rotas `/api/v1/*` usam `auth:api`, scopes OAuth e respostas JSON
+- rotas `/admin/*` usam `auth:web`, sessão, CSRF e views Blade
+- sessão web não autentica API
+- token OAuth não autentica painel Blade
+- login web administrativo é exclusivo para usuários ativos com permissão web administrativa
+
+## Permissões web oficiais
+
+Permissões web não são scopes OAuth. Elas ficam em:
+
+```text
+App\Support\Web\WebAdminPermissions
+```
+
+Permissões iniciais:
+
+| Permissão | Uso |
+| --- | --- |
+| `admin.web.access` | Acesso ao módulo web administrativo. |
+| `admin.dashboard.view` | Visualização do dashboard administrativo. |
+| `admin.logs.api_requests.view` | Consulta de logs de requisições da API. |
+
+O middleware oficial é:
+
+```text
+web.permission
+```
+
+## Padrão das telas administrativas
+
+- usar layout vertical do template `templateweb/master`
+- priorizar interface densa, operacional e escaneável
+- usar cards apenas para métricas ou blocos funcionais
+- usar tabelas para listagens administrativas
+- evitar landing page, hero marketing, textos explicativos longos e elementos decorativos soltos
+- toda tela administrativa deve ter teste de feature cobrindo autenticação e autorização
+
+## Consulta e visualização de logs
+
+Consulta de logs administrativos deve passar por service próprio:
+
+```text
+App\Services\Admin\Web\AdminLogQueryService
+```
+
+A política de mascaramento da visualização fica em:
+
+```text
+App\Services\Admin\Web\VisibleLogSanitizer
+```
+
+Regras obrigatórias:
+
+- nunca renderizar payload bruto de log diretamente na view
+- aplicar mascaramento novamente na visualização, mesmo que o dado já tenha sido sanitizado na escrita
+- `Authorization`, `X-Api-Key`, tokens, senhas, cookies, secrets e credenciais devem aparecer como `***`
+- views Blade devem usar escaping padrão `{{ }}` para qualquer dado vindo de log
+
+---
+
+# 7. Autenticação OAuth2 com Passport
 
 ## Guard oficial
 
@@ -300,34 +435,34 @@ Regras importantes:
 
 ---
 
-# 7. Como instalar e subir localmente
+# 8. Como instalar e subir localmente
 
-## 7.1. Clonar o projeto
+## 8.1. Clonar o projeto
 
 ```bash
 git clone <url-do-repositorio>
 cd basephp
 ```
 
-## 7.2. Instalar dependências
+## 8.2. Instalar dependências
 
 ```bash
 composer install
 ```
 
-## 7.3. Criar `.env`
+## 8.3. Criar `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-## 7.4. Gerar chave da aplicação
+## 8.4. Gerar chave da aplicação
 
 ```bash
 php artisan key:generate
 ```
 
-## 7.5. Configurar banco PostgreSQL
+## 8.5. Configurar banco PostgreSQL
 
 Exemplo mínimo no `.env`:
 
@@ -347,6 +482,8 @@ DB_SCHEMA=public
 DB_SSLMODE=prefer
 
 PASSPORT_ENABLE_PASSWORD_GRANT=false
+
+ADMIN_WEB_ENABLED=true
 
 API_REQUEST_LOGGING_ENABLED=true
 API_REQUEST_LOGGING_STORE_HEADERS=true
@@ -374,13 +511,13 @@ FILESYSTEM_LOCAL_SERVE=false
 
 Em produção, mantenha `APP_DEBUG=false`, `PASSPORT_ENABLE_PASSWORD_GRANT=false`, `L5_SWAGGER_PUBLIC=false`, `FILESYSTEM_LOCAL_SERVE=false` e evite persistir bodies completos de request/response salvo necessidade auditável.
 
-## 7.6. Rodar migrations
+## 8.6. Rodar migrations
 
 ```bash
 php artisan migrate
 ```
 
-## 7.7. Instalar chaves do Passport
+## 8.7. Instalar chaves do Passport
 
 Se for a primeira execução do ambiente, gere as chaves do Passport:
 
@@ -394,7 +531,7 @@ Se precisar recriar:
 php artisan passport:keys --force
 ```
 
-## 7.8. Criar clients OAuth
+## 8.8. Criar clients OAuth
 
 ```bash
 php artisan passport:client --public
@@ -426,7 +563,7 @@ php artisan passport:client --client
 
 Esse command retorna `client_id` e `client_secret`. Guarde o secret em cofre de segredo ou variável de ambiente segura.
 
-## 7.9. Seeders
+## 8.9. Seeders
 
 Se o projeto exigir dados base:
 
@@ -440,13 +577,13 @@ Ou seed específico:
 php artisan db:seed --class=TenantSeeder
 ```
 
-## 7.10. Subir servidor local
+## 8.10. Subir servidor local
 
 ```bash
 php artisan serve
 ```
 
-## 7.11. Gerar documentação OpenAPI
+## 8.11. Gerar documentação OpenAPI
 
 ```bash
 php artisan l5-swagger:generate
@@ -473,9 +610,9 @@ Se `L5_SWAGGER_PUBLIC=false` e o IP não estiver permitido, a documentação res
 
 ---
 
-# 8. Como autenticar e gerar token OAuth
+# 9. Como autenticar e gerar token OAuth
 
-## 8.1. Usuário humano com Authorization Code + PKCE
+## 9.1. Usuário humano com Authorization Code + PKCE
 
 O client deve gerar `code_verifier` e `code_challenge` no padrão PKCE.
 
@@ -524,7 +661,7 @@ Exemplo de payload:
 }
 ```
 
-## 8.2. Integração sistema-a-sistema com Client Credentials
+## 9.2. Integração sistema-a-sistema com Client Credentials
 
 ## Endpoint
 
@@ -590,7 +727,7 @@ curl --request GET \
 
 ---
 
-# 9. Multitenancy por schema no PostgreSQL
+# 10. Multitenancy por schema no PostgreSQL
 
 ## Modelo adotado
 
@@ -660,7 +797,7 @@ Essa regra vale para:
 
 ---
 
-# 10. Execuções tenant-aware fora do HTTP
+# 11. Execuções tenant-aware fora do HTTP
 
 Além do fluxo HTTP, o projeto também suporta tenancy por schema em:
 
@@ -695,7 +832,7 @@ Comandos estritamente administrativos, como bootstrap estrutural ou migração e
 
 ---
 
-# 11. Commands importantes
+# 12. Commands importantes
 
 ## `php artisan migrate`
 
@@ -752,7 +889,7 @@ Ele deve sempre executar usando:
 
 ---
 
-# 12. Logging e observabilidade
+# 13. Logging e observabilidade
 
 ## Identificadores técnicos oficiais
 
@@ -877,7 +1014,7 @@ Use valores `<= 0` apenas quando quiser desabilitar pruning de uma tabela consci
 
 ---
 
-# 13. Padrão de testes
+# 14. Padrão de testes
 
 A suíte de testes da base cobre a infraestrutura principal do projeto.
 
@@ -890,6 +1027,9 @@ A suíte de testes da base cobre a infraestrutura principal do projeto.
 - role e password changed
 - request context (`X-Request-Id` / `X-Trace-Id`)
 - request logging persistido
+- login web administrativo
+- autorização web por sessão e permissões próprias
+- consulta administrativa de logs com mascaramento na visualização
 - sanitização de payload sensível
 - `TenantContext`
 - `TenantExecutionManager`
@@ -910,7 +1050,8 @@ tests/
 │   ├── Listeners/
 │   ├── Observability/
 │   ├── Queue/
-│   └── Tenant/
+│   ├── Tenant/
+│   └── Web/
 ├── Support/
 └── Unit/
     └── Tenant/
@@ -975,7 +1116,7 @@ Se um novo projeto derivado precisar mudar algum desses pontos, ajuste o contrat
 
 ---
 
-# 14. Qualidade automatizada
+# 15. Qualidade automatizada
 
 O projeto usa PHPStan/Larastan como análise estática incremental.
 
@@ -997,6 +1138,7 @@ Esse comando executa:
 - `composer audit`
 - cache/clear de configuração Laravel
 - geração da documentação OpenAPI
+- validação de views Blade com `composer web:check`
 - teste de formatação com Pint
 - PHPStan/Larastan
 - suíte PHPUnit
@@ -1024,20 +1166,22 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 5. `composer audit`
 6. cache/clear de configuração
 7. geração OpenAPI
-8. Pint
-9. PHPStan/Larastan
-10. PHPUnit
+8. validação das views Blade
+9. Pint
+10. PHPStan/Larastan
+11. PHPUnit
 
 ---
 
-# 15. Regras obrigatórias de desenvolvimento
+# 16. Regras obrigatórias de desenvolvimento
 
 ## Controllers
 
 - não contêm regra de negócio
 - não manipulam schema
 - não persistem logs manualmente
-- retornam respostas por `ApiResponse`
+- controllers de API retornam respostas por `ApiResponse`
+- controllers web retornam views ou redirects
 
 ## Requests
 
@@ -1048,6 +1192,7 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 
 - concentram regra de negócio
 - usam tenancy/logging já fornecidos pela base
+- consultas administrativas de logs devem passar por service específico
 
 ## Middlewares
 
@@ -1068,6 +1213,15 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 - nunca improvisado em controller/service de domínio
 - payload completo de request/response deve ser exceção, não padrão de produção
 - toda tabela de log precisa ter política de retenção
+- visualização web de logs deve aplicar mascaramento antes de renderizar
+
+## Web administrativo
+
+- usa guard `web`, sessão Laravel e CSRF
+- não aceita Bearer token OAuth como autenticação do painel
+- permissões ficam em `WebAdminPermissions`
+- assets seguem o template `templateweb/master`
+- telas administrativas devem ser operacionais, compactas e baseadas em tabelas/cards funcionais
 
 ## Documentação e storage
 
@@ -1077,7 +1231,7 @@ O workflow oficial fica em `.github/workflows/ci.yml` e executa:
 
 ---
 
-# 16. Fluxo recomendado para desenvolvimento de novos módulos
+# 17. Fluxo recomendado para desenvolvimento de novos módulos
 
 Ao iniciar um novo módulo:
 
@@ -1091,17 +1245,21 @@ Ao iniciar um novo módulo:
 8. criar testes de feature e unitários
 9. validar resposta JSON padrão
 10. validar impacto em observabilidade
+11. para telas web, validar sessão, permissão, view Blade e mascaramento visual
 
 ---
 
-# 17. Estado atual da base
+# 18. Estado atual da base
 
 Esta base já fornece:
 
 - infraestrutura de autenticação OAuth2
+- módulo web administrativo Blade com login por sessão
+- contrato de permissões web administrativas
 - infraestrutura de multitenancy por schema
 - request context
 - request logging configurável
+- consulta web de logs da API com mascaramento na visualização
 - logging persistido
 - retenção de logs operacionais
 - commands tenant-aware
@@ -1114,7 +1272,7 @@ Ou seja: a base já está pronta para sustentar os primeiros módulos reais do d
 
 ---
 
-# 18. Próximos passos recomendados
+# 19. Próximos passos recomendados
 
 Depois da base estabilizada, os próximos passos naturais são:
 
@@ -1125,7 +1283,7 @@ Depois da base estabilizada, os próximos passos naturais são:
 
 ---
 
-# 19. Observação final
+# 20. Observação final
 
 Esta base deve ser tratada como **contrato arquitetural do projeto**.
 
@@ -1137,5 +1295,6 @@ Mudanças estruturais relevantes em:
 - execução fora do HTTP
 - formato de resposta
 - estratégia de testes
+- módulo web administrativo
 
 devem ser feitas com revisão arquitetural explícita, e não por conveniência pontual.
