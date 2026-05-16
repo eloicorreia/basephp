@@ -6,9 +6,12 @@ namespace App\Services\Admin;
 
 use App\DTO\Admin\AssignUserRoleDTO;
 use App\DTO\Admin\CreateUserDTO;
+use App\Enums\RoleCode;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
 use App\Support\Auth\AuthenticatedUserId;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
 class UserService
@@ -54,22 +57,23 @@ class UserService
     {
         return DB::transaction(function () use ($user, $dto): User {
             $authenticatedUser = auth()->user();
-            $beforeRoleId = $user->role_id;
+            $user->loadMissing('role');
+            $newRole = Role::query()->findOrFail($dto->roleId);
+
+            $this->ensureRoleCanBeChanged($user, $newRole, $authenticatedUser);
+
+            $beforeRole = $user->role;
 
             $user->forceFill([
-                'role_id' => $dto->roleId,
+                'role_id' => $newRole->id,
             ])->save();
 
             $this->logPersistenceService->logAudit(
                 action: 'user.role_assigned',
                 auditableType: User::class,
                 auditableId: $user->id,
-                beforeData: [
-                    'role_id' => $beforeRoleId,
-                ],
-                afterData: [
-                    'role_id' => $user->role_id,
-                ],
+                beforeData: $this->roleAuditSnapshot($beforeRole),
+                afterData: $this->roleAuditSnapshot($newRole),
                 userId: AuthenticatedUserId::resolve(),
                 userRole: $authenticatedUser instanceof User
                     ? $authenticatedUser->role?->code
@@ -78,5 +82,63 @@ class UserService
 
             return $user->refresh();
         });
+    }
+
+    private function ensureRoleCanBeChanged(User $targetUser, Role $newRole, mixed $authenticatedUser): void
+    {
+        if (
+            $this->isActiveAdmin($targetUser)
+            && $newRole->code !== RoleCode::ADMIN->value
+            && $this->activeAdminUsersCount() <= 1
+        ) {
+            throw new AuthorizationException('Não é permitido remover o último administrador ativo.');
+        }
+
+        if (
+            $authenticatedUser instanceof User
+            && $authenticatedUser->id === $targetUser->id
+        ) {
+            throw new AuthorizationException('Não é permitido alterar a própria role.');
+        }
+    }
+
+    private function activeAdminUsersCount(): int
+    {
+        $adminRoleId = Role::query()
+            ->where('code', RoleCode::ADMIN->value)
+            ->where('active', true)
+            ->value('id');
+
+        if ($adminRoleId === null) {
+            return 0;
+        }
+
+        return User::query()
+            ->where('is_active', true)
+            ->where('role_id', $adminRoleId)
+            ->count();
+    }
+
+    private function isActiveAdmin(User $user): bool
+    {
+        return $user->is_active
+            && $user->role?->active === true
+            && $user->role->code === RoleCode::ADMIN->value;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function roleAuditSnapshot(?Role $role): ?array
+    {
+        if ($role === null) {
+            return null;
+        }
+
+        return [
+            'role_id' => $role->id,
+            'role_code' => $role->code,
+            'role_name' => $role->name,
+        ];
     }
 }

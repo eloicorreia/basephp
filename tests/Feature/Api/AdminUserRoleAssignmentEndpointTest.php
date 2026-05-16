@@ -54,8 +54,16 @@ final class AdminUserRoleAssignmentEndpointTest extends TestCase
         $this->assertNotNull($auditLog);
         $this->assertSame($context['user']->id, $auditLog->user_id);
         $this->assertSame('admin', $auditLog->user_role);
-        $this->assertSame(['role_id' => $oldRole->id], $auditLog->before_data);
-        $this->assertSame(['role_id' => $newRole->id], $auditLog->after_data);
+        $this->assertSame([
+            'role_id' => $oldRole->id,
+            'role_code' => $oldRole->code,
+            'role_name' => $oldRole->name,
+        ], $auditLog->before_data);
+        $this->assertSame([
+            'role_id' => $newRole->id,
+            'role_code' => $newRole->code,
+            'role_name' => $newRole->name,
+        ], $auditLog->after_data);
     }
 
     public function test_admin_cannot_assign_inactive_role_to_user(): void
@@ -84,6 +92,55 @@ final class AdminUserRoleAssignmentEndpointTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $targetUser->id,
             'role_id' => $currentRole->id,
+        ]);
+    }
+
+    public function test_admin_cannot_change_own_role(): void
+    {
+        $context = $this->createAdminContext();
+
+        $backupAdmin = $this->createUser(role: $context['admin_role']);
+        $this->grantTenantAccess($backupAdmin, $context['tenant'], $context['tenant_role'], true);
+
+        $newRole = $this->createRole(
+            'self-change-role-'.str_replace('-', '', (string) Str::uuid()),
+            'Self Change Role'
+        );
+
+        $this->patchJson('/api/v1/admin/users/'.$context['user']->id.'/role', [
+            'role_id' => $newRole->id,
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $context['user']->id,
+            'role_id' => $context['admin_role']->id,
+        ]);
+    }
+
+    public function test_admin_cannot_remove_last_active_admin_role(): void
+    {
+        $context = $this->createAdminContext();
+
+        $newRole = $this->createRole(
+            'last-admin-target-role-'.str_replace('-', '', (string) Str::uuid()),
+            'Last Admin Target Role'
+        );
+
+        $this->patchJson('/api/v1/admin/users/'.$context['user']->id.'/role', [
+            'role_id' => $newRole->id,
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $context['user']->id,
+            'role_id' => $context['admin_role']->id,
         ]);
     }
 
@@ -160,7 +217,9 @@ final class AdminUserRoleAssignmentEndpointTest extends TestCase
 
         return [
             'tenant' => $tenant,
+            'tenant_role' => $tenantRole,
             'user' => $user,
+            'admin_role' => $adminRole,
         ];
     }
 

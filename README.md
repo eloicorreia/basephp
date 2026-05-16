@@ -492,6 +492,7 @@ Regras importantes:
 A associação oficial entre usuários humanos e roles globais é `users.role_id -> roles.id`.
 Cada usuário possui uma única role global por vez, usada por middlewares como `role:admin`.
 O papel do usuário dentro de um tenant específico continua separado em `tenant_users.role_id`.
+Roles inativas não autorizam middlewares `role:*` e não podem ser atribuídas a usuários.
 
 Endpoints administrativos disponíveis:
 
@@ -502,7 +503,15 @@ Endpoints administrativos disponíveis:
 | `PATCH /api/v1/admin/users/{user}/role` | Troca a role global de um usuário existente. |
 
 Criação e troca de role aceitam apenas roles ativas. A troca registra auditoria em `audit_logs`
-com `action = user.role_assigned`, preservando `before_data.role_id` e `after_data.role_id`.
+com `action = user.role_assigned`, preservando snapshot de `role_id`, `role_code` e `role_name`
+em `before_data` e `after_data`.
+
+Regras de segurança:
+
+- usuário não pode alterar a própria role pela API administrativa
+- não é permitido remover ou rebaixar o último usuário ativo com role global `admin` ativa
+- endpoints de roles usam `users.read` por enquanto; `roles.read` e `roles.write` ficam reservados para quando roles tiverem manutenção própria
+- consultas de catálogo de roles passam por `RoleService`, deixando o controller fino para filtros, regras e auditoria futuras
 
 ---
 

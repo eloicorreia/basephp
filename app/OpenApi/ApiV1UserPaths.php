@@ -105,6 +105,7 @@ final class ApiV1UserPaths
         ),
         responses: [
             new OA\Response(response: 200, description: 'Role do usuário atualizada com sucesso.', content: new OA\JsonContent(ref: '#/components/schemas/UserResponse')),
+            new OA\Response(response: 403, description: 'Troca bloqueada por regra de segurança.', content: new OA\JsonContent(ref: '#/components/schemas/ApiErrorResponse')),
             new OA\Response(response: 404, description: 'Usuário não encontrado.', content: new OA\JsonContent(ref: '#/components/schemas/ApiErrorResponse')),
             new OA\Response(response: 422, description: 'Role inválida ou inativa.', content: new OA\JsonContent(ref: '#/components/schemas/ApiErrorResponse')),
         ]
