@@ -88,6 +88,40 @@ final class AdminPermissionEndpointTest extends TestCase
         ]);
     }
 
+    public function test_permission_code_is_immutable_on_update(): void
+    {
+        $context = $this->createAdminContext();
+        $permission = Permission::query()->create([
+            'code' => 'custom.immutable.'.str_replace('-', '', (string) Str::uuid()),
+            'name' => 'Immutable Code',
+            'description' => 'Original description.',
+            'group' => 'Custom',
+            'context' => 'api',
+            'is_system' => false,
+            'is_sensitive' => false,
+            'active' => true,
+        ]);
+
+        $this->putJson('/api/v1/admin/permissions/'.$permission->id, [
+            'code' => 'custom.changed.'.str_replace('-', '', (string) Str::uuid()),
+            'name' => 'Updated Name',
+            'description' => 'Updated description.',
+            'group' => 'Custom',
+            'context' => 'web',
+            'is_sensitive' => true,
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.code', $permission->code);
+
+        $this->assertDatabaseHas('permissions', [
+            'id' => $permission->id,
+            'code' => $permission->code,
+            'name' => 'Updated Name',
+        ]);
+    }
+
     public function test_admin_can_enable_and_disable_custom_permission_without_physical_delete(): void
     {
         $context = $this->createAdminContext();

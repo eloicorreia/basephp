@@ -53,6 +53,8 @@ class Role extends Model
             return false;
         }
 
+        // Authorization callers must keep the base permissions relation complete
+        // when eager loading it; filtered permission views should use another relation.
         if ($this->relationLoaded('permissions')) {
             return $this->permissions
                 ->where('active', true)
