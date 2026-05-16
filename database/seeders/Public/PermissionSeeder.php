@@ -18,7 +18,9 @@ class PermissionSeeder extends Seeder
                 [
                     'name' => $definition['name'],
                     'description' => $definition['description'],
+                    'group' => $definition['group'],
                     'context' => $definition['context'],
+                    'is_system' => $definition['is_system'],
                     'is_sensitive' => $definition['is_sensitive'],
                     'active' => true,
                 ]

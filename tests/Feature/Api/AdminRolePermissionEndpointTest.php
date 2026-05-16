@@ -79,6 +79,7 @@ final class AdminRolePermissionEndpointTest extends TestCase
         $this->assertDatabaseHas('role_permissions', [
             'role_id' => $role->id,
             'permission_id' => $usersWrite->id,
+            'assigned_by' => $context['user']->id,
         ]);
         $this->assertDatabaseMissing('role_permissions', [
             'role_id' => $role->id,
@@ -94,7 +95,11 @@ final class AdminRolePermissionEndpointTest extends TestCase
         $this->assertSame($context['user']->id, $auditLog->user_id);
         $this->assertSame('admin', $auditLog->user_role);
         $this->assertSame(PermissionRegistry::USERS_READ, $auditLog->before_data['permissions'][0]['code']);
+        $this->assertSame($usersRead->name, $auditLog->before_data['permissions'][0]['name']);
+        $this->assertSame($usersRead->context, $auditLog->before_data['permissions'][0]['context']);
+        $this->assertSame($usersRead->is_sensitive, $auditLog->before_data['permissions'][0]['is_sensitive']);
         $this->assertSame(PermissionRegistry::USERS_WRITE, $auditLog->after_data['permissions'][0]['code']);
+        $this->assertSame($usersWrite->name, $auditLog->after_data['permissions'][0]['name']);
     }
 
     public function test_sync_role_permissions_rejects_inactive_permission(): void
@@ -112,6 +117,87 @@ final class AdminRolePermissionEndpointTest extends TestCase
 
         $this->putJson('/api/v1/admin/roles/'.$role->id.'/permissions', [
             'permission_ids' => [$permission->id],
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_sync_role_permissions_cannot_remove_admin_full_from_last_operational_role(): void
+    {
+        $context = $this->createAdminContext();
+
+        $usersRead = Permission::query()->where('code', PermissionRegistry::USERS_READ)->firstOrFail();
+
+        $this->putJson('/api/v1/admin/roles/'.$context['admin_role']->id.'/permissions', [
+            'permission_ids' => [$usersRead->id],
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_sync_role_permissions_cannot_remove_roles_write_from_all_roles(): void
+    {
+        $context = $this->createAdminContext();
+
+        $adminFull = Permission::query()->where('code', PermissionRegistry::ADMIN_FULL)->firstOrFail();
+        $permissionsWrite = Permission::query()->where('code', PermissionRegistry::PERMISSIONS_WRITE)->firstOrFail();
+
+        $this->putJson('/api/v1/admin/roles/'.$context['admin_role']->id.'/permissions', [
+            'permission_ids' => [$adminFull->id, $permissionsWrite->id],
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_sync_role_permissions_cannot_leave_system_without_active_permission_admin_user(): void
+    {
+        $context = $this->createAdminContext();
+
+        $backupRole = $this->createRole(
+            'permission-admin-backup-'.str_replace('-', '', (string) Str::uuid()),
+            'Permission Admin Backup'
+        );
+        $adminFull = Permission::query()->where('code', PermissionRegistry::ADMIN_FULL)->firstOrFail();
+        $rolesWrite = Permission::query()->where('code', PermissionRegistry::ROLES_WRITE)->firstOrFail();
+        $permissionsWrite = Permission::query()->where('code', PermissionRegistry::PERMISSIONS_WRITE)->firstOrFail();
+        $usersRead = Permission::query()->where('code', PermissionRegistry::USERS_READ)->firstOrFail();
+
+        $backupRole->permissions()->sync([$adminFull->id, $rolesWrite->id, $permissionsWrite->id]);
+
+        $this->putJson('/api/v1/admin/roles/'.$context['admin_role']->id.'/permissions', [
+            'permission_ids' => [$usersRead->id],
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_sync_role_permissions_cannot_remove_own_permission_administration_access(): void
+    {
+        $context = $this->createAdminContext();
+
+        $backupRole = $this->createRole(
+            'perm-admin-user-'.str_replace('-', '', (string) Str::uuid()),
+            'Permission Admin User Backup'
+        );
+        $adminFull = Permission::query()->where('code', PermissionRegistry::ADMIN_FULL)->firstOrFail();
+        $rolesWrite = Permission::query()->where('code', PermissionRegistry::ROLES_WRITE)->firstOrFail();
+        $permissionsWrite = Permission::query()->where('code', PermissionRegistry::PERMISSIONS_WRITE)->firstOrFail();
+        $usersRead = Permission::query()->where('code', PermissionRegistry::USERS_READ)->firstOrFail();
+
+        $backupRole->permissions()->sync([$adminFull->id, $rolesWrite->id, $permissionsWrite->id]);
+        $backupUser = $this->createUser(role: $backupRole);
+        $this->grantTenantAccess($backupUser, $context['tenant'], $context['tenant_role'], true);
+
+        $this->putJson('/api/v1/admin/roles/'.$context['admin_role']->id.'/permissions', [
+            'permission_ids' => [$usersRead->id],
         ], [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
@@ -148,7 +234,9 @@ final class AdminRolePermissionEndpointTest extends TestCase
 
         return [
             'tenant' => $tenant,
+            'tenant_role' => $tenantRole,
             'user' => $user,
+            'admin_role' => $adminRole,
         ];
     }
 }

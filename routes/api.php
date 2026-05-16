@@ -86,6 +86,14 @@ Route::prefix('v1')->group(function (): void {
 
             Route::get('/admin/permissions', [PermissionController::class, 'index'])
                 ->middleware([OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::PERMISSIONS_READ), 'permission:'.PermissionRegistry::PERMISSIONS_READ]);
+            Route::post('/admin/permissions', [PermissionController::class, 'store'])
+                ->middleware([OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::PERMISSIONS_WRITE), 'permission:'.PermissionRegistry::PERMISSIONS_WRITE]);
+            Route::put('/admin/permissions/{permission}', [PermissionController::class, 'update'])
+                ->middleware([OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::PERMISSIONS_WRITE), 'permission:'.PermissionRegistry::PERMISSIONS_WRITE]);
+            Route::patch('/admin/permissions/{permission}/enable', [PermissionController::class, 'enable'])
+                ->middleware([OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::PERMISSIONS_WRITE), 'permission:'.PermissionRegistry::PERMISSIONS_WRITE]);
+            Route::patch('/admin/permissions/{permission}/disable', [PermissionController::class, 'disable'])
+                ->middleware([OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::PERMISSIONS_WRITE), 'permission:'.PermissionRegistry::PERMISSIONS_WRITE]);
 
             Route::get('/admin/tenant-users', [TenantUserController::class, 'index'])
                 ->middleware([OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::TENANT_USERS_READ), 'permission:'.PermissionRegistry::TENANT_USERS_READ]);

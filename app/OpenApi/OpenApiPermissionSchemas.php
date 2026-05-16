@@ -15,7 +15,9 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'code', type: 'string', example: 'users.read'),
         new OA\Property(property: 'name', type: 'string', example: 'Consultar usuários'),
         new OA\Property(property: 'description', type: 'string', nullable: true, example: 'Permite consultar usuários globais.'),
+        new OA\Property(property: 'group', type: 'string', nullable: true, example: 'Usuários'),
         new OA\Property(property: 'context', type: 'string', enum: ['api', 'web', 'both'], example: 'api'),
+        new OA\Property(property: 'is_system', type: 'boolean', example: true),
         new OA\Property(property: 'is_sensitive', type: 'boolean', example: false),
         new OA\Property(property: 'active', type: 'boolean', example: true),
     ]

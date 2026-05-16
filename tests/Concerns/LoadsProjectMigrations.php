@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Concerns;
 
+use Database\Seeders\Public\PermissionSeeder;
+use Database\Seeders\Public\RoleSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
@@ -84,6 +86,9 @@ trait LoadsProjectMigrations
             'TRUNCATE TABLE %s RESTART IDENTITY CASCADE',
             implode(', ', $qualifiedTables)
         ));
+
+        $this->seed(PermissionSeeder::class);
+        $this->seed(RoleSeeder::class);
     }
 
     private function ensureTestingDatabase(): void
@@ -153,6 +158,10 @@ trait LoadsProjectMigrations
         return Schema::hasTable('tenants')
             && Schema::hasTable('permissions')
             && Schema::hasTable('role_permissions')
+            && Schema::hasColumn('permissions', 'group')
+            && Schema::hasColumn('permissions', 'is_system')
+            && Schema::hasColumn('role_permissions', 'assigned_by')
+            && Schema::hasColumn('role_permissions', 'assigned_at')
             && Schema::hasTable('api_request_logs')
             && Schema::hasColumn('users', 'role_id')
             && Schema::hasColumn('users', 'is_active')

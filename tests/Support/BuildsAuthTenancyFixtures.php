@@ -4,23 +4,37 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Enums\RoleCode;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\TenantUser;
 use App\Models\User;
+use App\Support\Auth\PermissionRegistry;
 use Illuminate\Support\Str;
 
 trait BuildsAuthTenancyFixtures
 {
     private function createRole(string $code, string $name, bool $active = true): Role
     {
-        return Role::query()->firstOrCreate(
+        $role = Role::query()->firstOrCreate(
             ['code' => $code],
             [
                 'name' => $name,
                 'active' => $active,
             ]
         );
+
+        $role->forceFill([
+            'name' => $name,
+            'active' => $active,
+        ])->save();
+
+        if ($role->code === RoleCode::ADMIN->value) {
+            $this->grantAllRegistryPermissionsToRole($role);
+        }
+
+        return $role;
     }
 
     /**
@@ -89,5 +103,33 @@ trait BuildsAuthTenancyFixtures
             'role_id' => $role->id,
             'is_active' => $isActive,
         ]);
+    }
+
+    private function grantAllRegistryPermissionsToRole(Role $role): void
+    {
+        foreach (PermissionRegistry::definitions() as $code => $definition) {
+            Permission::query()->updateOrCreate(
+                ['code' => $code],
+                [
+                    'name' => $definition['name'],
+                    'description' => $definition['description'],
+                    'group' => $definition['group'],
+                    'context' => $definition['context'],
+                    'is_system' => $definition['is_system'],
+                    'is_sensitive' => $definition['is_sensitive'],
+                    'active' => true,
+                ]
+            );
+        }
+
+        $syncPayload = [];
+
+        foreach (Permission::query()->whereIn('code', PermissionRegistry::codes())->pluck('id')->all() as $permissionId) {
+            $syncPayload[$permissionId] = [
+                'assigned_at' => now(),
+            ];
+        }
+
+        $role->permissions()->syncWithoutDetaching($syncPayload);
     }
 }

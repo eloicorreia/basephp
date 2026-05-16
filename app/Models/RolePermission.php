@@ -14,6 +14,12 @@ class RolePermission extends Model
     protected $fillable = [
         'role_id',
         'permission_id',
+        'assigned_by',
+        'assigned_at',
+    ];
+
+    protected $casts = [
+        'assigned_at' => 'datetime',
     ];
 
     /**

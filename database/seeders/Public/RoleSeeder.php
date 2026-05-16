@@ -42,12 +42,15 @@ class RoleSeeder extends Seeder
         $adminRole = Role::query()->where('code', RoleCode::ADMIN->value)->first();
 
         if ($adminRole instanceof Role) {
-            $adminRole->permissions()->sync(
-                Permission::query()
-                    ->whereIn('code', PermissionRegistry::codes())
-                    ->pluck('id')
-                    ->all()
-            );
+            $syncPayload = [];
+
+            foreach (Permission::query()->whereIn('code', PermissionRegistry::codes())->pluck('id')->all() as $permissionId) {
+                $syncPayload[$permissionId] = [
+                    'assigned_at' => now(),
+                ];
+            }
+
+            $adminRole->permissions()->sync($syncPayload);
         }
     }
 }
