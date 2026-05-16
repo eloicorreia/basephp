@@ -151,6 +151,8 @@ trait LoadsProjectMigrations
     protected function projectSchemaIsReady(): bool
     {
         return Schema::hasTable('tenants')
+            && Schema::hasTable('permissions')
+            && Schema::hasTable('role_permissions')
             && Schema::hasTable('api_request_logs')
             && Schema::hasColumn('users', 'role_id')
             && Schema::hasColumn('users', 'is_active')

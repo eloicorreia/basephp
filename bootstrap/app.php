@@ -6,6 +6,7 @@ use App\Exceptions\ApiException;
 use App\Http\Middleware\ApiRequestLoggingMiddleware;
 use App\Http\Middleware\EnsureClientCredentials;
 use App\Http\Middleware\EnsurePasswordChangedMiddleware;
+use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureTenantAccessMiddleware;
 use App\Http\Middleware\EnsureUserIsActive;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
+            'permission' => EnsurePermission::class,
             'role' => EnsureRole::class,
             'user.active' => EnsureUserIsActive::class,
             'tenant.resolve' => ResolveTenantMiddleware::class,

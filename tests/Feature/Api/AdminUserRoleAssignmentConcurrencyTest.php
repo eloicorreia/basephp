@@ -62,7 +62,7 @@ final class AdminUserRoleAssignmentConcurrencyTest extends TestCase
             }
 
             $this->assertInstanceOf(QueryException::class, $exception);
-            $this->assertStringContainsString('lock timeout', $exception->getMessage());
+            $this->assertSame('55P03', (string) $exception->getCode());
         } finally {
             DB::statement('reset lock_timeout');
             $lockConnection->rollBack();

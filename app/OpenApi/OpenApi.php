@@ -76,6 +76,10 @@ Observações de segurança:
     description: 'Consulta de roles globais e suporte à associação role x usuário.'
 )]
 #[OA\Tag(
+    name: 'Permissions',
+    description: 'Consulta do catálogo de permissões dinâmicas.'
+)]
+#[OA\Tag(
     name: 'Tenant Users',
     description: 'Administração de vínculos entre usuários e tenants.'
 )]

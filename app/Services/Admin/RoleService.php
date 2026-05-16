@@ -38,6 +38,7 @@ class RoleService
 
         return Role::query()
             ->withCount('users')
+            ->withCount('permissions')
             ->when(
                 $activeOnly,
                 static fn ($query) => $query->where('active', true)

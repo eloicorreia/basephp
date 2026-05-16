@@ -42,6 +42,14 @@ class AuthenticatedUserResource extends JsonResource
                 'code' => $tenantUser->role->code,
                 'name' => $tenantUser->role->name,
             ] : null,
+            'permissions' => $user->role?->permissions
+                ? $user->role->permissions
+                    ->where('active', true)
+                    ->sortBy('code')
+                    ->pluck('code')
+                    ->values()
+                    ->all()
+                : [],
         ];
     }
 }

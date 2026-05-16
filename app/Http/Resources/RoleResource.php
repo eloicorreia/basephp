@@ -27,6 +27,7 @@ class RoleResource extends JsonResource
             'name' => $role->name,
             'active' => $role->active,
             'users_count' => $role->users_count,
+            'permissions_count' => $role->permissions_count,
             'created_at' => $role->created_at,
             'updated_at' => $role->updated_at,
         ];

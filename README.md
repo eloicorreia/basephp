@@ -475,6 +475,8 @@ Os escopos são centralizados em `App\Support\Auth\OAuthScopes`, registrados em 
 | `admin.full` | Acesso administrativo amplo, usado como escopo guarda-chuva. |
 | `tenants.read` / `tenants.write` | Consultar/criar/manter tenants. |
 | `users.read` / `users.write` | Consultar/criar/manter usuários globais. |
+| `roles.read` / `roles.write` | Consultar roles e manter permissões vinculadas a roles. |
+| `permissions.read` / `permissions.write` | Consultar/manter catálogo de permissões. |
 | `tenant.users.read` / `tenant.users.write` | Consultar/criar/manter vínculos usuário x tenant. |
 | `queues.read` / `queues.write` | Consultar filas e executar ações operacionais. |
 | `emails.read` / `emails.write` | Consultar, enviar e reprocessar e-mails. |
@@ -483,7 +485,7 @@ Os escopos são centralizados em `App\Support\Auth\OAuthScopes`, registrados em 
 Regras importantes:
 
 - rotas tenant-aware exigem o scope OAuth `tenant.access` e o middleware `tenant.access`
-- rotas administrativas exigem role `admin` e escopo específico ou `admin.full`
+- rotas administrativas exigem role `admin`, permissão dinâmica no banco e escopo específico ou `admin.full`
 - rotas client credentials não podem depender de usuário humano
 - `system.health` deve ser usado apenas com client credentials
 
@@ -500,6 +502,9 @@ Endpoints administrativos disponíveis:
 | --- | --- |
 | `GET /api/v1/admin/roles` | Lista roles globais ativas para seleção em telas administrativas. |
 | `GET /api/v1/admin/roles/{role}` | Consulta uma role global e sua quantidade de usuários associados. |
+| `GET /api/v1/admin/roles/{role}/permissions` | Lista permissões vinculadas à role. |
+| `PUT /api/v1/admin/roles/{role}/permissions` | Sincroniza permissões vinculadas à role. |
+| `GET /api/v1/admin/permissions` | Lista o catálogo de permissões dinâmicas. |
 | `PATCH /api/v1/admin/users/{user}/role` | Troca a role global de um usuário existente. |
 
 `GET /api/v1/admin/roles` aceita `per_page` com máximo 100, `active_only`, `sort`
@@ -514,7 +519,8 @@ Regras de segurança:
 - usuário não pode alterar a própria role pela API administrativa
 - não é permitido remover ou rebaixar o último usuário ativo com role global `admin` ativa
 - a checagem do último admin usa bloqueio pessimista na transação para serializar trocas concorrentes de roles administrativas
-- endpoints de roles usam `users.read` por enquanto; `roles.read` e `roles.write` ficam reservados para quando roles tiverem manutenção própria
+- roles autorizam ações por meio de `role_permissions`; `admin.full` é a permissão guarda-chuva administrativa
+- alteração de permissões de role registra auditoria em `audit_logs` com `action = role.permissions_synced`
 - consultas de catálogo de roles passam por `RoleService`, deixando o controller fino para filtros, regras e auditoria futuras
 
 ---

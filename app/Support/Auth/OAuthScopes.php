@@ -26,6 +26,14 @@ final class OAuthScopes
 
     public const USERS_WRITE = 'users.write';
 
+    public const ROLES_READ = 'roles.read';
+
+    public const ROLES_WRITE = 'roles.write';
+
+    public const PERMISSIONS_READ = 'permissions.read';
+
+    public const PERMISSIONS_WRITE = 'permissions.write';
+
     public const QUEUES_READ = 'queues.read';
 
     public const QUEUES_WRITE = 'queues.write';
@@ -52,6 +60,10 @@ final class OAuthScopes
             self::TENANTS_WRITE => 'Criação e manutenção de tenants',
             self::USERS_READ => 'Listagem de usuários',
             self::USERS_WRITE => 'Criação e manutenção de usuários',
+            self::ROLES_READ => 'Listagem de roles e permissões vinculadas',
+            self::ROLES_WRITE => 'Manutenção de permissões vinculadas a roles',
+            self::PERMISSIONS_READ => 'Listagem de permissões',
+            self::PERMISSIONS_WRITE => 'Manutenção de permissões',
             self::QUEUES_READ => 'Consulta operacional de filas',
             self::QUEUES_WRITE => 'Ações operacionais em filas',
             self::EMAILS_READ => 'Consulta de envios de e-mail',

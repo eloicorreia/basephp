@@ -71,4 +71,13 @@ class User extends Authenticatable implements OAuthenticatable
 
         return in_array($role->code, $roles, true);
     }
+
+    public function hasPermission(string $permission): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        return $this->role?->hasPermission($permission) === true;
+    }
 }

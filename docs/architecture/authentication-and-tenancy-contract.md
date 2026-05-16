@@ -55,8 +55,11 @@
 - A listagem de roles deve aceitar apenas ordenação por allowlist e limitar `per_page` a no máximo 100 registros.
 - Consultas de catálogo de roles devem passar por `RoleService`; controllers não devem concentrar regras de filtro, bloqueio ou auditoria.
 - O vínculo por tenant continua separado em `tenant_users.role_id`; ele representa o papel do usuário dentro de um tenant específico e não substitui a role global.
-- O controle principal de autorização dos endpoints administrativos continua nos middlewares de rota (`auth:api`, `tenant.access`, `role:admin` e escopos OAuth).
-- Os endpoints de roles usam `users.read` por estarem no fluxo de administração de usuários. Scopes dedicados `roles.read` e `roles.write` só devem ser criados quando roles ganharem manutenção própria além de consulta de catálogo.
+- Permissões dinâmicas são armazenadas em `permissions` e vinculadas às roles por `role_permissions`.
+- O middleware `permission:{code}` deve consultar as permissões ativas da role global do usuário autenticado.
+- A permissão `admin.full` é a permissão guarda-chuva administrativa e autoriza as demais permissões dinâmicas.
+- Sincronização de permissões de role deve passar por `RolePermissionService` e registrar auditoria com `action = role.permissions_synced`.
+- O controle de autorização dos endpoints administrativos combina middlewares de rota (`auth:api`, `tenant.access`, `role:admin`, `permission:*`) e escopos OAuth.
 
 ## 7. Headers técnicos oficiais
 - `X-Request-Id`

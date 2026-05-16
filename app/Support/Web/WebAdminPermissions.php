@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Support\Web;
 
-use App\Enums\RoleCode;
 use App\Models\User;
 
 final class WebAdminPermissions
@@ -48,12 +47,6 @@ final class WebAdminPermissions
             return false;
         }
 
-        $role = $user->role;
-
-        if ($role === null || ! $role->active) {
-            return false;
-        }
-
-        return $role->code === RoleCode::ADMIN->value;
+        return $user->hasPermission($permission);
     }
 }

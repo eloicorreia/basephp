@@ -20,7 +20,7 @@ class MeController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $user = $request->user()?->load([
-            'role',
+            'role.permissions',
             'tenantUsers.tenant',
             'tenantUsers.role',
         ]);
