@@ -20,7 +20,7 @@ class StorePermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/', 'unique:permissions,code'],
+            'code' => ['required', 'string', 'max:150', 'regex:/^[a-z0-9]+(?:[._-][a-z0-9]+)*$/', 'unique:permissions,code'],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:255'],
             'group' => ['nullable', 'string', 'max:80'],

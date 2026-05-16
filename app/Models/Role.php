@@ -53,6 +53,13 @@ class Role extends Model
             return false;
         }
 
+        if ($this->relationLoaded('permissions')) {
+            return $this->permissions
+                ->where('active', true)
+                ->whereIn('code', [$permission, PermissionRegistry::ADMIN_FULL])
+                ->isNotEmpty();
+        }
+
         return $this->permissions()
             ->where('permissions.active', true)
             ->whereIn('permissions.code', [$permission, PermissionRegistry::ADMIN_FULL])

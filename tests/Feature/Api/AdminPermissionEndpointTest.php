@@ -8,6 +8,7 @@ use App\Models\AuditLog;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Support\Auth\PermissionRegistry;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -167,7 +168,7 @@ final class AdminPermissionEndpointTest extends TestCase
             ->where('code', PermissionRegistry::USERS_READ)
             ->firstOrFail();
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         $permission->delete();
     }
