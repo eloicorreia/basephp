@@ -26,4 +26,12 @@ class Role extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    /**
+     * @return HasMany<TenantUser, $this>
+     */
+    public function tenantUsers(): HasMany
+    {
+        return $this->hasMany(TenantUser::class);
+    }
 }

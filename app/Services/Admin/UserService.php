@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\DTO\Admin\AssignUserRoleDTO;
 use App\DTO\Admin\CreateUserDTO;
 use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
@@ -46,6 +47,36 @@ class UserService
             );
 
             return $user;
+        });
+    }
+
+    public function assignRole(User $user, AssignUserRoleDTO $dto): User
+    {
+        return DB::transaction(function () use ($user, $dto): User {
+            $authenticatedUser = auth()->user();
+            $beforeRoleId = $user->role_id;
+
+            $user->forceFill([
+                'role_id' => $dto->roleId,
+            ])->save();
+
+            $this->logPersistenceService->logAudit(
+                action: 'user.role_assigned',
+                auditableType: User::class,
+                auditableId: $user->id,
+                beforeData: [
+                    'role_id' => $beforeRoleId,
+                ],
+                afterData: [
+                    'role_id' => $user->role_id,
+                ],
+                userId: AuthenticatedUserId::resolve(),
+                userRole: $authenticatedUser instanceof User
+                    ? $authenticatedUser->role?->code
+                    : null,
+            );
+
+            return $user->refresh();
         });
     }
 }

@@ -41,22 +41,32 @@
 8. password.changed
 9. role, quando aplicável
 
-## 6. Headers técnicos oficiais
+## 6. Roles globais e usuários
+- A relação oficial entre usuário humano e role global é `users.role_id -> roles.id`.
+- Cada usuário possui no máximo uma role global ativa por vez.
+- A role global é usada por middlewares de autorização de alto nível, como `role:admin`.
+- Criação de usuário e troca de role devem aceitar apenas roles ativas.
+- A troca de role de usuário existente deve ser feita por `PATCH /api/v1/admin/users/{user}/role`.
+- Toda troca de role deve registrar auditoria com `action = user.role_assigned`, contendo `before_data.role_id` e `after_data.role_id`.
+- Consulta de roles disponíveis para associação deve usar `GET /api/v1/admin/roles`.
+- O vínculo por tenant continua separado em `tenant_users.role_id`; ele representa o papel do usuário dentro de um tenant específico e não substitui a role global.
+
+## 7. Headers técnicos oficiais
 - `X-Request-Id`
 - `X-Trace-Id`
 - `X-Tenant-Id` quando aplicável
 
-## 7. Regras obrigatórias
+## 8. Regras obrigatórias
 - Controllers não devem resolver tenant manualmente.
 - Services não devem ler headers diretamente.
 - O tenant ativo deve ser obtido pelo `TenantContext`.
 - Não é permitido acessar dados tenant sem `tenant.resolve`.
 
-## 8. Execuções tenant-aware fora do HTTP
+## 9. Execuções tenant-aware fora do HTTP
 
 Além do fluxo HTTP, o projeto adota tenancy por schema também em execuções assíncronas, eventos e comandos administrativos tenant-aware.
 
-### 8.1. Regras obrigatórias
+### 9.1. Regras obrigatórias
 
 - Jobs tenant-aware devem transportar `tenant_id`.
 - Listeners tenant-aware devem restaurar `TenantContext` e `search_path` antes de executar regra de negócio.
@@ -64,31 +74,31 @@ Além do fluxo HTTP, o projeto adota tenancy por schema também em execuções a
 - Nenhum job, listener ou command tenant-aware pode trocar schema manualmente fora de `TenantExecutionManager`.
 - A regra oficial de tenant ativo fora do HTTP também é `status = 'active'`.
 
-### 8.2. Fonte oficial do contexto
+### 9.2. Fonte oficial do contexto
 
 - O tenant atual da execução deve sempre ser obtido por `TenantContext`.
 - A troca de `search_path` deve sempre ser feita por `TenantSearchPathService`.
 - A orquestração de contexto tenant-aware fora do HTTP deve sempre ser feita por `TenantExecutionManager`.
 
-### 8.3. Jobs tenant-aware
+### 9.3. Jobs tenant-aware
 
 - Jobs tenant-aware devem receber `tenant_id` no construtor.
 - O `handle()` do job não deve configurar schema manualmente.
 - O job deve restaurar o contexto tenant antes de executar a regra principal.
 - A regra de negócio do job deve operar já dentro do contexto tenant restaurado.
 
-### 8.4. Listeners tenant-aware
+### 9.4. Listeners tenant-aware
 
 - Listeners tenant-aware devem receber ou inferir `tenant_id` a partir do evento.
 - O listener não deve trocar schema diretamente.
 - O listener deve restaurar `TenantContext` e `search_path` antes de chamar services tenant-aware.
 
-### 8.5. Commands tenant-aware
+### 9.5. Commands tenant-aware
 
 - Commands tenant-aware devem aceitar `tenant_id` explícito ou opção `--all`, quando aplicável.
 - Commands com `--all` devem processar apenas tenants com `status = 'active'`.
 - Commands tenant-aware não devem executar regra de negócio fora de `TenantExecutionManager`.
 
-### 8.6. Exceção administrativa
+### 9.6. Exceção administrativa
 
 Comandos estritamente administrativos que operam diretamente por schema, como rotinas de bootstrap ou migração estrutural, podem utilizar `TenantSearchPathService` diretamente, desde que isso esteja explicitamente documentado como exceção e não como padrão de negócio.

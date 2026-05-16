@@ -487,6 +487,23 @@ Regras importantes:
 - rotas client credentials não podem depender de usuário humano
 - `system.health` deve ser usado apenas com client credentials
 
+## Roles globais de usuários
+
+A associação oficial entre usuários humanos e roles globais é `users.role_id -> roles.id`.
+Cada usuário possui uma única role global por vez, usada por middlewares como `role:admin`.
+O papel do usuário dentro de um tenant específico continua separado em `tenant_users.role_id`.
+
+Endpoints administrativos disponíveis:
+
+| Endpoint | Uso |
+| --- | --- |
+| `GET /api/v1/admin/roles` | Lista roles globais ativas para seleção em telas administrativas. |
+| `GET /api/v1/admin/roles/{role}` | Consulta uma role global e sua quantidade de usuários associados. |
+| `PATCH /api/v1/admin/users/{user}/role` | Troca a role global de um usuário existente. |
+
+Criação e troca de role aceitam apenas roles ativas. A troca registra auditoria em `audit_logs`
+com `action = user.role_assigned`, preservando `before_data.role_id` e `after_data.role_id`.
+
 ---
 
 # 8. Como instalar e subir localmente

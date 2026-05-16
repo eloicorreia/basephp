@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Admin\EmailDispatchController;
 use App\Http\Controllers\Api\V1\Admin\FailedJobController;
 use App\Http\Controllers\Api\V1\Admin\QueueController;
+use App\Http\Controllers\Api\V1\Admin\RoleController;
 use App\Http\Controllers\Api\V1\Admin\TenantController;
 use App\Http\Controllers\Api\V1\Admin\TenantUserController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
@@ -65,6 +66,13 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/admin/users', [UserController::class, 'store'])
                 ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_WRITE));
             Route::get('/admin/users/{user}', [UserController::class, 'show'])
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_READ));
+            Route::patch('/admin/users/{user}/role', [UserController::class, 'assignRole'])
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_WRITE));
+
+            Route::get('/admin/roles', [RoleController::class, 'index'])
+                ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_READ));
+            Route::get('/admin/roles/{role}', [RoleController::class, 'show'])
                 ->middleware(OAuthScopes::any(OAuthScopes::ADMIN_FULL, OAuthScopes::USERS_READ));
 
             Route::get('/admin/tenant-users', [TenantUserController::class, 'index'])

@@ -7,7 +7,7 @@ namespace App\Http\Requests\Api\V1\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreUserRequest extends FormRequest
+class AssignUserRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -20,16 +20,11 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'string', 'email', 'max:150', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:12', 'max:100', 'confirmed'],
             'role_id' => [
                 'required',
                 'integer',
                 Rule::exists('roles', 'id')->where('active', true),
             ],
-            'is_active' => ['sometimes', 'boolean'],
-            'must_change_password' => ['sometimes', 'boolean'],
         ];
     }
 }

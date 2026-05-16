@@ -72,6 +72,10 @@ Observações de segurança:
     description: 'Administração de usuários globais da aplicação.'
 )]
 #[OA\Tag(
+    name: 'Roles',
+    description: 'Consulta de roles globais e suporte à associação role x usuário.'
+)]
+#[OA\Tag(
     name: 'Tenant Users',
     description: 'Administração de vínculos entre usuários e tenants.'
 )]

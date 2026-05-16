@@ -63,12 +63,12 @@ class User extends Authenticatable implements OAuthenticatable
 
     public function hasRole(string ...$roles): bool
     {
-        $roleCode = $this->role?->code;
+        $role = $this->role;
 
-        if ($roleCode === null) {
+        if ($role === null || ! $role->active) {
             return false;
         }
 
-        return in_array($roleCode, $roles, true);
+        return in_array($role->code, $roles, true);
     }
 }

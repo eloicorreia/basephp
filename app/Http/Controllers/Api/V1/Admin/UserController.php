@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\DTO\Admin\AssignUserRoleDTO;
 use App\DTO\Admin\CreateUserDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Admin\AssignUserRoleRequest;
 use App\Http\Requests\Api\V1\Admin\StoreUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -50,5 +52,16 @@ class UserController extends Controller
         $user->load('role');
 
         return ApiResponse::retrieved(new UserResource($user));
+    }
+
+    public function assignRole(AssignUserRoleRequest $request, User $user): JsonResponse
+    {
+        $dto = AssignUserRoleDTO::fromArray($request->validated());
+        $user = $this->userService->assignRole($user, $dto)->load('role');
+
+        return ApiResponse::success(
+            data: new UserResource($user),
+            message: 'Role do usuário atualizada com sucesso.',
+        );
     }
 }

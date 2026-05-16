@@ -42,6 +42,12 @@ use OpenApi\Attributes as OA;
             type: 'boolean',
             example: false
         ),
+        new OA\Property(
+            property: 'role',
+            ref: '#/components/schemas/Role',
+            description: 'Role global associada ao usuário.',
+            nullable: true
+        ),
     ]
 )]
 #[OA\Schema(
