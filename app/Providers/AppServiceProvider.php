@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Contracts\Multitenancy\TenantContextInterface;
+use App\Models\User;
+use App\Services\Web\AdminMenuBuilderService;
 use App\Support\Auth\OAuthScopes;
 use App\Support\Tenant\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 
@@ -56,6 +60,14 @@ class AppServiceProvider extends ServiceProvider
             return [
                 Limit::perMinute(20)->by($identifier),
             ];
+        });
+
+        View::composer('admin.partials.sidebar', function ($view): void {
+            $user = Auth::guard('web')->user();
+
+            $view->with('adminMenuGroups', $user instanceof User
+                ? app(AdminMenuBuilderService::class)->buildForUser($user)
+                : []);
         });
     }
 }

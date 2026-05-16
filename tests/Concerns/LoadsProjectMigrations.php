@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Concerns;
 
+use Database\Seeders\AdminMenuSeeder;
 use Database\Seeders\Public\PermissionSeeder;
 use Database\Seeders\Public\RoleSeeder;
 use Illuminate\Support\Facades\DB;
@@ -89,6 +90,7 @@ trait LoadsProjectMigrations
 
         $this->seed(PermissionSeeder::class);
         $this->seed(RoleSeeder::class);
+        $this->seed(AdminMenuSeeder::class);
     }
 
     private function ensureTestingDatabase(): void
@@ -158,6 +160,11 @@ trait LoadsProjectMigrations
         return Schema::hasTable('tenants')
             && Schema::hasTable('permissions')
             && Schema::hasTable('role_permissions')
+            && Schema::hasTable('admin_menu_groups')
+            && Schema::hasTable('admin_menu_items')
+            && Schema::hasTable('admin_menu_item_permissions')
+            && Schema::hasTable('admin_menu_versions')
+            && Schema::hasTable('admin_menu_event_logs')
             && Schema::hasColumn('permissions', 'group')
             && Schema::hasColumn('permissions', 'is_system')
             && Schema::hasColumn('role_permissions', 'assigned_by')

@@ -95,7 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                message: 'Não autenticado.',
+                message: 'Usuário não autenticado.',
                 status: $status,
             );
         });

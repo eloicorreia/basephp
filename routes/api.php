@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Admin\TenantUserController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
+use App\Http\Controllers\Api\V1\Me\MyMenuController;
 use App\Support\Auth\OAuthScopes;
 use App\Support\Auth\PermissionRegistry;
 use App\Support\Http\ApiResponse;
@@ -38,6 +39,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/auth/change-password', ChangePasswordController::class)
             ->middleware(['throttle:strict', OAuthScopes::scope(OAuthScopes::USER_PASSWORD_CHANGE)]);
     });
+
+    Route::middleware([
+        'auth:api',
+        'throttle:api',
+    ])->get('/me/menu', MyMenuController::class);
 
     Route::middleware([
         'auth:api',

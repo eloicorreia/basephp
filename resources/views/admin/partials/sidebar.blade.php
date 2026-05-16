@@ -16,35 +16,11 @@
 
             <ul class="navbar-nav" id="navbar-nav">
                 <li class="menu-title"><span>Menu</span></li>
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="{{ request()->routeIs('admin.dashboard') ? 'true' : 'false' }}" aria-controls="sidebarDashboards">
-                        <i class="ri-dashboard-2-line"></i>
-                        <span>Dashboards</span>
-                    </a>
-                    <div class="collapse menu-dropdown {{ request()->routeIs('admin.dashboard') ? 'show' : '' }}" id="sidebarDashboards">
-                        <ul class="nav nav-sm flex-column">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Operacional</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
 
-                <li class="menu-title"><span>Operação</span></li>
-                <li class="nav-item">
-                    <a class="nav-link menu-link {{ request()->routeIs('admin.logs.*') ? 'active' : '' }}" href="{{ route('admin.logs.api-requests.index') }}">
-                        <i class="ri-file-list-3-line"></i>
-                        <span>Logs da API</span>
-                    </a>
-                </li>
-
-                <li class="menu-title"><span>Base</span></li>
-                <li class="nav-item">
-                    <a class="nav-link menu-link disabled" href="#" aria-disabled="true">
-                        <i class="ri-settings-3-line"></i>
-                        <span>Configurações</span>
-                    </a>
-                </li>
+                @foreach ($adminMenuGroups ?? [] as $group)
+                    <li class="menu-title"><span>{{ $group['title'] }}</span></li>
+                    @include('admin.partials.sidebar-menu-items', ['items' => $group['items'] ?? []])
+                @endforeach
             </ul>
         </div>
     </div>
