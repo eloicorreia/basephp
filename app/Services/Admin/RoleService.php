@@ -9,23 +9,68 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class RoleService
 {
+    private const DEFAULT_PER_PAGE = 15;
+
+    private const MAX_PER_PAGE = 100;
+
+    /**
+     * @var array<string, string>
+     */
+    private const SORT_COLUMNS = [
+        'id' => 'id',
+        'code' => 'code',
+        'name' => 'name',
+        'created_at' => 'created_at',
+    ];
+
     /**
      * @return LengthAwarePaginator<int, Role>
      */
-    public function paginateForAdmin(bool $activeOnly = true): LengthAwarePaginator
-    {
+    public function paginateForAdmin(
+        bool $activeOnly = true,
+        ?int $perPage = null,
+        ?string $sort = null,
+        ?string $direction = null,
+    ): LengthAwarePaginator {
+        $perPage = $this->normalizePerPage($perPage);
+        $sortColumn = $this->normalizeSort($sort);
+        $sortDirection = $this->normalizeDirection($direction);
+
         return Role::query()
             ->withCount('users')
             ->when(
                 $activeOnly,
                 static fn ($query) => $query->where('active', true)
             )
-            ->orderBy('name')
-            ->paginate(15);
+            ->orderBy($sortColumn, $sortDirection)
+            ->paginate($perPage);
     }
 
     public function loadDetails(Role $role): Role
     {
         return $role->loadCount('users');
+    }
+
+    private function normalizePerPage(?int $perPage): int
+    {
+        if ($perPage === null || $perPage < 1) {
+            return self::DEFAULT_PER_PAGE;
+        }
+
+        return min($perPage, self::MAX_PER_PAGE);
+    }
+
+    private function normalizeSort(?string $sort): string
+    {
+        if ($sort === null || ! array_key_exists($sort, self::SORT_COLUMNS)) {
+            return self::SORT_COLUMNS['name'];
+        }
+
+        return self::SORT_COLUMNS[$sort];
+    }
+
+    private function normalizeDirection(?string $direction): string
+    {
+        return $direction === 'desc' ? 'desc' : 'asc';
     }
 }

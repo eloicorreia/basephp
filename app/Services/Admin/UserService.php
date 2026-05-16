@@ -57,7 +57,11 @@ class UserService
     {
         return DB::transaction(function () use ($user, $dto): User {
             $authenticatedUser = auth()->user();
-            $user->loadMissing('role');
+            $user = User::query()
+                ->with('role')
+                ->whereKey($user->id)
+                ->lockForUpdate()
+                ->firstOrFail();
             $newRole = Role::query()->findOrFail($dto->roleId);
 
             $this->ensureRoleCanBeChanged($user, $newRole, $authenticatedUser);
@@ -87,18 +91,18 @@ class UserService
     private function ensureRoleCanBeChanged(User $targetUser, Role $newRole, mixed $authenticatedUser): void
     {
         if (
+            $authenticatedUser instanceof User
+            && $authenticatedUser->id === $targetUser->id
+        ) {
+            throw new AuthorizationException('Não é permitido alterar a própria role.');
+        }
+
+        if (
             $this->isActiveAdmin($targetUser)
             && $newRole->code !== RoleCode::ADMIN->value
             && $this->activeAdminUsersCount() <= 1
         ) {
             throw new AuthorizationException('Não é permitido remover o último administrador ativo.');
-        }
-
-        if (
-            $authenticatedUser instanceof User
-            && $authenticatedUser->id === $targetUser->id
-        ) {
-            throw new AuthorizationException('Não é permitido alterar a própria role.');
         }
     }
 
@@ -107,16 +111,19 @@ class UserService
         $adminRoleId = Role::query()
             ->where('code', RoleCode::ADMIN->value)
             ->where('active', true)
+            ->lockForUpdate()
             ->value('id');
 
         if ($adminRoleId === null) {
             return 0;
         }
 
-        return User::query()
-            ->where('is_active', true)
-            ->where('role_id', $adminRoleId)
-            ->count();
+        $lockedAdminUsers = DB::select(
+            'select id from users where is_active = true and role_id = ? for update',
+            [$adminRoleId]
+        );
+
+        return count($lockedAdminUsers);
     }
 
     private function isActiveAdmin(User $user): bool

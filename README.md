@@ -502,6 +502,9 @@ Endpoints administrativos disponíveis:
 | `GET /api/v1/admin/roles/{role}` | Consulta uma role global e sua quantidade de usuários associados. |
 | `PATCH /api/v1/admin/users/{user}/role` | Troca a role global de um usuário existente. |
 
+`GET /api/v1/admin/roles` aceita `per_page` com máximo 100, `active_only`, `sort`
+controlado por allowlist (`id`, `code`, `name`, `created_at`) e `direction` (`asc` ou `desc`).
+
 Criação e troca de role aceitam apenas roles ativas. A troca registra auditoria em `audit_logs`
 com `action = user.role_assigned`, preservando snapshot de `role_id`, `role_code` e `role_name`
 em `before_data` e `after_data`.
@@ -510,6 +513,7 @@ Regras de segurança:
 
 - usuário não pode alterar a própria role pela API administrativa
 - não é permitido remover ou rebaixar o último usuário ativo com role global `admin` ativa
+- a checagem do último admin usa bloqueio pessimista na transação para serializar trocas concorrentes de roles administrativas
 - endpoints de roles usam `users.read` por enquanto; `roles.read` e `roles.write` ficam reservados para quando roles tiverem manutenção própria
 - consultas de catálogo de roles passam por `RoleService`, deixando o controller fino para filtros, regras e auditoria futuras
 

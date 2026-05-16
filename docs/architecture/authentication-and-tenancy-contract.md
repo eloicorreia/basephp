@@ -49,8 +49,10 @@
 - A troca de role de usuário existente deve ser feita por `PATCH /api/v1/admin/users/{user}/role`.
 - A API administrativa não permite que um usuário altere a própria role.
 - A API administrativa não permite remover ou rebaixar o último usuário ativo com role global `admin` ativa.
+- A proteção do último admin deve ocorrer dentro da transação, com bloqueio pessimista dos registros de admins ativos antes da troca.
 - Toda troca de role deve registrar auditoria com `action = user.role_assigned`, contendo snapshot de `role_id`, `role_code` e `role_name` em `before_data` e `after_data`.
 - Consulta de roles disponíveis para associação deve usar `GET /api/v1/admin/roles`.
+- A listagem de roles deve aceitar apenas ordenação por allowlist e limitar `per_page` a no máximo 100 registros.
 - Consultas de catálogo de roles devem passar por `RoleService`; controllers não devem concentrar regras de filtro, bloqueio ou auditoria.
 - O vínculo por tenant continua separado em `tenant_users.role_id`; ele representa o papel do usuário dentro de um tenant específico e não substitui a role global.
 - O controle principal de autorização dos endpoints administrativos continua nos middlewares de rota (`auth:api`, `tenant.access`, `role:admin` e escopos OAuth).

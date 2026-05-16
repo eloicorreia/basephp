@@ -21,7 +21,10 @@ class RoleController extends Controller
     public function index(Request $request): JsonResponse
     {
         $roles = $this->roleService->paginateForAdmin(
-            activeOnly: $request->boolean('active_only', true)
+            activeOnly: $request->boolean('active_only', true),
+            perPage: $request->integer('per_page', 15),
+            sort: $request->string('sort', 'name')->toString(),
+            direction: $request->string('direction', 'asc')->toString(),
         );
 
         return ApiResponse::paginated(

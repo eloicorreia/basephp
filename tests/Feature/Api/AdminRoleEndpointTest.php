@@ -69,6 +69,44 @@ final class AdminRoleEndpointTest extends TestCase
         $this->assertContains($inactiveRole->code, array_column($response->json('data'), 'code'));
     }
 
+    public function test_admin_role_index_supports_controlled_pagination_and_sorting(): void
+    {
+        $context = $this->createAdminContext();
+
+        $zetaRole = $this->createRole(
+            'zeta-role-'.str_replace('-', '', (string) Str::uuid()),
+            'Zeta Role'
+        );
+        $alphaRole = $this->createRole(
+            'alpha-role-'.str_replace('-', '', (string) Str::uuid()),
+            'Alpha Role'
+        );
+
+        $response = $this->getJson('/api/v1/admin/roles?per_page=2&sort=name&direction=asc', [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 2);
+
+        $names = array_column($response->json('data'), 'name');
+
+        $this->assertContains($alphaRole->name, $names);
+        $this->assertNotContains($zetaRole->name, $names);
+    }
+
+    public function test_admin_role_index_limits_per_page_to_maximum(): void
+    {
+        $context = $this->createAdminContext();
+
+        $this->getJson('/api/v1/admin/roles?per_page=500', [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 100);
+    }
+
     public function test_admin_role_show_returns_role_data(): void
     {
         $context = $this->createAdminContext();

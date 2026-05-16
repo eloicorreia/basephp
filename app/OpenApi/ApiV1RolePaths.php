@@ -20,7 +20,10 @@ final class ApiV1RolePaths
         ],
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', example: 1)),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', maximum: 100, minimum: 1, example: 15)),
             new OA\Parameter(name: 'active_only', in: 'query', required: false, schema: new OA\Schema(type: 'boolean', example: true)),
+            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['id', 'code', 'name', 'created_at'], example: 'name')),
+            new OA\Parameter(name: 'direction', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['asc', 'desc'], example: 'asc')),
         ],
         responses: [
             new OA\Response(response: 200, description: 'Roles recuperadas com sucesso.', content: new OA\JsonContent(ref: '#/components/schemas/PaginatedResponse')),
