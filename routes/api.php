@@ -43,6 +43,9 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware([
         'auth:api',
         'throttle:api',
+        'user.active',
+        'password.changed',
+        OAuthScopes::scope(OAuthScopes::USER_PROFILE),
     ])->get('/me/menu', MyMenuController::class);
 
     Route::middleware([

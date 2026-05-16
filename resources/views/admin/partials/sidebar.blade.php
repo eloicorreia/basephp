@@ -15,12 +15,18 @@
             <div id="two-column-menu"></div>
 
             <ul class="navbar-nav" id="navbar-nav">
-                <li class="menu-title"><span>Menu</span></li>
-
-                @foreach ($adminMenuGroups ?? [] as $group)
+                @forelse ($adminMenuGroups ?? [] as $group)
                     <li class="menu-title"><span>{{ $group['title'] }}</span></li>
                     @include('admin.partials.sidebar-menu-items', ['items' => $group['items'] ?? []])
-                @endforeach
+                @empty
+                    <li class="menu-title"><span>Menu</span></li>
+                    <li class="nav-item">
+                        <a class="nav-link menu-link disabled" href="#" aria-disabled="true">
+                            <i class="ri-lock-line"></i>
+                            <span>Nenhum menu disponível</span>
+                        </a>
+                    </li>
+                @endforelse
             </ul>
         </div>
     </div>

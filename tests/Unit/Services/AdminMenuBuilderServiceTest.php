@@ -109,6 +109,17 @@ final class AdminMenuBuilderServiceTest extends TestCase
         $this->assertMenuDoesNotContain($menu, 'parent-hidden');
     }
 
+    public function test_item_with_permission_without_route_and_without_visible_children_does_not_appear(): void
+    {
+        $permission = $this->permission('custom.menu.without-route');
+        $this->menuItem('without-route-item', 'Without Route Item', [$permission->id], routeName: null);
+        $user = $this->userWithPermissions([$permission]);
+
+        $menu = $this->builder()->buildForUser($user);
+
+        $this->assertMenuDoesNotContain($menu, 'without-route-item');
+    }
+
     public function test_permission_strategy_any_allows_one_permission(): void
     {
         $first = $this->permission('custom.menu.any.first');
@@ -255,7 +266,7 @@ final class AdminMenuBuilderServiceTest extends TestCase
         );
 
         $item = AdminMenuItem::query()->create([
-            'admin_menu_group_id' => $parent instanceof AdminMenuItem ? null : $group->id,
+            'admin_menu_group_id' => $parent instanceof AdminMenuItem ? $parent->admin_menu_group_id : $group->id,
             'parent_id' => $parent?->id,
             'code' => $code,
             'title' => $title,

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Web\Admin;
 
 use App\Enums\RoleCode;
+use App\Models\AdminMenuGroup;
+use App\Models\AdminMenuItem;
 use App\Models\Permission;
 use App\Support\Web\WebAdminPermissions;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -34,6 +36,7 @@ final class AdminMenuRenderingTest extends TestCase
 
         $this->assertStringContainsString('Dashboard', $html);
         $this->assertStringNotContainsString('api-request-logs', $html);
+        $this->assertStringNotContainsString('<span>Menu</span>', $html);
     }
 
     public function test_admin_full_sidebar_renders_seeded_items(): void
@@ -51,6 +54,25 @@ final class AdminMenuRenderingTest extends TestCase
         $this->assertStringContainsString('Dashboard', $html);
         $this->assertStringContainsString('Logs da API', $html);
         $this->assertStringContainsString('admin/logs/api-requests', $html);
+        $this->assertStringNotContainsString('Nenhum menu disponível', $html);
+    }
+
+    public function test_sidebar_renders_fallback_when_no_menu_is_visible(): void
+    {
+        AdminMenuItem::query()->delete();
+        AdminMenuGroup::query()->delete();
+        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
+        $user = $this->createUser(role: $role);
+
+        $this->actingAs($user, 'web');
+
+        $html = view('admin.partials.sidebar', [
+            'templateAssets' => '/vendor/templateweb/master/assets',
+        ])
+            ->render();
+
+        $this->assertStringContainsString('<span>Menu</span>', $html);
+        $this->assertStringContainsString('Nenhum menu disponível', $html);
     }
 
     public function test_direct_route_access_remains_protected_by_permission_middleware(): void

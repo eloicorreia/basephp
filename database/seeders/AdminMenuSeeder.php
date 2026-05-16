@@ -16,7 +16,9 @@ class AdminMenuSeeder extends Seeder
 {
     public function run(): void
     {
-        $dashboardGroup = AdminMenuGroup::query()->updateOrCreate(
+        $changed = false;
+
+        $dashboardGroup = $this->updateOrCreateGroup(
             ['code' => 'painel'],
             [
                 'title' => 'Painel',
@@ -24,10 +26,11 @@ class AdminMenuSeeder extends Seeder
                 'icon' => null,
                 'order' => 10,
                 'active' => true,
-            ]
+            ],
+            $changed
         );
 
-        $operationGroup = AdminMenuGroup::query()->updateOrCreate(
+        $operationGroup = $this->updateOrCreateGroup(
             ['code' => 'operacao'],
             [
                 'title' => 'Operação',
@@ -35,10 +38,11 @@ class AdminMenuSeeder extends Seeder
                 'icon' => null,
                 'order' => 20,
                 'active' => true,
-            ]
+            ],
+            $changed
         );
 
-        $dashboardItem = AdminMenuItem::query()->updateOrCreate(
+        $dashboardItem = $this->updateOrCreateItem(
             ['code' => 'dashboard'],
             [
                 'admin_menu_group_id' => $dashboardGroup->id,
@@ -52,10 +56,11 @@ class AdminMenuSeeder extends Seeder
                 'active' => true,
                 'opens_in_new_tab' => false,
                 'permission_strategy' => AdminMenuPermissionStrategy::ANY->value,
-            ]
+            ],
+            $changed
         );
 
-        $apiRequestLogsItem = AdminMenuItem::query()->updateOrCreate(
+        $apiRequestLogsItem = $this->updateOrCreateItem(
             ['code' => 'api-request-logs'],
             [
                 'admin_menu_group_id' => $operationGroup->id,
@@ -69,16 +74,51 @@ class AdminMenuSeeder extends Seeder
                 'active' => true,
                 'opens_in_new_tab' => false,
                 'permission_strategy' => AdminMenuPermissionStrategy::ANY->value,
-            ]
+            ],
+            $changed
         );
 
-        $this->syncPermission($dashboardItem, WebAdminPermissions::DASHBOARD_VIEW);
-        $this->syncPermission($apiRequestLogsItem, WebAdminPermissions::API_REQUEST_LOGS_VIEW);
+        $this->syncPermission($dashboardItem, WebAdminPermissions::DASHBOARD_VIEW, $changed);
+        $this->syncPermission($apiRequestLogsItem, WebAdminPermissions::API_REQUEST_LOGS_VIEW, $changed);
 
-        app(AdminMenuVersionService::class)->increment();
+        if ($changed) {
+            app(AdminMenuVersionService::class)->increment();
+        }
     }
 
-    private function syncPermission(AdminMenuItem $item, string $permissionCode): void
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $values
+     */
+    private function updateOrCreateGroup(array $attributes, array $values, bool &$changed): AdminMenuGroup
+    {
+        $group = AdminMenuGroup::query()->firstOrNew($attributes);
+        $group->fill($values);
+        $groupChanged = ! $group->exists || $group->isDirty();
+        $group->save();
+
+        $changed = $changed || $groupChanged;
+
+        return $group;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $values
+     */
+    private function updateOrCreateItem(array $attributes, array $values, bool &$changed): AdminMenuItem
+    {
+        $item = AdminMenuItem::query()->firstOrNew($attributes);
+        $item->fill($values);
+        $itemChanged = ! $item->exists || $item->isDirty();
+        $item->save();
+
+        $changed = $changed || $itemChanged;
+
+        return $item;
+    }
+
+    private function syncPermission(AdminMenuItem $item, string $permissionCode, bool &$changed): void
     {
         $permission = Permission::query()
             ->where('code', $permissionCode)
@@ -88,6 +128,9 @@ class AdminMenuSeeder extends Seeder
             return;
         }
 
-        $item->permissions()->syncWithoutDetaching([$permission->id]);
+        if (! $item->permissions()->whereKey($permission->id)->exists()) {
+            $item->permissions()->attach($permission->id);
+            $changed = true;
+        }
     }
 }
