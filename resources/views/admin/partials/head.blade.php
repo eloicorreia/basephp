@@ -7,16 +7,15 @@
     <link rel="preload" href="{{ $templateAssets }}/css/bootstrap.min.css" as="style">
     <link rel="preload" href="{{ $templateAssets }}/css/app.min.css" as="style">
     <link rel="preload" href="{{ $templateAssets }}/css/admin-contract.css" as="style">
+    <link rel="preload" href="{{ $templateAssets }}/fonts/hkgrotesk-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ $templateAssets }}/fonts/hkgrotesk-medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ $templateAssets }}/fonts/hkgrotesk-semibold.woff2" as="font" type="font/woff2" crossorigin>
     <script src="{{ $templateAssets }}/js/layout.js"></script>
+    <script type="module" src="{{ $templateAssets }}/js/turbo.es2017-esm.js"></script>
     <link href="{{ $templateAssets }}/css/bootstrap.min.css" rel="stylesheet" type="text/css">
     <link href="{{ $templateAssets }}/css/icons.min.css" rel="stylesheet" type="text/css">
     <link href="{{ $templateAssets }}/css/app.min.css" rel="stylesheet" type="text/css">
     <link href="{{ $templateAssets }}/css/custom.min.css" rel="stylesheet" type="text/css">
     <link href="{{ $templateAssets }}/css/admin-contract.css" rel="stylesheet" type="text/css">
-    <script>
-        window.addEventListener('DOMContentLoaded', function () {
-            document.documentElement.classList.add('admin-layout-ready');
-        });
-    </script>
     @stack('styles')
 </head>

@@ -1,4 +1,4 @@
-<div class="app-menu navbar-menu">
+<div id="admin-sidebar" class="app-menu navbar-menu" data-turbo-permanent>
     <div class="navbar-brand-box">
         <a href="{{ route('admin.dashboard') }}" class="logo logo-dark">
             <span class="logo-sm"><img src="{{ $templateAssets }}/images/logo-sm.png" alt="" height="22"></span>

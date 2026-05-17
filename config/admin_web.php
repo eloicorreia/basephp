@@ -19,6 +19,8 @@ return [
             'css/custom.min.css',
             'css/admin-contract.css',
             'js/layout.js',
+            'js/turbo.es2017-esm.js',
+            'js/admin-navigation.js',
             'js/pages/password-addon.init.js',
             'libs/bootstrap/js/bootstrap.bundle.min.js',
             'images/favicon.ico',

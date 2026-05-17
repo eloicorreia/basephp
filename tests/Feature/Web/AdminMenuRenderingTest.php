@@ -57,6 +57,45 @@ final class AdminMenuRenderingTest extends TestCase
         $this->assertStringNotContainsString('Nenhum menu disponível', $html);
     }
 
+    public function test_sidebar_renders_turbo_permanent_navigation_contract(): void
+    {
+        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
+        $user = $this->createUser(role: $role);
+
+        $this->actingAs($user, 'web');
+
+        $html = view('admin.partials.sidebar', [
+            'templateAssets' => '/vendor/templateweb/master/assets',
+        ])
+            ->render();
+
+        $this->assertStringContainsString('id="admin-sidebar"', $html);
+        $this->assertStringContainsString('data-turbo-permanent', $html);
+        $this->assertStringContainsString('data-admin-menu-link', $html);
+        $this->assertStringContainsString('data-admin-menu-parent', $html);
+    }
+
+    public function test_admin_layout_renders_stable_navigation_contract(): void
+    {
+        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
+        $user = $this->createUser(role: $role);
+
+        $this->actingAs($user, 'web')
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertDontSee("sessionStorage.removeItem('defaultAttribute')", false)
+            ->assertSee('data-layout-width="fluid"', false)
+            ->assertSee('data-layout-position="fixed"', false)
+            ->assertSee('data-layout-style="default"', false)
+            ->assertSee('data-layout-direction="ltr"', false)
+            ->assertSee('data-bs-theme="light"', false)
+            ->assertSee('data-theme-colors="default"', false)
+            ->assertSee('js/turbo.es2017-esm.js', false)
+            ->assertSee('js/admin-navigation.js', false)
+            ->assertSee('fonts/hkgrotesk-regular.woff2', false)
+            ->assertSee('data-turbo="false"', false);
+    }
+
     public function test_sidebar_renders_fallback_when_no_menu_is_visible(): void
     {
         AdminMenuItem::query()->delete();

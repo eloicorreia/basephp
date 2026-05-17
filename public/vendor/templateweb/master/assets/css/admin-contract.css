@@ -4,7 +4,7 @@
         url("../fonts/hkgrotesk-regular.woff") format("woff");
     font-style: normal;
     font-weight: 400;
-    font-display: swap;
+    font-display: optional;
 }
 
 @font-face {
@@ -13,7 +13,7 @@
         url("../fonts/hkgrotesk-medium.woff") format("woff");
     font-style: normal;
     font-weight: 500;
-    font-display: swap;
+    font-display: optional;
 }
 
 @font-face {
@@ -22,7 +22,7 @@
         url("../fonts/hkgrotesk-semibold.woff") format("woff");
     font-style: normal;
     font-weight: 600;
-    font-display: swap;
+    font-display: optional;
 }
 
 @font-face {
@@ -31,7 +31,7 @@
         url("../fonts/hkgrotesk-bold.woff") format("woff");
     font-style: normal;
     font-weight: 700;
-    font-display: swap;
+    font-display: optional;
 }
 
 :root {

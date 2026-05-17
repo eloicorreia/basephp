@@ -9,7 +9,7 @@
 
     <li class="nav-item">
         @if ($hasChildren)
-            <a class="nav-link menu-link {{ $isActive ? 'active' : '' }}" href="#{{ $collapseId }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ $isActive ? 'true' : 'false' }}" aria-controls="{{ $collapseId }}">
+            <a class="nav-link menu-link {{ $isActive ? 'active' : '' }}" href="#{{ $collapseId }}" data-bs-toggle="collapse" data-admin-menu-parent role="button" aria-expanded="{{ $isActive ? 'true' : 'false' }}" aria-controls="{{ $collapseId }}">
                 @if (! empty($item['icon']))
                     <i class="{{ $item['icon'] }}"></i>
                 @endif
@@ -21,7 +21,7 @@
                 </ul>
             </div>
         @elseif (! empty($item['url']))
-            <a class="nav-link menu-link {{ $isActive ? 'active' : '' }}" href="{{ $item['url'] }}" @if ($target !== null) target="{{ $target }}" rel="noopener noreferrer" @endif>
+            <a class="nav-link menu-link {{ $isActive ? 'active' : '' }}" href="{{ $item['url'] }}" data-admin-menu-link @if ($target !== null) target="{{ $target }}" rel="noopener noreferrer" data-turbo="false" @endif>
                 @if (! empty($item['icon']))
                     <i class="{{ $item['icon'] }}"></i>
                 @endif

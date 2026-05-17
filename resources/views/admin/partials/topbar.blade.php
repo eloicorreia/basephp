@@ -28,7 +28,7 @@
                     </button>
                     <div class="dropdown-menu dropdown-menu-end">
                         <h6 class="dropdown-header">{{ $currentUser?->name }}</h6>
-                        <form method="POST" action="{{ route('admin.logout') }}">
+                        <form method="POST" action="{{ route('admin.logout') }}" data-turbo="false">
                             @csrf
                             <button type="submit" class="dropdown-item">
                                 <i class="ri-logout-box-r-line text-muted fs-16 align-middle me-1"></i>
