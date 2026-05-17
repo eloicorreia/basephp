@@ -44,7 +44,7 @@
 
                             <div class="mb-3">
                                 <div class="float-end">
-                                    <a href="{{ route('password.request') }}" class="text-muted">Esqueci minha senha</a>
+                                    <a href="{{ route('password.request') }}" tabindex="-1" class="text-muted">Esqueci minha senha</a>
                                 </div>
                                 <label class="form-label" for="password">Senha</label>
                                 <div class="position-relative auth-pass-inputgroup mb-3">
@@ -56,7 +56,7 @@
                                         autocomplete="current-password"
                                         required
                                     >
-                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button">
+                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" tabindex="-1" type="button">
                                         <i class="ri-eye-fill align-middle"></i>
                                     </button>
                                 </div>
