@@ -3,7 +3,20 @@
     $currentUser = auth('web')->user();
 @endphp
 <!doctype html>
-<html lang="pt-BR" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-theme="default">
+<html
+    lang="pt-BR"
+    data-layout="vertical"
+    data-topbar="light"
+    data-sidebar="dark"
+    data-sidebar-size="lg"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+    data-layout-style="default"
+    data-layout-direction="ltr"
+    data-bs-theme="light"
+    data-theme="default"
+    data-theme-colors="default"
+>
 @include('admin.partials.head')
 <body>
     <div id="layout-wrapper">

@@ -70,20 +70,17 @@ textarea {
     backface-visibility: hidden;
 }
 
-.page-content {
-    contain: layout;
-}
-
 .navbar-menu .navbar-nav .nav-link {
     transition-duration: 120ms;
     transition-property: background-color, color;
 }
 
-.main-content,
-.page-content,
-#page-topbar,
-.app-menu {
-    transition-property: margin, width, transform;
+html:not(.admin-layout-ready) .main-content,
+html:not(.admin-layout-ready) .page-content,
+html:not(.admin-layout-ready) #page-topbar,
+html:not(.admin-layout-ready) .app-menu,
+html:not(.admin-layout-ready) .navbar-menu .navbar-nav .nav-link {
+    transition: none !important;
 }
 
 .security-permission-grid {

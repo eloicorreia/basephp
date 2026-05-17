@@ -2,7 +2,20 @@
     $templateAssets = asset((string) config('admin_web.template.asset_path'));
 @endphp
 <!doctype html>
-<html lang="pt-BR" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg">
+<html
+    lang="pt-BR"
+    data-layout="vertical"
+    data-topbar="light"
+    data-sidebar="dark"
+    data-sidebar-size="lg"
+    data-layout-width="fluid"
+    data-layout-position="fixed"
+    data-layout-style="default"
+    data-layout-direction="ltr"
+    data-bs-theme="light"
+    data-theme="default"
+    data-theme-colors="default"
+>
 @include('admin.partials.auth-head')
 <body>
     <div class="auth-page-wrapper pt-5">
