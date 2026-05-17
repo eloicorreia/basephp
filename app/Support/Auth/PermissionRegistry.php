@@ -74,6 +74,9 @@ final class PermissionRegistry
             WebAdminPermissions::SECURITY_USERS_MANAGE => self::web('Manter usuários web', 'Permite cadastrar e manter usuários pelo painel web.', 'Segurança', true),
             WebAdminPermissions::SECURITY_ROLES_MANAGE => self::web('Manter roles web', 'Permite cadastrar roles e sincronizar permissões pelo painel web.', 'Segurança', true),
             WebAdminPermissions::SECURITY_PERMISSIONS_MANAGE => self::web('Manter permissões web', 'Permite cadastrar e ativar/desativar permissões pelo painel web.', 'Segurança', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_VIEW => self::web('Visualizar configurações de sistema', 'Permite consultar configurações de sistema por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_PASSWORD_POLICY_MANAGE => self::web('Manter política de senhas', 'Permite alterar a política de senhas por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_MAIL_MANAGE => self::web('Manter e-mail do tenant', 'Permite alterar a configuração de envio de e-mail por tenant.', 'Configurações do Sistema', true),
         ];
     }
 

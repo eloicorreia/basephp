@@ -24,6 +24,12 @@ final class WebAdminPermissions
 
     public const SECURITY_PERMISSIONS_MANAGE = 'admin.security.permissions.manage';
 
+    public const SYSTEM_SETTINGS_VIEW = 'admin.system-settings.view';
+
+    public const SYSTEM_SETTINGS_PASSWORD_POLICY_MANAGE = 'admin.system-settings.password-policy.manage';
+
+    public const SYSTEM_SETTINGS_MAIL_MANAGE = 'admin.system-settings.mail.manage';
+
     /**
      * @return array<string, string>
      */
@@ -38,6 +44,9 @@ final class WebAdminPermissions
             self::SECURITY_USERS_MANAGE => 'Cadastro e manutenção web de usuários administrativos.',
             self::SECURITY_ROLES_MANAGE => 'Cadastro e manutenção web de roles administrativas.',
             self::SECURITY_PERMISSIONS_MANAGE => 'Cadastro e manutenção web de permissões administrativas.',
+            self::SYSTEM_SETTINGS_VIEW => 'Visualização das configurações de sistema por tenant.',
+            self::SYSTEM_SETTINGS_PASSWORD_POLICY_MANAGE => 'Manutenção da política de senhas por tenant.',
+            self::SYSTEM_SETTINGS_MAIL_MANAGE => 'Manutenção da configuração de e-mail por tenant.',
         ];
     }
 

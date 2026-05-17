@@ -170,6 +170,8 @@ trait LoadsProjectMigrations
             && Schema::hasColumn('role_permissions', 'assigned_by')
             && Schema::hasColumn('role_permissions', 'assigned_at')
             && Schema::hasTable('api_request_logs')
+            && Schema::hasTable('tenant_password_policies')
+            && Schema::hasTable('user_password_histories')
             && Schema::hasColumn('users', 'role_id')
             && Schema::hasColumn('users', 'is_active')
             && Schema::hasColumn('users', 'must_change_password');
