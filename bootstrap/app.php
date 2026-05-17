@@ -34,6 +34,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        \App\Console\Commands\TenantsMigrateCommand::class,
+        \App\Console\Commands\TenantsValidateCommand::class,
+        \App\Console\Commands\TenantsProvisionCommand::class,
+        \App\Console\Commands\SystemUpdateCommand::class,
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'permission' => EnsurePermission::class,
