@@ -4,203 +4,275 @@ declare(strict_types=1);
 
 namespace App\Services\Tenant;
 
+use App\DTOs\Tenant\TenantProvisioningResult;
 use App\Models\Tenant;
-use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
-use App\Support\Auth\AuthenticatedUserId;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use RuntimeException;
+use App\Support\Tenant\TenantRequiredTables;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class TenantProvisioningService
+final readonly class TenantProvisioningService
 {
-    /**
-     * @var array<int, string>
-     */
-    private const REQUIRED_TENANT_TABLES = [
-        'migrations',
-        'business_logs',
-        'integration_logs',
-        'mail_configs',
-        'email_dispatch_logs',
-    ];
-
     public function __construct(
-        private readonly TenantSchemaService $tenantSchemaService,
-        private readonly TenantMigrationService $tenantMigrationService,
-        private readonly TenantSeederService $tenantSeederService,
-        private readonly LogPersistenceService $logPersistenceService,
+        private TenantSchemaService $tenantSchemaService,
+        private TenantMigrationService $tenantMigrationService,
+        private LogPersistenceService $logPersistenceService,
     ) {}
 
-    public function provision(
-        string $code,
-        string $name,
-        string $schemaName,
-        bool $force = false,
-    ): Tenant {
-        $this->tenantSchemaService->assertValidSchemaName($schemaName);
-
-        $tenant = $this->reserveTenantForProvisioning($code, $name, $schemaName);
-
-        if (
-            $tenant->status === Tenant::STATUS_ACTIVE
-            && $this->tenantSchemaIsReady($tenant->schema_name)
-        ) {
-            return $tenant;
-        }
-
-        if ($tenant->status === Tenant::STATUS_ACTIVE) {
-            $tenant->update(['status' => Tenant::STATUS_PROVISIONING]);
-            $tenant->refresh();
-        }
+    public function provision(Tenant $tenant, bool $createSchema = false, bool $force = false): TenantProvisioningResult
+    {
+        $schemaName = (string) $tenant->schema_name;
 
         try {
-            $this->tenantSchemaService->createSchema($schemaName);
-            $this->tenantSchemaService->setSearchPath($schemaName);
+            $this->tenantSchemaService->assertValidSchemaName($schemaName);
 
-            $this->tenantMigrationService->runTenantMigrations($schemaName, $force);
-            $this->tenantSeederService->runTenantSeeders($force);
+            $schemaExists = $this->tenantSchemaService->schemaExists($schemaName);
 
-            if (! $this->tenantSchemaIsReady($schemaName)) {
-                throw new RuntimeException('Schema do tenant não ficou estruturalmente consistente após o provisionamento.');
+            if (! $schemaExists && ! $createSchema) {
+                return $this->fail(
+                    tenant: $tenant,
+                    schemaName: $schemaName,
+                    schemaExists: false,
+                    migrated: false,
+                    message: 'Schema não existe. Informe --create-schema para criar o schema antes das migrations.',
+                    operation: 'tenants_provision',
+                );
             }
+
+            if (! $schemaExists && $createSchema) {
+                $this->tenantSchemaService->createSchema($schemaName);
+                $schemaExists = true;
+            }
+
+            $migrationResult = $this->migrate($tenant, $force);
+
+            if ($migrationResult->failed()) {
+                return $migrationResult;
+            }
+
+            return $this->validate($tenant);
         } catch (Throwable $throwable) {
-            $this->safeResetSearchPath();
-            $this->markTenantAsFailed($tenant, $throwable);
+            $this->logUnexpectedFailure($throwable, $tenant, $schemaName, 'tenants_provision');
 
             throw $throwable;
-        } finally {
-            $this->safeResetSearchPath();
         }
-
-        return $this->markTenantAsActive($tenant);
     }
 
-    private function tenantSchemaIsReady(string $schemaName): bool
+    public function validate(Tenant $tenant): TenantProvisioningResult
     {
-        return $this->tenantSchemaService->schemaExists($schemaName)
-            && $this->tenantSchemaService->schemaHasTables($schemaName, self::REQUIRED_TENANT_TABLES);
-    }
-
-    private function reserveTenantForProvisioning(string $code, string $name, string $schemaName): Tenant
-    {
-        return DB::transaction(function () use ($code, $name, $schemaName): Tenant {
-            $tenant = Tenant::query()
-                ->where('code', $code)
-                ->orWhere('schema_name', $schemaName)
-                ->lockForUpdate()
-                ->first();
-
-            if ($tenant === null) {
-                return Tenant::query()->create([
-                    'uuid' => (string) Str::uuid(),
-                    'code' => $code,
-                    'name' => $name,
-                    'schema_name' => $schemaName,
-                    'status' => Tenant::STATUS_PROVISIONING,
-                ]);
-            }
-
-            if ($tenant->code !== $code || $tenant->schema_name !== $schemaName) {
-                throw new RuntimeException('Já existe tenant usando o código ou schema informado.');
-            }
-
-            if ($tenant->status === Tenant::STATUS_ACTIVE) {
-                return $tenant;
-            }
-
-            if (! in_array($tenant->status, [Tenant::STATUS_ERROR, Tenant::STATUS_PROVISIONING], true)) {
-                throw new RuntimeException('Tenant existente não pode ser provisionado novamente neste status.');
-            }
-
-            $tenant->update([
-                'name' => $name,
-                'status' => Tenant::STATUS_PROVISIONING,
-            ]);
-
-            $tenant->refresh();
-
-            return $tenant;
-        });
-    }
-
-    private function markTenantAsActive(Tenant $tenant): Tenant
-    {
-        $tenant->update([
-            'status' => Tenant::STATUS_ACTIVE,
-        ]);
-
-        $tenant->refresh();
+        $schemaName = (string) $tenant->schema_name;
 
         try {
-            $this->logPersistenceService->logAudit(
-                action: 'tenant.provisioned',
-                auditableType: Tenant::class,
-                auditableId: $tenant->id,
-                beforeData: [
-                    'status' => Tenant::STATUS_PROVISIONING,
-                ],
-                afterData: [
-                    'code' => $tenant->code,
-                    'schema_name' => $tenant->schema_name,
-                    'status' => $tenant->status,
-                ],
-                userId: AuthenticatedUserId::resolve(),
-                userRole: $this->currentUserRoleCode(),
-            );
+            $this->tenantSchemaService->assertValidSchemaName($schemaName);
 
-            $this->logPersistenceService->logSystemInfo(
-                message: 'Tenant provisionado com sucesso.',
-                category: 'tenant',
-                operation: 'provision',
-                userId: AuthenticatedUserId::resolve(),
-                context: [
-                    'tenant_id' => $tenant->id,
-                    'tenant_code' => $tenant->code,
-                    'schema_name' => $tenant->schema_name,
-                ],
-                processingStatus: 'success',
+            $schemaExists = $this->tenantSchemaService->schemaExists($schemaName);
+
+            if (! $schemaExists) {
+                return $this->fail(
+                    tenant: $tenant,
+                    schemaName: $schemaName,
+                    schemaExists: false,
+                    migrated: false,
+                    message: 'Schema não existe.',
+                    operation: 'tenants_validate',
+                );
+            }
+
+            $missingTables = $this->missingRequiredTables($schemaName);
+
+            if ($missingTables !== []) {
+                return $this->fail(
+                    tenant: $tenant,
+                    schemaName: $schemaName,
+                    schemaExists: true,
+                    migrated: false,
+                    message: 'Tenant incompleto. Existem tabelas obrigatórias ausentes.',
+                    operation: 'tenants_validate',
+                    missingTables: $missingTables,
+                );
+            }
+
+            return TenantProvisioningResult::make(
+                tenantCode: (string) $tenant->code,
+                schemaName: $schemaName,
+                success: true,
+                schemaExists: true,
+                migrated: false,
             );
-        } catch (Throwable) {
+        } catch (Throwable $throwable) {
+            $this->logExpectedFailure($tenant, $schemaName, 'tenants_validate', $throwable->getMessage(), $throwable::class);
+
+            return TenantProvisioningResult::make(
+                tenantCode: (string) $tenant->code,
+                schemaName: $schemaName,
+                success: false,
+                schemaExists: false,
+                migrated: false,
+                errors: [$throwable->getMessage()],
+            );
         }
-
-        return $tenant;
     }
 
-    private function markTenantAsFailed(Tenant $tenant, Throwable $throwable): void
+    public function migrate(Tenant $tenant, bool $force = false): TenantProvisioningResult
     {
+        $schemaName = (string) $tenant->schema_name;
+
         try {
-            $tenant->update([
-                'status' => Tenant::STATUS_ERROR,
-            ]);
-        } catch (Throwable) {
+            $this->tenantSchemaService->assertValidSchemaName($schemaName);
+
+            $schemaExists = $this->tenantSchemaService->schemaExists($schemaName);
+
+            if (! $schemaExists) {
+                return $this->fail(
+                    tenant: $tenant,
+                    schemaName: $schemaName,
+                    schemaExists: false,
+                    migrated: false,
+                    message: 'Schema não existe.',
+                    operation: 'tenants_migrate',
+                );
+            }
+
+            $this->tenantMigrationService->runTenantMigrations($schemaName, $force);
+
+            $missingTables = $this->missingRequiredTables($schemaName);
+
+            if ($missingTables !== []) {
+                return $this->fail(
+                    tenant: $tenant,
+                    schemaName: $schemaName,
+                    schemaExists: true,
+                    migrated: true,
+                    message: 'Migrations executadas, mas o tenant continua incompleto.',
+                    operation: 'tenants_migrate',
+                    missingTables: $missingTables,
+                );
+            }
+
+            return TenantProvisioningResult::make(
+                tenantCode: (string) $tenant->code,
+                schemaName: $schemaName,
+                success: true,
+                schemaExists: true,
+                migrated: true,
+            );
+        } catch (Throwable $throwable) {
+            $this->logExpectedFailure($tenant, $schemaName, 'tenants_migrate', $throwable->getMessage(), $throwable::class);
+
+            return TenantProvisioningResult::make(
+                tenantCode: (string) $tenant->code,
+                schemaName: $schemaName,
+                success: false,
+                schemaExists: false,
+                migrated: false,
+                errors: [$throwable->getMessage()],
+            );
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function missingRequiredTables(string $schemaName): array
+    {
+        $missingTables = [];
+
+        foreach (TenantRequiredTables::all() as $tableName) {
+            if (! $this->tenantSchemaService->tableExists($schemaName, $tableName)) {
+                $missingTables[] = $tableName;
+            }
         }
 
+        return $missingTables;
+    }
+
+    /**
+     * @param  array<int, string>  $missingTables
+     */
+    private function fail(
+        Tenant $tenant,
+        string $schemaName,
+        bool $schemaExists,
+        bool $migrated,
+        string $message,
+        string $operation,
+        array $missingTables = [],
+    ): TenantProvisioningResult {
+        $this->logExpectedFailure($tenant, $schemaName, $operation, $message, null, $missingTables);
+
+        return TenantProvisioningResult::make(
+            tenantCode: (string) $tenant->code,
+            schemaName: $schemaName,
+            success: false,
+            schemaExists: $schemaExists,
+            migrated: $migrated,
+            missingTables: $missingTables,
+            errors: [$message],
+        );
+    }
+
+    /**
+     * @param  array<int, string>  $missingTables
+     */
+    private function logExpectedFailure(
+        Tenant $tenant,
+        string $schemaName,
+        string $operation,
+        string $message,
+        ?string $errorClass = null,
+        array $missingTables = [],
+    ): void {
+        $context = [
+            'tenant_id' => $tenant->id,
+            'tenant_code' => $tenant->code,
+            'schema_name' => $schemaName,
+            'command' => $operation,
+            'error_class' => $errorClass,
+            'missing_tables' => $missingTables,
+        ];
+
+        try {
+            $this->logPersistenceService->logSystemWarning(
+                message: $message,
+                category: 'tenant-operations',
+                operation: $operation,
+                context: $context,
+                processingStatus: 'failed',
+            );
+        } catch (Throwable $loggingThrowable) {
+            Log::warning('Falha ao persistir log operacional de tenant.', [
+                'operation' => $operation,
+                'tenant_id' => $tenant->id,
+                'tenant_code' => $tenant->code,
+                'schema_name' => $schemaName,
+                'error_class' => $loggingThrowable::class,
+                'message' => $loggingThrowable->getMessage(),
+            ]);
+        }
+    }
+
+    private function logUnexpectedFailure(
+        Throwable $throwable,
+        Tenant $tenant,
+        string $schemaName,
+        string $operation,
+    ): void {
         try {
             $this->logPersistenceService->logSystemError(
                 throwable: $throwable,
-                category: 'tenant',
-                operation: 'provision',
-                userId: AuthenticatedUserId::resolve(),
-                httpStatus: 500,
+                category: 'tenant-operations',
+                operation: $operation,
             );
         } catch (Throwable) {
         }
-    }
 
-    private function safeResetSearchPath(): void
-    {
-        try {
-            $this->tenantSchemaService->resetSearchPath();
-        } catch (Throwable) {
-        }
-    }
-
-    private function currentUserRoleCode(): ?string
-    {
-        $user = auth()->user();
-
-        return $user instanceof User ? $user->role?->code : null;
+        Log::error('Erro inesperado em operação de tenant.', [
+            'operation' => $operation,
+            'tenant_id' => $tenant->id,
+            'tenant_code' => $tenant->code,
+            'schema_name' => $schemaName,
+            'error_class' => $throwable::class,
+            'message' => $throwable->getMessage(),
+        ]);
     }
 }
