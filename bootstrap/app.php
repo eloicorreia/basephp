@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Console\Commands\SystemUpdateCommand;
+use App\Console\Commands\TenantsMigrateCommand;
+use App\Console\Commands\TenantsProvisionCommand;
+use App\Console\Commands\TenantsValidateCommand;
 use App\Exceptions\ApiException;
 use App\Http\Middleware\ApiRequestLoggingMiddleware;
 use App\Http\Middleware\EnsureClientCredentials;
@@ -35,10 +39,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
-        \App\Console\Commands\TenantsMigrateCommand::class,
-        \App\Console\Commands\TenantsValidateCommand::class,
-        \App\Console\Commands\TenantsProvisionCommand::class,
-        \App\Console\Commands\SystemUpdateCommand::class,
+        TenantsMigrateCommand::class,
+        TenantsValidateCommand::class,
+        TenantsProvisionCommand::class,
+        SystemUpdateCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

@@ -56,7 +56,7 @@ class AdminUserSeeder extends Seeder
                 }
             }
 
-            $admin = new User();
+            $admin = new User;
             $admin->forceFill([
                 'name' => $name,
                 'email' => $email,

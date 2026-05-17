@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\TenantSettings;
 
 use App\Models\TenantSystemSetting;
-use Illuminate\Database\Eloquent\Model;
 
 final readonly class TenantSystemSettingService extends BaseTenantSettingService
 {

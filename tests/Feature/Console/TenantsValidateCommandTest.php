@@ -6,6 +6,7 @@ namespace Tests\Feature\Console;
 
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class TenantsValidateCommandTest extends TestCase
@@ -56,7 +57,7 @@ final class TenantsValidateCommandTest extends TestCase
             '--force' => true,
         ])->assertSuccessful();
 
-        \Illuminate\Support\Facades\DB::statement('DROP TABLE "tenant_dev_001"."tenant_api_settings" CASCADE');
+        DB::statement('DROP TABLE "tenant_dev_001"."tenant_api_settings" CASCADE');
 
         $this->artisan('tenants:validate', [
             '--tenant' => $tenant->code,

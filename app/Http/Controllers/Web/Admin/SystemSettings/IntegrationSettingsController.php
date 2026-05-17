@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Admin\SystemSettings;
 
+use App\Http\Requests\Web\Admin\SystemSettings\UpdateTenantIntegrationSettingsRequest;
 use App\Services\Logging\LogPersistenceService;
 use App\Services\Tenant\TenantExecutionManager;
 use App\Services\TenantSettings\TenantIntegrationSettingService;
 use App\Services\TenantSettings\TenantSelectionService;
-use App\Http\Requests\Web\Admin\SystemSettings\UpdateTenantIntegrationSettingsRequest;
 use Illuminate\Http\RedirectResponse;
 
 final class IntegrationSettingsController extends BaseTenantSettingController
@@ -18,9 +18,18 @@ final class IntegrationSettingsController extends BaseTenantSettingController
         parent::__construct($tenantSelectionService, $tenantExecutionManager, $settingService, $logPersistenceService);
     }
 
-    protected function viewName(): string { return 'admin.system-settings.integrations'; }
+    protected function viewName(): string
+    {
+        return 'admin.system-settings.integrations';
+    }
 
-    protected function routeName(): string { return 'admin.system-settings.integrations.edit'; }
+    protected function routeName(): string
+    {
+        return 'admin.system-settings.integrations.edit';
+    }
 
-    public function update(UpdateTenantIntegrationSettingsRequest $request): RedirectResponse { return $this->updateSetting($request); }
+    public function update(UpdateTenantIntegrationSettingsRequest $request): RedirectResponse
+    {
+        return $this->updateSetting($request);
+    }
 }

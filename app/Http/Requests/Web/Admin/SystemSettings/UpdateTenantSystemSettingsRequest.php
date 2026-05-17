@@ -8,7 +8,10 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class UpdateTenantSystemSettingsRequest extends FormRequest
 {
-    public function authorize(): bool { return $this->user('web') !== null; }
+    public function authorize(): bool
+    {
+        return $this->user('web') !== null;
+    }
 
     /**
      * @return array<string, list<string>>

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Web\Admin;
 
-use App\Enums\RoleCode;
 use App\DTO\Mail\TenantMailConfigData;
+use App\Enums\RoleCode;
+use App\Exceptions\Mail\TenantMailConnectionException;
 use App\Models\MailConfig;
 use App\Models\Permission;
 use App\Models\Tenant;
@@ -211,7 +212,7 @@ final class AdminSystemSettingsWebTest extends TestCase
         {
             public function test(TenantMailConfigData $config): void
             {
-                throw new \App\Exceptions\Mail\TenantMailConnectionException;
+                throw new TenantMailConnectionException;
             }
         });
         $user = $this->adminUser();

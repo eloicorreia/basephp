@@ -20,6 +20,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\Public\RoleSeeder as PublicRoleSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\TenantSeeder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -229,7 +230,7 @@ class SeederIdempotencyTest extends TestCase
     }
 
     /**
-     * @param  class-string<\Illuminate\Database\Eloquent\Model>  $modelClass
+     * @param  class-string<Model>  $modelClass
      */
     private function assertNoDuplicateCodes(string $modelClass): void
     {

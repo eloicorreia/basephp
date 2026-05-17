@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace App\Services\TenantSettings;
 
 use App\Models\TenantWebhookSetting;
+use App\Services\Logging\LogPersistenceService;
+use App\Support\Tenant\TenantContext;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Database\Eloquent\Model;
 
 final readonly class TenantWebhookSettingService extends BaseTenantSettingService
 {
     public function __construct(
-        \App\Services\Logging\LogPersistenceService $logPersistenceService,
-        \App\Support\Tenant\TenantContext $tenantContext,
+        LogPersistenceService $logPersistenceService,
+        TenantContext $tenantContext,
         private Encrypter $encrypter,
     ) {
         parent::__construct($logPersistenceService, $tenantContext);
