@@ -410,6 +410,11 @@ class AdminMenuSeeder extends Seeder
             ->first();
 
         if (! $permission instanceof Permission) {
+            $this->command?->warn(sprintf(
+                'Permissão obrigatória do menu não encontrada: %s.',
+                $permissionCode
+            ));
+
             return;
         }
 

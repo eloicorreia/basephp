@@ -13,10 +13,10 @@ class TenantSeeder extends Seeder
 {
     public function run(): void
     {
-        $seedDevelopmentTenant = (bool) config('bootstrap.development_tenant.enabled', false);
-
-        if (! app()->environment(['local', 'testing']) && ! $seedDevelopmentTenant) {
-            $this->command?->warn('Tenant de desenvolvimento não criado: ambiente não local/testing e sem permissão explícita.');
+        if (! $this->shouldSeedDevelopmentTenant()) {
+            $this->command?->warn(
+                'Tenant de desenvolvimento não criado: ambiente não local/testing e sem permissão explícita.'
+            );
 
             return;
         }
@@ -40,5 +40,16 @@ class TenantSeeder extends Seeder
         });
 
         $this->command?->info('Tenant de desenvolvimento sincronizado sem provisionar schema ou migrations tenant.');
+    }
+
+    private function shouldSeedDevelopmentTenant(): bool
+    {
+        $configuredValue = config('bootstrap.development_tenant.enabled');
+
+        if (app()->environment(['local', 'testing'])) {
+            return $configuredValue !== false;
+        }
+
+        return $configuredValue === true;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\RoleCode;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -17,7 +18,7 @@ class AdminUserSeeder extends Seeder
     {
         DB::transaction(function (): void {
             $adminRole = Role::query()
-                ->where('code', 'admin')
+                ->where('code', RoleCode::ADMIN->value)
                 ->first();
 
             if (! $adminRole instanceof Role) {

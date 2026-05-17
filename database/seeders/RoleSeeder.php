@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\RoleCode;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Support\Auth\PermissionRegistry;
@@ -17,7 +18,7 @@ class RoleSeeder extends Seeder
     {
         DB::transaction(function (): void {
             $adminRole = Role::query()->updateOrCreate(
-                ['code' => 'admin'],
+                ['code' => RoleCode::ADMIN->value],
                 [
                     'name' => 'Administrador',
                     'active' => true,
@@ -25,7 +26,15 @@ class RoleSeeder extends Seeder
             );
 
             Role::query()->updateOrCreate(
-                ['code' => 'user'],
+                ['code' => RoleCode::EMPRESA->value],
+                [
+                    'name' => 'Empresa',
+                    'active' => true,
+                ]
+            );
+
+            Role::query()->updateOrCreate(
+                ['code' => RoleCode::USUARIO->value],
                 [
                     'name' => 'Usuário',
                     'active' => true,

@@ -9,39 +9,44 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Support\Auth\PermissionRegistry;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        $roles = [
-            [
-                'code' => RoleCode::ADMIN->value,
-                'name' => 'Administrador',
-                'active' => true,
-            ],
-            [
-                'code' => RoleCode::EMPRESA->value,
-                'name' => 'Empresa',
-                'active' => true,
-            ],
-            [
-                'code' => RoleCode::USUARIO->value,
-                'name' => 'Usuário',
-                'active' => true,
-            ],
-        ];
+        DB::transaction(function (): void {
+            $roles = [
+                [
+                    'code' => RoleCode::ADMIN->value,
+                    'name' => 'Administrador',
+                    'active' => true,
+                ],
+                [
+                    'code' => RoleCode::EMPRESA->value,
+                    'name' => 'Empresa',
+                    'active' => true,
+                ],
+                [
+                    'code' => RoleCode::USUARIO->value,
+                    'name' => 'Usuário',
+                    'active' => true,
+                ],
+            ];
 
-        foreach ($roles as $role) {
-            Role::query()->updateOrCreate(
-                ['code' => $role['code']],
-                $role
-            );
-        }
+            foreach ($roles as $role) {
+                Role::query()->updateOrCreate(
+                    ['code' => $role['code']],
+                    $role
+                );
+            }
 
-        $adminRole = Role::query()->where('code', RoleCode::ADMIN->value)->first();
+            $adminRole = Role::query()->where('code', RoleCode::ADMIN->value)->first();
 
-        if ($adminRole instanceof Role) {
+            if (! $adminRole instanceof Role) {
+                return;
+            }
+
             $syncPayload = [];
 
             foreach (Permission::query()->whereIn('code', PermissionRegistry::codes())->pluck('id')->all() as $permissionId) {
@@ -50,7 +55,9 @@ class RoleSeeder extends Seeder
                 ];
             }
 
-            $adminRole->permissions()->sync($syncPayload);
-        }
+            if ($syncPayload !== []) {
+                $adminRole->permissions()->syncWithoutDetaching($syncPayload);
+            }
+        });
     }
 }

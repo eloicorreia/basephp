@@ -10,7 +10,9 @@ return [
     ],
 
     'development_tenant' => [
-        'enabled' => env('SEED_DEVELOPMENT_TENANT', true),
+        // Null means: enabled by default only in local/testing.
+        // Production must explicitly set SEED_DEVELOPMENT_TENANT=true.
+        'enabled' => env('SEED_DEVELOPMENT_TENANT'),
         'code' => env('DEVELOPMENT_TENANT_CODE', 'tenant-dev-001'),
         'name' => env('DEVELOPMENT_TENANT_NAME', 'Tenant Desenvolvimento 001'),
         'schema_name' => env('DEVELOPMENT_TENANT_SCHEMA_NAME', 'tenant_dev_001'),
