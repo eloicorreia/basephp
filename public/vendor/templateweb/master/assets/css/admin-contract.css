@@ -63,3 +63,40 @@ textarea {
 .admin-template-preview {
     border: 1px dashed var(--vz-border-color);
 }
+
+.app-menu,
+.topbar,
+.main-content {
+    backface-visibility: hidden;
+}
+
+.page-content {
+    animation: admin-content-enter 120ms ease-out;
+    contain: layout paint;
+}
+
+.navbar-menu .navbar-nav .nav-link,
+.main-content {
+    transition-duration: 120ms;
+}
+
+.security-permission-grid {
+    max-height: 560px;
+    overflow-y: auto;
+}
+
+@keyframes admin-content-enter {
+    from {
+        opacity: 0.96;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-content {
+        animation: none;
+    }
+}

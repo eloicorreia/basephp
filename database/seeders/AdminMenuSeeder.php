@@ -42,6 +42,18 @@ class AdminMenuSeeder extends Seeder
             $changed
         );
 
+        $securityGroup = $this->updateOrCreateGroup(
+            ['code' => 'seguranca'],
+            [
+                'title' => 'Segurança',
+                'translation_key' => null,
+                'icon' => null,
+                'order' => 30,
+                'active' => true,
+            ],
+            $changed
+        );
+
         $dashboardItem = $this->updateOrCreateItem(
             ['code' => 'dashboard'],
             [
@@ -78,8 +90,84 @@ class AdminMenuSeeder extends Seeder
             $changed
         );
 
+        $securityItem = $this->updateOrCreateItem(
+            ['code' => 'security'],
+            [
+                'admin_menu_group_id' => $securityGroup->id,
+                'parent_id' => null,
+                'title' => 'Segurança',
+                'translation_key' => null,
+                'route_name' => 'admin.security.index',
+                'active_route_pattern' => 'admin.security.*',
+                'icon' => 'ri-shield-keyhole-line',
+                'order' => 10,
+                'active' => true,
+                'opens_in_new_tab' => false,
+                'permission_strategy' => AdminMenuPermissionStrategy::ANY->value,
+            ],
+            $changed
+        );
+
+        $securityUsersItem = $this->updateOrCreateItem(
+            ['code' => 'security-users'],
+            [
+                'admin_menu_group_id' => $securityGroup->id,
+                'parent_id' => $securityItem->id,
+                'title' => 'Usuários',
+                'translation_key' => null,
+                'route_name' => 'admin.security.users.index',
+                'active_route_pattern' => 'admin.security.users.*',
+                'icon' => null,
+                'order' => 10,
+                'active' => true,
+                'opens_in_new_tab' => false,
+                'permission_strategy' => AdminMenuPermissionStrategy::ANY->value,
+            ],
+            $changed
+        );
+
+        $securityRolesItem = $this->updateOrCreateItem(
+            ['code' => 'security-roles'],
+            [
+                'admin_menu_group_id' => $securityGroup->id,
+                'parent_id' => $securityItem->id,
+                'title' => 'Roles',
+                'translation_key' => null,
+                'route_name' => 'admin.security.roles.index',
+                'active_route_pattern' => 'admin.security.roles.*',
+                'icon' => null,
+                'order' => 20,
+                'active' => true,
+                'opens_in_new_tab' => false,
+                'permission_strategy' => AdminMenuPermissionStrategy::ANY->value,
+            ],
+            $changed
+        );
+
+        $securityPermissionsItem = $this->updateOrCreateItem(
+            ['code' => 'security-permissions'],
+            [
+                'admin_menu_group_id' => $securityGroup->id,
+                'parent_id' => $securityItem->id,
+                'title' => 'Permissões',
+                'translation_key' => null,
+                'route_name' => 'admin.security.permissions.index',
+                'active_route_pattern' => 'admin.security.permissions.*',
+                'icon' => null,
+                'order' => 30,
+                'active' => true,
+                'opens_in_new_tab' => false,
+                'permission_strategy' => AdminMenuPermissionStrategy::ANY->value,
+            ],
+            $changed
+        );
+
         $this->syncPermission($dashboardItem, WebAdminPermissions::DASHBOARD_VIEW, $changed);
         $this->syncPermission($apiRequestLogsItem, WebAdminPermissions::API_REQUEST_LOGS_VIEW, $changed);
+        $this->syncPermission($securityItem, WebAdminPermissions::SECURITY_VIEW, $changed);
+        $this->syncPermission($securityUsersItem, WebAdminPermissions::SECURITY_USERS_MANAGE, $changed);
+        $this->syncPermission($securityRolesItem, WebAdminPermissions::SECURITY_ROLES_MANAGE, $changed);
+        $this->syncPermission($securityPermissionsItem, WebAdminPermissions::SECURITY_PERMISSIONS_MANAGE, $changed);
 
         if ($changed) {
             app(AdminMenuVersionService::class)->increment();

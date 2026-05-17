@@ -70,6 +70,10 @@ final class PermissionRegistry
             WebAdminPermissions::DASHBOARD_VIEW => self::web('Visualizar dashboard', 'Permite visualizar o dashboard administrativo.', 'Painel web'),
             WebAdminPermissions::API_REQUEST_LOGS_VIEW => self::web('Consultar logs de API', 'Permite consultar logs de requisições da API.', 'Logs'),
             WebAdminPermissions::API_REQUEST_LOG_PAYLOADS_VIEW => self::web('Visualizar payloads de logs', 'Permite visualizar payloads mascarados dos logs da API.', 'Logs', true),
+            WebAdminPermissions::SECURITY_VIEW => self::web('Visualizar segurança', 'Permite visualizar a árvore de segurança administrativa.', 'Segurança', true),
+            WebAdminPermissions::SECURITY_USERS_MANAGE => self::web('Manter usuários web', 'Permite cadastrar e manter usuários pelo painel web.', 'Segurança', true),
+            WebAdminPermissions::SECURITY_ROLES_MANAGE => self::web('Manter roles web', 'Permite cadastrar roles e sincronizar permissões pelo painel web.', 'Segurança', true),
+            WebAdminPermissions::SECURITY_PERMISSIONS_MANAGE => self::web('Manter permissões web', 'Permite cadastrar e ativar/desativar permissões pelo painel web.', 'Segurança', true),
         ];
     }
 
