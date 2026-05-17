@@ -75,8 +75,16 @@ final class PermissionRegistry
             WebAdminPermissions::SECURITY_ROLES_MANAGE => self::web('Manter roles web', 'Permite cadastrar roles e sincronizar permissões pelo painel web.', 'Segurança', true),
             WebAdminPermissions::SECURITY_PERMISSIONS_MANAGE => self::web('Manter permissões web', 'Permite cadastrar e ativar/desativar permissões pelo painel web.', 'Segurança', true),
             WebAdminPermissions::SYSTEM_SETTINGS_VIEW => self::web('Visualizar configurações de sistema', 'Permite consultar configurações de sistema por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_GENERAL_MANAGE => self::web('Manter configurações gerais', 'Permite alterar configurações gerais por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_SECURITY_MANAGE => self::web('Manter configurações de segurança', 'Permite alterar configurações de segurança por tenant.', 'Configurações do Sistema', true),
             WebAdminPermissions::SYSTEM_SETTINGS_PASSWORD_POLICY_MANAGE => self::web('Manter política de senhas', 'Permite alterar a política de senhas por tenant.', 'Configurações do Sistema', true),
             WebAdminPermissions::SYSTEM_SETTINGS_MAIL_MANAGE => self::web('Manter e-mail do tenant', 'Permite alterar a configuração de envio de e-mail por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_API_MANAGE => self::web('Manter configurações de API', 'Permite alterar configurações de API por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_QUEUE_MANAGE => self::web('Manter configurações de filas', 'Permite alterar configurações de filas por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_AUDIT_MANAGE => self::web('Manter logs e auditoria', 'Permite alterar configurações de logs e auditoria por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_INTEGRATION_MANAGE => self::web('Manter integrações', 'Permite alterar configurações de integrações por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_WEBHOOK_MANAGE => self::web('Manter webhooks', 'Permite alterar configurações de webhooks por tenant.', 'Configurações do Sistema', true),
+            WebAdminPermissions::SYSTEM_SETTINGS_NOTIFICATION_MANAGE => self::web('Manter notificações', 'Permite alterar configurações de notificações por tenant.', 'Configurações do Sistema', true),
         ];
     }
 

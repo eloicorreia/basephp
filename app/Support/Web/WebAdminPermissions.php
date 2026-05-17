@@ -26,9 +26,25 @@ final class WebAdminPermissions
 
     public const SYSTEM_SETTINGS_VIEW = 'admin.system-settings.view';
 
+    public const SYSTEM_SETTINGS_GENERAL_MANAGE = 'admin.system-settings.general.manage';
+
+    public const SYSTEM_SETTINGS_SECURITY_MANAGE = 'admin.system-settings.security.manage';
+
     public const SYSTEM_SETTINGS_PASSWORD_POLICY_MANAGE = 'admin.system-settings.password-policy.manage';
 
     public const SYSTEM_SETTINGS_MAIL_MANAGE = 'admin.system-settings.mail.manage';
+
+    public const SYSTEM_SETTINGS_API_MANAGE = 'admin.system-settings.api.manage';
+
+    public const SYSTEM_SETTINGS_QUEUE_MANAGE = 'admin.system-settings.queue.manage';
+
+    public const SYSTEM_SETTINGS_AUDIT_MANAGE = 'admin.system-settings.audit.manage';
+
+    public const SYSTEM_SETTINGS_INTEGRATION_MANAGE = 'admin.system-settings.integration.manage';
+
+    public const SYSTEM_SETTINGS_WEBHOOK_MANAGE = 'admin.system-settings.webhook.manage';
+
+    public const SYSTEM_SETTINGS_NOTIFICATION_MANAGE = 'admin.system-settings.notification.manage';
 
     /**
      * @return array<string, string>
@@ -45,8 +61,16 @@ final class WebAdminPermissions
             self::SECURITY_ROLES_MANAGE => 'Cadastro e manutenção web de roles administrativas.',
             self::SECURITY_PERMISSIONS_MANAGE => 'Cadastro e manutenção web de permissões administrativas.',
             self::SYSTEM_SETTINGS_VIEW => 'Visualização das configurações de sistema por tenant.',
+            self::SYSTEM_SETTINGS_GENERAL_MANAGE => 'Manutenção das configurações gerais por tenant.',
+            self::SYSTEM_SETTINGS_SECURITY_MANAGE => 'Manutenção das configurações de segurança por tenant.',
             self::SYSTEM_SETTINGS_PASSWORD_POLICY_MANAGE => 'Manutenção da política de senhas por tenant.',
             self::SYSTEM_SETTINGS_MAIL_MANAGE => 'Manutenção da configuração de e-mail por tenant.',
+            self::SYSTEM_SETTINGS_API_MANAGE => 'Manutenção das configurações de API por tenant.',
+            self::SYSTEM_SETTINGS_QUEUE_MANAGE => 'Manutenção das configurações de filas por tenant.',
+            self::SYSTEM_SETTINGS_AUDIT_MANAGE => 'Manutenção das configurações de logs e auditoria por tenant.',
+            self::SYSTEM_SETTINGS_INTEGRATION_MANAGE => 'Manutenção das configurações de integrações por tenant.',
+            self::SYSTEM_SETTINGS_WEBHOOK_MANAGE => 'Manutenção das configurações de webhooks por tenant.',
+            self::SYSTEM_SETTINGS_NOTIFICATION_MANAGE => 'Manutenção das configurações de notificações por tenant.',
         ];
     }
 

@@ -16,6 +16,7 @@
         'selectedTenant' => $selectedTenant,
         'routeName' => 'admin.system-settings.password-policy.edit',
     ])
+    @include('admin.system-settings._load-state')
 
     @if ($selectedTenant && $policy)
         <div class="card">

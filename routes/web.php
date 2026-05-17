@@ -11,9 +11,17 @@ use App\Http\Controllers\Web\Admin\Security\SecurityController;
 use App\Http\Controllers\Web\Admin\Security\SecurityPermissionController;
 use App\Http\Controllers\Web\Admin\Security\SecurityRoleController;
 use App\Http\Controllers\Web\Admin\Security\SecurityUserController;
+use App\Http\Controllers\Web\Admin\SystemSettings\ApiSettingsController;
+use App\Http\Controllers\Web\Admin\SystemSettings\AuditSettingsController;
+use App\Http\Controllers\Web\Admin\SystemSettings\GeneralSettingsController;
+use App\Http\Controllers\Web\Admin\SystemSettings\IntegrationSettingsController;
 use App\Http\Controllers\Web\Admin\SystemSettings\MailSettingsController;
+use App\Http\Controllers\Web\Admin\SystemSettings\NotificationSettingsController;
 use App\Http\Controllers\Web\Admin\SystemSettings\PasswordPolicyController;
+use App\Http\Controllers\Web\Admin\SystemSettings\QueueSettingsController;
+use App\Http\Controllers\Web\Admin\SystemSettings\SecuritySettingsController;
 use App\Http\Controllers\Web\Admin\SystemSettings\SystemSettingsController;
+use App\Http\Controllers\Web\Admin\SystemSettings\WebhookSettingsController;
 use App\Support\Web\WebAdminPermissions;
 use Illuminate\Support\Facades\Route;
 
@@ -133,6 +141,20 @@ Route::middleware([
             ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_VIEW)
             ->name('index');
 
+        Route::get('/general', [GeneralSettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_GENERAL_MANAGE)
+            ->name('general.edit');
+        Route::put('/general', [GeneralSettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_GENERAL_MANAGE)
+            ->name('general.update');
+
+        Route::get('/security', [SecuritySettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_SECURITY_MANAGE)
+            ->name('security.edit');
+        Route::put('/security', [SecuritySettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_SECURITY_MANAGE)
+            ->name('security.update');
+
         Route::get('/password-policy', [PasswordPolicyController::class, 'edit'])
             ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_PASSWORD_POLICY_MANAGE)
             ->name('password-policy.edit');
@@ -149,5 +171,47 @@ Route::middleware([
         Route::post('/mail/test', [MailSettingsController::class, 'test'])
             ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_MAIL_MANAGE)
             ->name('mail.test');
+
+        Route::get('/api', [ApiSettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_API_MANAGE)
+            ->name('api.edit');
+        Route::put('/api', [ApiSettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_API_MANAGE)
+            ->name('api.update');
+
+        Route::get('/queues', [QueueSettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_QUEUE_MANAGE)
+            ->name('queues.edit');
+        Route::put('/queues', [QueueSettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_QUEUE_MANAGE)
+            ->name('queues.update');
+
+        Route::get('/audit', [AuditSettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_AUDIT_MANAGE)
+            ->name('audit.edit');
+        Route::put('/audit', [AuditSettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_AUDIT_MANAGE)
+            ->name('audit.update');
+
+        Route::get('/integrations', [IntegrationSettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_INTEGRATION_MANAGE)
+            ->name('integrations.edit');
+        Route::put('/integrations', [IntegrationSettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_INTEGRATION_MANAGE)
+            ->name('integrations.update');
+
+        Route::get('/webhooks', [WebhookSettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_WEBHOOK_MANAGE)
+            ->name('webhooks.edit');
+        Route::put('/webhooks', [WebhookSettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_WEBHOOK_MANAGE)
+            ->name('webhooks.update');
+
+        Route::get('/notifications', [NotificationSettingsController::class, 'edit'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_NOTIFICATION_MANAGE)
+            ->name('notifications.edit');
+        Route::put('/notifications', [NotificationSettingsController::class, 'update'])
+            ->middleware('web.permission:'.WebAdminPermissions::SYSTEM_SETTINGS_NOTIFICATION_MANAGE)
+            ->name('notifications.update');
     });
 });

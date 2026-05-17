@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Web\Admin\SystemSettings;
+
+use App\Services\Logging\LogPersistenceService;
+use App\Services\Tenant\TenantExecutionManager;
+use App\Services\TenantSettings\TenantSecuritySettingService;
+use App\Services\TenantSettings\TenantSelectionService;
+use App\Http\Requests\Web\Admin\SystemSettings\UpdateTenantSecuritySettingsRequest;
+use Illuminate\Http\RedirectResponse;
+
+final class SecuritySettingsController extends BaseTenantSettingController
+{
+    public function __construct(TenantSelectionService $tenantSelectionService, TenantExecutionManager $tenantExecutionManager, TenantSecuritySettingService $settingService, LogPersistenceService $logPersistenceService)
+    {
+        parent::__construct($tenantSelectionService, $tenantExecutionManager, $settingService, $logPersistenceService);
+    }
+
+    protected function viewName(): string { return 'admin.system-settings.security'; }
+
+    protected function routeName(): string { return 'admin.system-settings.security.edit'; }
+
+    public function update(UpdateTenantSecuritySettingsRequest $request): RedirectResponse { return $this->updateSetting($request); }
+}

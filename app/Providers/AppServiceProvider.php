@@ -7,7 +7,9 @@ namespace App\Providers;
 use App\Contracts\Multitenancy\TenantContextInterface;
 use App\Models\User;
 use App\Services\Mail\Contracts\RuntimeMailSenderInterface;
+use App\Services\Mail\Contracts\TenantMailConnectionTesterInterface;
 use App\Services\Mail\SymfonyRuntimeMailSender;
+use App\Services\Mail\SymfonyTenantMailConnectionTester;
 use App\Services\Web\AdminMenuBuilderService;
 use App\Support\Auth\OAuthScopes;
 use App\Support\Tenant\TenantContext;
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(TenantContext::class);
         $this->app->alias(TenantContext::class, TenantContextInterface::class);
         $this->app->bind(RuntimeMailSenderInterface::class, SymfonyRuntimeMailSender::class);
+        $this->app->bind(TenantMailConnectionTesterInterface::class, SymfonyTenantMailConnectionTester::class);
     }
 
     public function boot(): void

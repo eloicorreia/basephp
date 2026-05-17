@@ -1,0 +1,23 @@
+@extends('layouts.admin')
+
+@section('title', 'Webhooks')
+@section('page-title', 'Configurações do Sistema')
+
+@section('content')
+    <x-admin.page-title title="Webhooks" subtitle="Endpoint, segredo e eventos por tenant." aside="Tenant" />
+    @include('admin.system-settings._alerts')
+    @include('admin.system-settings._tenant-selector', ['tenants' => $tenants, 'selectedTenant' => $selectedTenant, 'routeName' => 'admin.system-settings.webhooks.edit'])
+    @include('admin.system-settings._load-state')
+    @if ($selectedTenant && $setting && empty($loadError))
+        <div class="card"><div class="card-body"><form method="POST" action="{{ route('admin.system-settings.webhooks.update') }}" class="row g-3">
+            @csrf @method('PUT')<input type="hidden" name="tenant" value="{{ $selectedTenant->code }}">
+            <div class="col-md-8"><label class="form-label" for="webhook_url">URL</label><input class="form-control" id="webhook_url" name="webhook_url" type="url" value="{{ old('webhook_url', $setting->webhook_url) }}"></div>
+            <div class="col-md-4"><label class="form-label" for="webhook_secret">Segredo</label><input class="form-control" id="webhook_secret" name="webhook_secret" type="password" autocomplete="new-password" placeholder="{{ $setting->webhook_secret_encrypted ? 'Mantido se ficar em branco' : '' }}"></div>
+            <div class="col-md-6"><label class="form-label" for="webhook_retry_attempts">Retentativas</label><input class="form-control" id="webhook_retry_attempts" name="webhook_retry_attempts" type="number" value="{{ old('webhook_retry_attempts', $setting->webhook_retry_attempts) }}" required></div>
+            <div class="col-md-6"><label class="form-label" for="webhook_timeout_seconds">Timeout</label><input class="form-control" id="webhook_timeout_seconds" name="webhook_timeout_seconds" type="number" value="{{ old('webhook_timeout_seconds', $setting->webhook_timeout_seconds) }}" required></div>
+            <div class="col-12"><label class="form-label" for="webhook_events">Eventos</label><textarea class="form-control" id="webhook_events" name="webhook_events" rows="4">{{ old('webhook_events', implode("\n", $setting->webhook_events ?? [])) }}</textarea></div>
+            <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="webhook_enabled" name="webhook_enabled" value="1" @checked(old('webhook_enabled', $setting->webhook_enabled))><label class="form-check-label" for="webhook_enabled">Webhook habilitado</label></div></div>
+            <div class="col-12 d-flex justify-content-end gap-2"><a class="btn btn-light" href="{{ route('admin.system-settings.index', ['tenant' => $selectedTenant->code]) }}">Voltar</a><button class="btn btn-primary" type="submit">Salvar</button></div>
+        </form></div></div>
+    @endif
+@endsection

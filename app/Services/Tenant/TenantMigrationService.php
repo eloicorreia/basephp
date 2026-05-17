@@ -11,16 +11,25 @@ class TenantMigrationService
 {
     public function __construct(
         private readonly TenantSchemaService $tenantSchemaService,
+        private readonly ?TenantSearchPathService $tenantSearchPathService = null,
     ) {}
 
     public function runTenantMigrations(string $schemaName, bool $force = false): void
     {
+        $searchPathService = $this->tenantSearchPathService ?? app(TenantSearchPathService::class);
+
         $this->tenantSchemaService->ensureMigrationRepository($schemaName);
 
-        $exitCode = Artisan::call('migrate', [
-            '--path' => 'database/migrations/tenant',
-            '--force' => $force,
-        ]);
+        try {
+            $searchPathService->setTenantSchema($schemaName);
+
+            $exitCode = Artisan::call('migrate', [
+                '--path' => 'database/migrations/tenant',
+                '--force' => $force,
+            ]);
+        } finally {
+            $searchPathService->resetToPublic();
+        }
 
         if ($exitCode !== 0) {
             throw new RuntimeException('Falha ao executar migrations do tenant.');

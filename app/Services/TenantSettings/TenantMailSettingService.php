@@ -6,10 +6,13 @@ namespace App\Services\TenantSettings;
 
 use App\DTO\Mail\EmailAddressData;
 use App\DTO\Mail\SendEmailData;
+use App\DTO\Mail\TenantMailConfigData;
+use App\Exceptions\Mail\TenantMailConnectionException;
 use App\Models\MailConfig;
 use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
 use App\Services\Mail\Contracts\RuntimeMailSenderInterface;
+use App\Services\Mail\Contracts\TenantMailConnectionTesterInterface;
 use App\Services\Mail\TenantMailConfigResolverService;
 use App\Support\Auth\AuthenticatedUserId;
 use Illuminate\Contracts\Encryption\Encrypter;
@@ -23,6 +26,7 @@ final readonly class TenantMailSettingService
         private LogPersistenceService $logPersistenceService,
         private TenantMailConfigResolverService $mailConfigResolverService,
         private RuntimeMailSenderInterface $runtimeMailSender,
+        private TenantMailConnectionTesterInterface $connectionTester,
     ) {}
 
     public function defaultConfig(): ?MailConfig
@@ -43,6 +47,9 @@ final readonly class TenantMailSettingService
             $config = $this->defaultConfig() ?? new MailConfig(['name' => 'SMTP padrão']);
             $before = $config->exists ? $this->auditSnapshot($config) : null;
             $password = (string) ($data['password'] ?? '');
+            $runtimePassword = $password !== '' ? $password : $this->existingPassword($config);
+
+            $this->testConnectionFromPayload($data, $runtimePassword);
 
             MailConfig::query()->where('is_default', true)->update(['is_default' => false]);
 
@@ -58,8 +65,8 @@ final readonly class TenantMailSettingService
                 'reply_to_address' => $data['reply_to_address'] ?? null,
                 'reply_to_name' => $data['reply_to_name'] ?? null,
                 'timeout_seconds' => $data['timeout_seconds'],
-                'verify_peer' => (bool) ($data['verify_peer'] ?? false),
-                'verify_peer_name' => (bool) ($data['verify_peer_name'] ?? false),
+                'verify_peer' => (bool) ($data['verify_peer'] ?? true),
+                'verify_peer_name' => (bool) ($data['verify_peer_name'] ?? true),
                 'allow_self_signed' => (bool) ($data['allow_self_signed'] ?? false),
                 'is_active' => (bool) ($data['is_active'] ?? false),
                 'is_default' => true,
@@ -85,6 +92,57 @@ final readonly class TenantMailSettingService
 
             return $config;
         });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function testConnectionFromPayload(array $data, ?string $password = null): void
+    {
+        $authenticatedUser = auth()->user();
+        $runtimeConfig = new TenantMailConfigData(
+            id: 0,
+            name: (string) $data['name'],
+            driver: 'smtp',
+            host: (string) $data['host'],
+            port: (int) $data['port'],
+            encryption: $data['encryption'] ?? null,
+            username: $data['username'] ?? null,
+            password: $password,
+            fromAddress: (string) $data['from_address'],
+            fromName: (string) $data['from_name'],
+            replyToAddress: $data['reply_to_address'] ?? null,
+            replyToName: $data['reply_to_name'] ?? null,
+            timeoutSeconds: (int) $data['timeout_seconds'],
+            verifyPeer: (bool) ($data['verify_peer'] ?? true),
+            verifyPeerName: (bool) ($data['verify_peer_name'] ?? true),
+            allowSelfSigned: (bool) ($data['allow_self_signed'] ?? false),
+        );
+
+        try {
+            $this->connectionTester->test($runtimeConfig);
+            $this->logPersistenceService->logAudit(
+                action: 'tenant_settings.mail.connection_test_succeeded',
+                auditableType: MailConfig::class,
+                auditableId: null,
+                beforeData: null,
+                afterData: $this->connectionAuditPayload($data),
+                userId: AuthenticatedUserId::resolve(),
+                userRole: $authenticatedUser instanceof User ? $authenticatedUser->role?->code : null,
+            );
+        } catch (TenantMailConnectionException $exception) {
+            $this->logPersistenceService->logAudit(
+                action: 'tenant_settings.mail.connection_test_failed',
+                auditableType: MailConfig::class,
+                auditableId: null,
+                beforeData: null,
+                afterData: $this->connectionAuditPayload($data),
+                userId: AuthenticatedUserId::resolve(),
+                userRole: $authenticatedUser instanceof User ? $authenticatedUser->role?->code : null,
+            );
+
+            throw $exception;
+        }
     }
 
     public function sendTest(string $to): void
@@ -116,7 +174,7 @@ final readonly class TenantMailSettingService
                 auditableType: MailConfig::class,
                 auditableId: $config->id,
                 beforeData: null,
-                afterData: ['to' => $to, 'error' => $throwable->getMessage()],
+                afterData: ['to' => $to, 'error_class' => $throwable::class],
                 userId: AuthenticatedUserId::resolve(),
                 userRole: $authenticatedUser instanceof User ? $authenticatedUser->role?->code : null,
             );
@@ -144,6 +202,29 @@ final readonly class TenantMailSettingService
             'timeout_seconds' => $config->timeout_seconds,
             'is_active' => $config->is_active,
             'is_default' => $config->is_default,
+        ];
+    }
+
+    private function existingPassword(MailConfig $config): ?string
+    {
+        if (! $config->exists || $config->password_encrypted === null) {
+            return null;
+        }
+
+        return $this->encrypter->decryptString((string) $config->password_encrypted);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function connectionAuditPayload(array $data): array
+    {
+        return [
+            'host' => $data['host'] ?? null,
+            'port' => $data['port'] ?? null,
+            'encryption' => $data['encryption'] ?? null,
+            'username' => ! empty($data['username']) ? '***' : null,
         ];
     }
 }

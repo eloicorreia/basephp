@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\Admin\SystemSettings\TestTenantMailSettingsRequest;
 use App\Http\Requests\Web\Admin\SystemSettings\UpdateTenantMailSettingsRequest;
 use App\Models\User;
+use App\Services\Logging\LogPersistenceService;
 use App\Services\Tenant\TenantExecutionManager;
 use App\Services\TenantSettings\TenantMailSettingService;
 use App\Services\TenantSettings\TenantSelectionService;
@@ -23,6 +24,7 @@ final class MailSettingsController extends Controller
         private readonly TenantSelectionService $tenantSelectionService,
         private readonly TenantExecutionManager $tenantExecutionManager,
         private readonly TenantMailSettingService $mailSettingService,
+        private readonly LogPersistenceService $logPersistenceService,
     ) {}
 
     public function edit(Request $request): View
@@ -35,14 +37,23 @@ final class MailSettingsController extends Controller
             tenantCode: $request->filled('tenant') ? $request->string('tenant')->toString() : null,
         );
 
-        $mailConfig = $tenant !== null
-            ? $this->tenantExecutionManager->run($tenant, fn () => $this->mailSettingService->defaultConfig())
-            : null;
+        $mailConfig = null;
+        $loadError = null;
+
+        if ($tenant !== null) {
+            try {
+                $mailConfig = $this->tenantExecutionManager->run($tenant, fn () => $this->mailSettingService->defaultConfig());
+            } catch (Throwable $throwable) {
+                $this->logPersistenceService->logSystemError($throwable, 'tenant-settings', 'mail.edit', $user->id);
+                $loadError = 'Não foi possível carregar as configurações deste tenant. Verifique se o tenant está provisionado e se as migrations foram executadas.';
+            }
+        }
 
         return view('admin.system-settings.mail', [
             'tenants' => $tenants,
             'selectedTenant' => $tenant,
             'mailConfig' => $mailConfig,
+            'loadError' => $loadError,
         ]);
     }
 
@@ -57,10 +68,18 @@ final class MailSettingsController extends Controller
             throw new NotFoundHttpException('Tenant não encontrado.');
         }
 
-        $this->tenantExecutionManager->run(
-            $tenant,
-            fn () => $this->mailSettingService->updateDefault($data)
-        );
+        try {
+            $this->tenantExecutionManager->run(
+                $tenant,
+                fn () => $this->mailSettingService->updateDefault($data)
+            );
+        } catch (Throwable $throwable) {
+            $this->logPersistenceService->logSystemError($throwable, 'tenant-settings', 'mail.update', $user->id);
+
+            return back()
+                ->withErrors(['mail' => 'Não foi possível conectar ao servidor de e-mail com as configurações informadas.'])
+                ->withInput($request->except('password'));
+        }
 
         return redirect()
             ->route('admin.system-settings.mail.edit', ['tenant' => $tenant->code])
@@ -84,8 +103,10 @@ final class MailSettingsController extends Controller
                 fn () => $this->mailSettingService->sendTest((string) $data['to'])
             );
         } catch (Throwable $throwable) {
+            $this->logPersistenceService->logSystemError($throwable, 'tenant-settings', 'mail.test', $user->id);
+
             return back()
-                ->withErrors(['mail_test' => 'Falha ao enviar e-mail de teste: '.$throwable->getMessage()])
+                ->withErrors(['mail_test' => 'Falha ao enviar e-mail de teste. Verifique as configurações informadas.'])
                 ->withInput();
         }
 

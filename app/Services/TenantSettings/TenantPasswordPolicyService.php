@@ -8,12 +8,14 @@ use App\Models\TenantPasswordPolicy;
 use App\Models\User;
 use App\Services\Logging\LogPersistenceService;
 use App\Support\Auth\AuthenticatedUserId;
+use App\Support\Tenant\TenantContext;
 use Illuminate\Support\Facades\DB;
 
 final readonly class TenantPasswordPolicyService
 {
     public function __construct(
         private LogPersistenceService $logPersistenceService,
+        private TenantContext $tenantContext,
     ) {}
 
     public function getOrCreateDefault(?int $userId = null): TenantPasswordPolicy
@@ -40,9 +42,14 @@ final readonly class TenantPasswordPolicyService
     {
         return DB::transaction(function () use ($data): TenantPasswordPolicy {
             $authenticatedUser = auth()->user();
+            $tenant = $this->tenantContext->require();
             $policy = $this->getOrCreateDefault(AuthenticatedUserId::resolve());
             $policy = TenantPasswordPolicy::query()->whereKey($policy->id)->lockForUpdate()->firstOrFail();
-            $before = $policy->toArray();
+            $before = array_merge($policy->toArray(), [
+                'tenant_id' => $tenant->id,
+                'tenant_code' => $tenant->code,
+                'schema_name' => $tenant->schema_name,
+            ]);
 
             $policy->fill([
                 'min_length' => $data['min_length'],
@@ -68,7 +75,11 @@ final readonly class TenantPasswordPolicyService
                 auditableType: TenantPasswordPolicy::class,
                 auditableId: (int) $policy->id,
                 beforeData: $before,
-                afterData: $policy->fresh()?->toArray(),
+                afterData: array_merge($policy->fresh()?->toArray() ?? [], [
+                    'tenant_id' => $tenant->id,
+                    'tenant_code' => $tenant->code,
+                    'schema_name' => $tenant->schema_name,
+                ]),
                 userId: AuthenticatedUserId::resolve(),
                 userRole: $authenticatedUser instanceof User ? $authenticatedUser->role?->code : null,
             );

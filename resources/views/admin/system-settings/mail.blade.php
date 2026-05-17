@@ -16,8 +16,9 @@
         'selectedTenant' => $selectedTenant,
         'routeName' => 'admin.system-settings.mail.edit',
     ])
+    @include('admin.system-settings._load-state')
 
-    @if ($selectedTenant)
+    @if ($selectedTenant && empty($loadError))
         <div class="card">
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.system-settings.mail.update') }}" class="row g-3">
