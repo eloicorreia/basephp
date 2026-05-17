@@ -71,13 +71,19 @@ textarea {
 }
 
 .page-content {
-    animation: admin-content-enter 120ms ease-out;
-    contain: layout paint;
+    contain: layout;
 }
 
-.navbar-menu .navbar-nav .nav-link,
-.main-content {
+.navbar-menu .navbar-nav .nav-link {
     transition-duration: 120ms;
+    transition-property: background-color, color;
+}
+
+.main-content,
+.page-content,
+#page-topbar,
+.app-menu {
+    transition-property: margin, width, transform;
 }
 
 .security-permission-grid {
@@ -85,18 +91,12 @@ textarea {
     overflow-y: auto;
 }
 
-@keyframes admin-content-enter {
-    from {
-        opacity: 0.96;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .page-content {
-        animation: none;
+    .navbar-menu .navbar-nav .nav-link,
+    .main-content,
+    .page-content,
+    #page-topbar,
+    .app-menu {
+        transition: none;
     }
 }
