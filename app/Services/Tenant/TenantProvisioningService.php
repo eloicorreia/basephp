@@ -50,7 +50,27 @@ final readonly class TenantProvisioningService
                 return $migrationResult;
             }
 
-            return $this->validate($tenant);
+            $validationResult = $this->validate($tenant);
+
+            if ($validationResult->failed()) {
+                return TenantProvisioningResult::make(
+                    tenantCode: $validationResult->tenantCode,
+                    schemaName: $validationResult->schemaName,
+                    success: false,
+                    schemaExists: $validationResult->schemaExists,
+                    migrated: true,
+                    missingTables: $validationResult->missingTables,
+                    errors: $validationResult->errors,
+                );
+            }
+
+            return TenantProvisioningResult::make(
+                tenantCode: (string) $tenant->code,
+                schemaName: $schemaName,
+                success: true,
+                schemaExists: $schemaExists,
+                migrated: true,
+            );
         } catch (Throwable $throwable) {
             $this->logUnexpectedFailure($throwable, $tenant, $schemaName, 'tenants_provision');
 
@@ -257,7 +277,23 @@ final readonly class TenantProvisioningService
         string $schemaName,
         string $operation,
     ): void {
+        $context = [
+            'tenant_id' => $tenant->id,
+            'tenant_code' => $tenant->code,
+            'schema_name' => $schemaName,
+            'command' => $operation,
+            'error_class' => $throwable::class,
+        ];
+
         try {
+            $this->logPersistenceService->logSystemWarning(
+                message: $throwable->getMessage() !== '' ? $throwable->getMessage() : 'Erro inesperado em operação de tenant.',
+                category: 'tenant-operations',
+                operation: $operation,
+                context: $context,
+                processingStatus: 'error',
+            );
+
             $this->logPersistenceService->logSystemError(
                 throwable: $throwable,
                 category: 'tenant-operations',

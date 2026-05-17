@@ -35,7 +35,9 @@ final class SystemUpdateCommand extends Command
             return self::FAILURE;
         }
 
-        $this->runPermissionSyncIfAvailable();
+        if (! $this->runPermissionSyncIfAvailable()) {
+            return self::FAILURE;
+        }
 
         if (! $this->runStep('Running AdminMenuSeeder', 'db:seed', [
             '--class' => AdminMenuSeeder::class,
@@ -99,6 +101,7 @@ final class SystemUpdateCommand extends Command
 
             if ($exitCode !== self::SUCCESS) {
                 $this->logFailure($command, sprintf('Command returned exit code %d.', $exitCode));
+                $this->error(sprintf('FAILED: Command returned exit code %d.', $exitCode));
 
                 return false;
             }
@@ -114,19 +117,19 @@ final class SystemUpdateCommand extends Command
         }
     }
 
-    private function runPermissionSyncIfAvailable(): void
+    private function runPermissionSyncIfAvailable(): bool
     {
         $availableCommands = Artisan::all();
 
         foreach (['permissions:sync', 'permission:sync'] as $commandName) {
             if (array_key_exists($commandName, $availableCommands)) {
-                $this->runStep('Running permission sync', $commandName, ['--force' => true]);
-
-                return;
+                return $this->runStep('Running permission sync', $commandName, ['--force' => true]);
             }
         }
 
         $this->warn('Permission sync command not found; skipping explicit permission sync.');
+
+        return true;
     }
 
     private function logFailure(string $command, string $message, ?Throwable $throwable = null): void
