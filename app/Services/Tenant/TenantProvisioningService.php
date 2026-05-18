@@ -9,6 +9,8 @@ use App\Models\Tenant;
 use App\Services\Logging\LogPersistenceService;
 use App\Support\Tenant\TenantRequiredTables;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use RuntimeException;
 use Throwable;
 
 final readonly class TenantProvisioningService
@@ -16,8 +18,52 @@ final readonly class TenantProvisioningService
     public function __construct(
         private TenantSchemaService $tenantSchemaService,
         private TenantMigrationService $tenantMigrationService,
+        private ?TenantSeederService $tenantSeederService,
         private LogPersistenceService $logPersistenceService,
     ) {}
+
+    public function createAndProvision(string $code, string $name, string $schemaName, bool $force = false): Tenant
+    {
+        $this->tenantSchemaService->assertValidSchemaName($schemaName);
+
+        $tenant = $this->resolveTenantForProvisioning($code, $name, $schemaName);
+
+        try {
+            $this->tenantSchemaService->createSchema($schemaName);
+            $this->tenantMigrationService->runTenantMigrations($schemaName, $force);
+
+            if ($this->tenantSeederService instanceof TenantSeederService) {
+                $searchPathService = app(TenantSearchPathService::class);
+
+                try {
+                    $searchPathService->setTenantSchema($schemaName);
+                    $this->tenantSeederService->runTenantSeeders($force);
+                } finally {
+                    $searchPathService->resetToPublic();
+                }
+            }
+
+            $missingTables = $this->missingRequiredTables($schemaName);
+
+            if ($missingTables !== []) {
+                throw new RuntimeException('Tenant provisionado com schema incompleto: '.implode(', ', $missingTables));
+            }
+
+            $tenant->forceFill([
+                'status' => Tenant::STATUS_ACTIVE,
+            ])->save();
+
+            return $tenant->refresh();
+        } catch (Throwable $throwable) {
+            $tenant->forceFill([
+                'status' => Tenant::STATUS_ERROR,
+            ])->save();
+
+            $this->logLegacyProvisionFailure($throwable, $tenant);
+
+            throw $throwable;
+        }
+    }
 
     public function provision(Tenant $tenant, bool $createSchema = false, bool $force = false): TenantProvisioningResult
     {
@@ -310,5 +356,62 @@ final readonly class TenantProvisioningService
             'error_class' => $throwable::class,
             'message' => $throwable->getMessage(),
         ]);
+    }
+
+    private function resolveTenantForProvisioning(string $code, string $name, string $schemaName): Tenant
+    {
+        $existingTenant = Tenant::query()
+            ->where('code', $code)
+            ->orWhere('schema_name', $schemaName)
+            ->first();
+
+        if ($existingTenant instanceof Tenant) {
+            if ($existingTenant->code !== $code || $existingTenant->schema_name !== $schemaName) {
+                throw new RuntimeException('Já existe tenant usando o código ou schema informado.');
+            }
+
+            if ($existingTenant->status === Tenant::STATUS_ERROR) {
+                $existingTenant->forceFill([
+                    'name' => $name,
+                    'status' => Tenant::STATUS_PROVISIONING,
+                ])->save();
+            }
+
+            return $existingTenant;
+        }
+
+        return Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => $code,
+            'name' => $name,
+            'schema_name' => $schemaName,
+            'status' => Tenant::STATUS_PROVISIONING,
+        ]);
+    }
+
+    private function logLegacyProvisionFailure(Throwable $throwable, Tenant $tenant): void
+    {
+        try {
+            $this->logPersistenceService->logSystemWarning(
+                message: $throwable->getMessage(),
+                category: 'tenant',
+                operation: 'provision',
+                context: [
+                    'tenant_id' => $tenant->id,
+                    'tenant_code' => $tenant->code,
+                    'schema_name' => $tenant->schema_name,
+                    'error_class' => $throwable::class,
+                ],
+                processingStatus: 'error',
+            );
+        } catch (Throwable $loggingThrowable) {
+            Log::warning('Falha ao persistir log operacional de provisionamento legado.', [
+                'tenant_id' => $tenant->id,
+                'tenant_code' => $tenant->code,
+                'schema_name' => $tenant->schema_name,
+                'error_class' => $loggingThrowable::class,
+                'message' => $loggingThrowable->getMessage(),
+            ]);
+        }
     }
 }

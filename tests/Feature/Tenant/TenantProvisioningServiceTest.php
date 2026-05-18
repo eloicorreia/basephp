@@ -53,7 +53,7 @@ final class TenantProvisioningServiceTest extends TestCase
         );
 
         try {
-            $service->provision(
+            $service->createAndProvision(
                 code: $code,
                 name: 'Tenant Failure',
                 schemaName: $schemaName,
@@ -83,7 +83,7 @@ final class TenantProvisioningServiceTest extends TestCase
         $code = 'tenant-success-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
         $this->schemasToDrop[] = $schemaName;
 
-        $tenant = app(TenantProvisioningService::class)->provision(
+        $tenant = app(TenantProvisioningService::class)->createAndProvision(
             code: $code,
             name: 'Tenant Success',
             schemaName: $schemaName,
@@ -103,13 +103,13 @@ final class TenantProvisioningServiceTest extends TestCase
         $code = 'tenant-idem-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
         $this->schemasToDrop[] = $schemaName;
 
-        $firstTenant = app(TenantProvisioningService::class)->provision(
+        $firstTenant = app(TenantProvisioningService::class)->createAndProvision(
             code: $code,
             name: 'Tenant Idempotente',
             schemaName: $schemaName,
         );
 
-        $secondTenant = app(TenantProvisioningService::class)->provision(
+        $secondTenant = app(TenantProvisioningService::class)->createAndProvision(
             code: $code,
             name: 'Tenant Idempotente Renomeado',
             schemaName: $schemaName,
@@ -137,7 +137,7 @@ final class TenantProvisioningServiceTest extends TestCase
             'status' => 'active',
         ]);
 
-        $rebuiltTenant = app(TenantProvisioningService::class)->provision(
+        $rebuiltTenant = app(TenantProvisioningService::class)->createAndProvision(
             code: $code,
             name: 'Tenant Incompleto',
             schemaName: $schemaName,
@@ -174,7 +174,7 @@ final class TenantProvisioningServiceTest extends TestCase
         );
 
         try {
-            $failingService->provision(
+            $failingService->createAndProvision(
                 code: $code,
                 name: 'Tenant Retry',
                 schemaName: $schemaName,
@@ -188,7 +188,7 @@ final class TenantProvisioningServiceTest extends TestCase
 
         $this->assertSame('error', $failedTenant->status);
 
-        $retriedTenant = app(TenantProvisioningService::class)->provision(
+        $retriedTenant = app(TenantProvisioningService::class)->createAndProvision(
             code: $code,
             name: 'Tenant Retry Recuperado',
             schemaName: $schemaName,
@@ -217,7 +217,7 @@ final class TenantProvisioningServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Já existe tenant usando o código ou schema informado.');
 
-        app(TenantProvisioningService::class)->provision(
+        app(TenantProvisioningService::class)->createAndProvision(
             code: $code,
             name: 'Tenant Conflitante',
             schemaName: $conflictingSchemaName,

@@ -113,6 +113,7 @@ php artisan tenants:provision --tenant=tenant-dev-001 --create-schema --force
 
 ```bash
 php artisan migrate --force
+php artisan db:seed --class=PermissionSeeder --force
 php artisan db:seed --class=AdminMenuSeeder --force
 php artisan tenants:migrate --force --only-active
 php artisan tenants:validate --only-active

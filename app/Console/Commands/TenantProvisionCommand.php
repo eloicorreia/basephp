@@ -27,7 +27,7 @@ class TenantProvisionCommand extends Command
     public function handle(): int
     {
         try {
-            $tenant = $this->tenantProvisioningService->provision(
+            $tenant = $this->tenantProvisioningService->createAndProvision(
                 code: (string) $this->argument('code'),
                 name: (string) $this->argument('name'),
                 schemaName: (string) $this->argument('schema_name'),

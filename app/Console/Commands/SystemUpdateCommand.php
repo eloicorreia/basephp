@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Services\Logging\LogPersistenceService;
 use Database\Seeders\AdminMenuSeeder;
+use Database\Seeders\PermissionSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -129,7 +130,10 @@ final class SystemUpdateCommand extends Command
 
         $this->warn('Permission sync command not found; skipping explicit permission sync.');
 
-        return true;
+        return $this->runStep('Running PermissionSeeder', 'db:seed', [
+            '--class' => PermissionSeeder::class,
+            '--force' => true,
+        ]);
     }
 
     private function logFailure(string $command, string $message, ?Throwable $throwable = null): void

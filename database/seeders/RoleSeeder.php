@@ -59,6 +59,6 @@ class RoleSeeder extends Seeder
             ]);
         });
 
-        $this->command?->info('Roles base sincronizadas com sucesso.');
+        $this->command->info('Roles base sincronizadas com sucesso.');
     }
 }

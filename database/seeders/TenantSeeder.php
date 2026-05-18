@@ -14,7 +14,7 @@ class TenantSeeder extends Seeder
     public function run(): void
     {
         if (! $this->shouldSeedDevelopmentTenant()) {
-            $this->command?->warn(
+            $this->command->warn(
                 'Tenant de desenvolvimento não criado: ambiente não local/testing e sem permissão explícita.'
             );
 
@@ -39,7 +39,7 @@ class TenantSeeder extends Seeder
             $tenant->save();
         });
 
-        $this->command?->info('Tenant de desenvolvimento sincronizado sem provisionar schema ou migrations tenant.');
+        $this->command->info('Tenant de desenvolvimento sincronizado sem provisionar schema ou migrations tenant.');
     }
 
     private function shouldSeedDevelopmentTenant(): bool

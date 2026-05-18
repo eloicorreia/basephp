@@ -190,7 +190,10 @@ class SeederIdempotencyTest extends TestCase
             app()->detectEnvironment(static fn (): string => 'production');
             config()->set('bootstrap.development_tenant.enabled', null);
 
-            $this->seed(TenantSeeder::class);
+            $this->artisan('db:seed', [
+                '--class' => TenantSeeder::class,
+                '--force' => true,
+            ])->assertSuccessful();
 
             $this->assertSame(0, Tenant::query()->where('code', 'tenant-dev-001')->count());
         } finally {
@@ -206,7 +209,10 @@ class SeederIdempotencyTest extends TestCase
             app()->detectEnvironment(static fn (): string => 'production');
             config()->set('bootstrap.development_tenant.enabled', true);
 
-            $this->seed(TenantSeeder::class);
+            $this->artisan('db:seed', [
+                '--class' => TenantSeeder::class,
+                '--force' => true,
+            ])->assertSuccessful();
 
             $this->assertSame(1, Tenant::query()->where('code', 'tenant-dev-001')->count());
         } finally {

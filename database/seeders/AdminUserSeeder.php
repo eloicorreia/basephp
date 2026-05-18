@@ -34,13 +34,13 @@ class AdminUserSeeder extends Seeder
             if ($user instanceof User) {
                 if ($user->role_id === null) {
                     $user->forceFill(['role_id' => $adminRole->id])->save();
-                    $this->command?->info('Usuário administrador existente recebeu a role admin por não possuir role.');
+                    $this->command->info('Usuário administrador existente recebeu a role admin por não possuir role.');
                 } elseif ((int) $user->role_id !== (int) $adminRole->id) {
-                    $this->command?->warn(
+                    $this->command->warn(
                         'Usuário administrador já existe com outra role. A role não foi sobrescrita automaticamente.'
                     );
                 } else {
-                    $this->command?->info('Usuário administrador já existe. Senha e status preservados.');
+                    $this->command->info('Usuário administrador já existe. Senha e status preservados.');
                 }
 
                 return;
@@ -67,7 +67,7 @@ class AdminUserSeeder extends Seeder
                 'email_verified_at' => now(),
             ])->save();
 
-            $this->command?->info(sprintf('Usuário administrador inicial criado: %s.', $email));
+            $this->command->info(sprintf('Usuário administrador inicial criado: %s.', $email));
         });
     }
 }

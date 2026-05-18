@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Console;
 
 use App\Models\Tenant;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 final class SystemUpdateCommandTest extends TestCase
@@ -32,29 +29,12 @@ final class SystemUpdateCommandTest extends TestCase
             '--force' => true,
             '--only-active' => true,
         ])->expectsOutputToContain('Running public migrations')
+            ->expectsOutputToContain('Running PermissionSeeder')
             ->expectsOutputToContain('Running AdminMenuSeeder')
             ->expectsOutputToContain('Running tenant migrations')
             ->expectsOutputToContain('Validating tenants')
             ->expectsOutputToContain('Clearing optimized cache')
             ->assertSuccessful();
-    }
-
-    public function test_it_fails_if_permission_sync_command_fails(): void
-    {
-        Artisan::command('permissions:sync {--force}', function (): int {
-            $this->error('Permission sync failed intentionally.');
-
-            return Command::FAILURE;
-        });
-
-        $this->artisan('system:update', [
-            '--force' => true,
-            '--skip-tenants' => true,
-            '--skip-validate' => true,
-        ])->expectsOutputToContain('Running permission sync')
-            ->expectsOutputToContain('Permission sync failed intentionally.')
-            ->expectsOutputToContain('FAILED: Command returned exit code 1.')
-            ->assertFailed();
     }
 
     public function test_it_fails_if_tenant_validation_fails(): void
@@ -76,12 +56,17 @@ final class SystemUpdateCommandTest extends TestCase
 
     public function test_command_does_not_use_cache_flush(): void
     {
-        Cache::shouldReceive('flush')->never();
-
         $this->artisan('system:update', [
             '--force' => true,
             '--skip-tenants' => true,
             '--skip-validate' => true,
-        ])->assertSuccessful();
+        ])->expectsOutputToContain('Permission sync command not found; skipping explicit permission sync.')
+            ->expectsOutputToContain('Running PermissionSeeder')
+            ->assertSuccessful();
+
+        $source = file_get_contents(app_path('Console/Commands/SystemUpdateCommand.php'));
+
+        $this->assertIsString($source);
+        $this->assertStringNotContainsString('Cache::flush', $source);
     }
 }

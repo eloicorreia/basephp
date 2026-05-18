@@ -45,7 +45,7 @@ class PermissionSeeder extends Seeder
             }
         });
 
-        $this->command?->info(sprintf(
+        $this->command->info(sprintf(
             'Permissões sincronizadas. Criadas: %d. Atualizadas: %d.',
             $created,
             $updated

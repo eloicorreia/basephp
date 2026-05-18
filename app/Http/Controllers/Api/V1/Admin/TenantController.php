@@ -33,10 +33,10 @@ class TenantController extends Controller
 
     public function store(StoreTenantRequest $request): JsonResponse
     {
-        $tenant = $this->tenantProvisioningService->provision(
-            code: $request->validated('code'),
-            name: $request->validated('name'),
-            schemaName: $request->validated('schema_name'),
+        $tenant = $this->tenantProvisioningService->createAndProvision(
+            code: (string) $request->validated('code'),
+            name: (string) $request->validated('name'),
+            schemaName: (string) $request->validated('schema_name'),
         );
 
         return ApiResponse::success(
