@@ -62,7 +62,7 @@ Route::middleware([
     Route::get('/password/change', [ChangePasswordController::class, 'show'])->name('password.change');
     Route::put('/password/change', [ChangePasswordController::class, 'update'])->name('password.update');
 
-    Route::middleware('web.password.changed')->group(function (): void {
+    Route::middleware(['web.tenant-security', 'web.password.changed'])->group(function (): void {
         Route::get('/', DashboardController::class)
             ->middleware('web.permission:'.WebAdminPermissions::DASHBOARD_VIEW)
             ->name('dashboard');

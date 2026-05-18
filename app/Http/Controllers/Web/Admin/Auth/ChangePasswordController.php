@@ -11,7 +11,6 @@ use App\Services\Auth\AuthService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 final class ChangePasswordController extends Controller
 {
@@ -34,9 +33,6 @@ final class ChangePasswordController extends Controller
             newPassword: (string) $request->validated('new_password'),
             request: $request,
         );
-
-        Auth::guard('web')->login($user->refresh());
-        $request->session()->regenerate();
 
         return redirect()
             ->intended(route('admin.dashboard'))

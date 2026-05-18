@@ -10,6 +10,7 @@ use App\Exceptions\ApiException;
 use App\Http\Middleware\ApiRequestLoggingMiddleware;
 use App\Http\Middleware\ApplyTenantRuntimeSettings;
 use App\Http\Middleware\ApplyTenantSecuritySettings;
+use App\Http\Middleware\ApplyWebTenantSecuritySettings;
 use App\Http\Middleware\EnsureClientCredentials;
 use App\Http\Middleware\EnsurePasswordChangedMiddleware;
 use App\Http\Middleware\EnsurePermission;
@@ -55,6 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.resolve' => ResolveTenantMiddleware::class,
             'tenant.runtime-settings' => ApplyTenantRuntimeSettings::class,
             'tenant.security-settings' => ApplyTenantSecuritySettings::class,
+            'web.tenant-security' => ApplyWebTenantSecuritySettings::class,
             'tenant.access' => EnsureTenantAccessMiddleware::class,
             'password.changed' => EnsurePasswordChangedMiddleware::class,
             'client.credentials' => EnsureClientCredentials::class,
@@ -74,7 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ValidationException $e, Request $request) {
             $status = 422;
 
-            if (! $request->expectsJson() && ! $request->is('api/*')) {
+            if ($request->routeIs('admin.password.update') && ! $request->expectsJson()) {
                 return redirect()
                     ->back()
                     ->withInput($request->except(['password', 'current_password', 'new_password', 'new_password_confirmation']))

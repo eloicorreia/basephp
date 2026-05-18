@@ -182,6 +182,7 @@ trait LoadsProjectMigrations
             && Schema::hasTable('tenant_integration_settings')
             && Schema::hasTable('tenant_webhook_settings')
             && Schema::hasTable('tenant_notification_settings')
+            && Schema::hasTable('tenant_user_web_sessions')
             && Schema::hasColumn('users', 'role_id')
             && Schema::hasColumn('users', 'is_active')
             && Schema::hasColumn('users', 'must_change_password')

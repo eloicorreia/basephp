@@ -12,6 +12,7 @@ use App\Services\Tenant\TenantExecutionManager;
 use App\Services\TenantSettings\TenantPasswordPolicyService;
 use App\Services\TenantSettings\TenantPasswordValidatorService;
 use App\Services\TenantSettings\TenantSecurityRuntimeSettings;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +26,7 @@ class AuthService
         private readonly TenantPasswordPolicyService $passwordPolicyService,
         private readonly TenantPasswordValidatorService $passwordValidatorService,
         private readonly TenantSecurityRuntimeSettings $securityRuntimeSettings,
+        private readonly TenantWebSessionService $webSessionService,
     ) {}
 
     public function changePassword(User $user, string $currentPassword, string $newPassword, ?Tenant $tenant = null): void
@@ -77,6 +79,7 @@ class AuthService
                     fn (): bool => (bool) $this->securityRuntimeSettings->settings()->logout_on_password_change
                 )) {
                     $this->revokeUserTokens($user);
+                    $this->webSessionService->revokeAllForUser($tenant, $user, 'password_changed');
                 }
             }
         });
@@ -97,12 +100,26 @@ class AuthService
 
     public function changePasswordForRequest(User $user, string $currentPassword, string $newPassword, Request $request): void
     {
+        $tenant = $this->tenantFromRequest($request);
+
         $this->changePassword(
             user: $user,
             currentPassword: $currentPassword,
             newPassword: $newPassword,
-            tenant: $this->tenantFromRequest($request),
+            tenant: $tenant,
         );
+
+        if ($tenant instanceof Tenant && $request->hasSession()) {
+            $this->tenantExecutionManager->run($tenant, function () use ($tenant, $user, $request): void {
+                $settings = $this->securityRuntimeSettings->settings();
+                $freshUser = $user->refresh();
+
+                $webSession = $this->webSessionService->start($tenant, $freshUser, $request, $settings);
+                $request->session()->put('admin_web_session_id', $webSession->session_id);
+                $request->session()->put('admin_password_changed_at', $freshUser->password_changed_at?->timestamp);
+                $request->session()->put('admin_login_at', now()->timestamp);
+            });
+        }
     }
 
     private function validateTenantPassword(User $user, string $newPassword): null
@@ -150,6 +167,7 @@ class AuthService
 
     private function tenantFromRequest(Request $request): ?Tenant
     {
+        $hasTenantHeader = trim((string) $request->header('X-Tenant-Id', '')) !== '';
         $tenantCode = trim((string) $request->header('X-Tenant-Id', ''));
 
         if ($tenantCode === '' && $request->hasSession()) {
@@ -160,9 +178,54 @@ class AuthService
             return null;
         }
 
-        return Tenant::query()
+        $tenant = Tenant::query()
             ->where('code', $tenantCode)
             ->where('status', Tenant::STATUS_ACTIVE)
             ->first();
+
+        if (! $tenant instanceof Tenant) {
+            if ($hasTenantHeader) {
+                $this->logTenantPasswordChangeDenied($request, null, 'tenant_security.change_password_invalid_tenant');
+
+                throw new AuthorizationException('Tenant inválido ou inativo.');
+            }
+
+            return null;
+        }
+
+        if (! $request->user() instanceof User) {
+            return $tenant;
+        }
+
+        $user = $request->user();
+
+        if (! $user->tenantUsers()->where('tenant_id', $tenant->id)->where('is_active', true)->exists()) {
+            $this->logTenantPasswordChangeDenied($request, $tenant, 'tenant_security.change_password_membership_denied');
+
+            throw new AuthorizationException('Usuário sem acesso ao tenant informado.');
+        }
+
+        return $tenant;
+    }
+
+    private function logTenantPasswordChangeDenied(Request $request, ?Tenant $tenant, string $operation): void
+    {
+        $user = $request->user();
+        $tenantCode = $tenant instanceof Tenant ? $tenant->code : $request->header('X-Tenant-Id');
+
+        $this->logPersistenceService->logSystemWarning(
+            message: 'Troca de senha negada pela política tenant-aware.',
+            category: 'tenant-security',
+            operation: $operation,
+            userId: $user instanceof User ? $user->id : null,
+            context: [
+                'tenant_id' => $tenant?->id,
+                'tenant_code' => $tenantCode,
+                'user_id' => $user instanceof User ? $user->id : null,
+                'ip' => $request->ip(),
+            ],
+            httpStatus: 403,
+            processingStatus: 'denied',
+        );
     }
 }

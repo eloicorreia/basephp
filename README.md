@@ -277,7 +277,27 @@ GET  /admin/logs/api-requests/{apiRequestLog}
 GET  /admin/logs/api-requests/{apiRequestLog}/payload
 ```
 
-O login administrativo continua compatível com o fluxo web existente. Quando a requisição de login envia o header `X-Tenant-Id`, as regras tenant-aware de segurança e senha são aplicadas: vínculo ativo com tenant, allowlist de IP, bloqueio em `tenant_user_security_states`, expiração/troca obrigatória de senha e senha temporária. Usuários com `must_change_password=true` são redirecionados para `/admin/password/change` antes de acessar as telas administrativas.
+## Autenticação web tenant-aware
+
+O formulário `/admin/login` aceita o campo `tenant_code`. Quando `tenant_code` é informado, o login administrativo é tenant-aware e aplica as configurações salvas em **Sistema > Segurança** e **Sistema > Senhas**. O header `X-Tenant-Id` continua aceito para compatibilidade com testes e automações, mas a tela real não depende mais de header invisível ao usuário.
+
+No login tenant-aware, o sistema valida tenant ativo, usuário ativo, vínculo ativo em `tenant_users`, permissão administrativa, `allowed_ip_ranges`, bloqueio em `tenant_user_security_states`, tentativas máximas, duração de bloqueio, senha temporária expirada, expiração de senha e troca obrigatória no primeiro login. Falhas incrementam o contador apenas do tenant atual; sucesso zera apenas o contador do tenant atual e grava `admin_tenant_code`, `admin_login_at`, `admin_password_changed_at` e `admin_web_session_id` na sessão web.
+
+O login sem `tenant_code` e sem `X-Tenant-Id` permanece como fluxo global legado do painel. Esse modo não aplica políticas tenant-aware porque não há tenant resolvido; use-o somente para compatibilidade operacional enquanto o acesso administrativo tenant-aware estiver sendo adotado.
+
+## Sessão web tenant-aware
+
+Após login tenant-aware, as rotas administrativas normais passam pelo middleware `web.tenant-security`. Ele aplica continuamente vínculo ativo usuário x tenant, allowlist de IP, bloqueio tenant-aware, `session_lifetime_minutes`, `idle_timeout_minutes`, `force_single_session_per_user` e `logout_on_password_change`.
+
+Sessões web tenant-aware são persistidas em `tenant_user_web_sessions`. Quando `force_single_session_per_user=true`, sessões anteriores do mesmo usuário no mesmo tenant são revogadas e deixam de acessar o painel. No logout, a sessão atual é marcada como revogada, `admin_tenant_code` e metadados de sessão são limpos, a sessão Laravel é invalidada e a operação é auditada/logada com usuário, tenant, IP e identificador da sessão.
+
+## Troca de senha
+
+As rotas `GET /admin/password/change` e `PUT /admin/password/change` atendem tanto troca voluntária quanto troca obrigatória. Usuários com `must_change_password=true`, primeiro login obrigatório, senha expirada ou senha temporária válida com troca exigida são redirecionados para essa tela e não acessam as demais telas administrativas até concluir a alteração.
+
+A troca de senha web usa o tenant salvo em `admin_tenant_code` e respeita tamanho mínimo/máximo, maiúscula, minúscula, número, símbolo, senhas comuns, dados pessoais, histórico, expiração e `logout_on_password_change`. Ao concluir, atualiza `users.password`, `users.password_changed_at`, `users.must_change_password=false`, registra histórico no schema do tenant quando configurado e audita a operação.
+
+Na API, `POST /api/v1/auth/change-password` mantém o contrato JSON existente. Quando `X-Tenant-Id` é informado, a API exige vínculo ativo do usuário com o tenant, aplica a política de senha tenant-aware e registra histórico no schema do tenant. Sem `X-Tenant-Id`, permanece o comportamento global legado validado apenas pelo contrato base do endpoint.
 
 ## Template oficial
 

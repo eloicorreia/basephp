@@ -19,6 +19,7 @@ final class AdminLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'tenant_code' => ['nullable', 'string', 'max:100'],
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
             'remember' => ['sometimes', 'boolean'],

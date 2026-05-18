@@ -25,6 +25,7 @@ final readonly class WebAdminLoginService
         private TenantPasswordPolicyService $passwordPolicyService,
         private TenantSecurityRuntimeSettings $securityRuntimeSettings,
         private TenantSecurityPolicyService $securityPolicyService,
+        private TenantWebSessionService $webSessionService,
         private IpRangeMatcher $ipRangeMatcher,
         private LogPersistenceService $logPersistenceService,
     ) {}
@@ -34,7 +35,7 @@ final readonly class WebAdminLoginService
         $remember = $request->boolean('remember');
         $email = (string) $request->input('email');
         $candidateUser = User::query()->where('email', $email)->first();
-        $tenant = $this->tenantFromHeader($request);
+        $tenant = $this->tenantFromRequest($request);
 
         if ($tenant instanceof Tenant) {
             $preflightFailure = $this->tenantPreflight($request, $tenant, $candidateUser, $adminWebAuditService, $email);
@@ -42,7 +43,7 @@ final readonly class WebAdminLoginService
             if ($preflightFailure instanceof WebAdminLoginResult) {
                 return $preflightFailure;
             }
-        } elseif ($this->hasTenantHeader($request)) {
+        } elseif ($this->hasTenantIdentifier($request)) {
             $adminWebAuditService->loginFailed($request, $candidateUser, $email);
 
             return WebAdminLoginResult::failure('Tenant inválido ou inativo.');
@@ -90,6 +91,8 @@ final readonly class WebAdminLoginService
                 fn (): bool => $this->afterSuccessfulTenantLogin($request, $tenant, $user)
             );
             $request->session()->put('admin_tenant_code', $tenant->code);
+            $request->session()->put('admin_login_at', now()->timestamp);
+            $request->session()->put('admin_password_changed_at', $user->password_changed_at?->timestamp);
         }
 
         $user->forceFill([
@@ -179,12 +182,15 @@ final readonly class WebAdminLoginService
             $request->session()->migrate(true);
         }
 
+        $webSession = $this->webSessionService->start($tenant, $user, $request, $settings);
+        $request->session()->put('admin_web_session_id', $webSession->session_id);
+
         return $mustChangePassword;
     }
 
-    private function tenantFromHeader(Request $request): ?Tenant
+    private function tenantFromRequest(Request $request): ?Tenant
     {
-        $tenantCode = trim((string) $request->header('X-Tenant-Id', ''));
+        $tenantCode = trim((string) ($request->input('tenant_code') ?: $request->header('X-Tenant-Id', '')));
 
         if ($tenantCode === '') {
             return null;
@@ -196,9 +202,9 @@ final readonly class WebAdminLoginService
             ->first();
     }
 
-    private function hasTenantHeader(Request $request): bool
+    private function hasTenantIdentifier(Request $request): bool
     {
-        return trim((string) $request->header('X-Tenant-Id', '')) !== '';
+        return trim((string) ($request->input('tenant_code') ?: $request->header('X-Tenant-Id', ''))) !== '';
     }
 
     private function temporaryPasswordExpired(User $user, TenantPasswordPolicy $policy): bool

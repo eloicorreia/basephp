@@ -9,6 +9,7 @@ use App\Http\Requests\Web\Admin\Auth\AdminLoginRequest;
 use App\Models\User;
 use App\Services\Admin\Web\AdminWebAuditService;
 use App\Services\Auth\WebAdminLoginService;
+use App\Services\Auth\WebAdminLogoutService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,14 +43,16 @@ final class LoginController extends Controller
         return redirect()->intended(route('admin.dashboard'));
     }
 
-    public function destroy(Request $request, AdminWebAuditService $adminWebAuditService): RedirectResponse
+    public function destroy(Request $request, AdminWebAuditService $adminWebAuditService, WebAdminLogoutService $logoutService): RedirectResponse
     {
         $user = $request->user('web');
 
         $adminWebAuditService->logout($request, $user instanceof User ? $user : null);
+        $logoutService->finalize($request, $user instanceof User ? $user : null);
 
         Auth::guard('web')->logout();
 
+        $request->session()->forget(['admin_tenant_code', 'admin_login_at', 'admin_password_changed_at', 'admin_web_session_id']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

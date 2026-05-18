@@ -29,6 +29,22 @@
                             @endif
 
                             <div class="mb-3">
+                                <label for="tenant_code" class="form-label">Tenant</label>
+                                <input
+                                    type="text"
+                                    class="form-control @error('tenant_code') is-invalid @enderror"
+                                    id="tenant_code"
+                                    name="tenant_code"
+                                    value="{{ old('tenant_code') }}"
+                                    autocomplete="organization"
+                                    placeholder="codigo-do-tenant"
+                                >
+                                @error('tenant_code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="email" class="form-label">E-mail</label>
                                 <input
                                     type="email"

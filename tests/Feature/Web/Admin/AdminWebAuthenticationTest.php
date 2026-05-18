@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Models\TenantPasswordPolicy;
 use App\Models\TenantSecuritySetting;
 use App\Models\TenantUserSecurityState;
+use App\Models\TenantUserWebSession;
 use App\Models\User;
 use App\Models\UserPasswordHistory;
 use App\Services\Admin\Web\AdminWebAuditService;
@@ -38,6 +39,7 @@ final class AdminWebAuthenticationTest extends TestCase
             ->assertSee('vendor/templateweb/master/assets/css/app.min.css', false)
             ->assertSee('vendor/templateweb/master/assets/css/admin-contract.css', false)
             ->assertSee('vendor/templateweb/master/assets/js/pages/password-addon.init.js', false)
+            ->assertSee('Tenant')
             ->assertSee('Esqueci minha senha');
     }
 
@@ -80,6 +82,109 @@ final class AdminWebAuthenticationTest extends TestCase
             ->where('tenant_id', $tenant->id)
             ->where('user_id', $user->id)
             ->value('failed_login_attempts'));
+    }
+
+    public function test_admin_user_can_login_with_tenant_code_form_field(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_login_form', 'web-login-form');
+
+        $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
+            'email' => $user->email,
+            'password' => 'SenhaAtual@123',
+        ])->assertRedirect(route('admin.dashboard'));
+
+        $this->assertAuthenticatedAs($user, 'web');
+        $this->assertSame($tenant->code, session('admin_tenant_code'));
+    }
+
+    public function test_tenant_login_denies_invalid_or_inactive_tenant(): void
+    {
+        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
+        $user = $this->createUser(role: $role, overrides: [
+            'email' => 'invalid-tenant-admin@example.com',
+            'password' => 'SenhaAtual@123',
+        ]);
+        $inactiveTenant = $this->createTenant(code: 'inactive-web-login', isActive: false);
+
+        foreach (['missing-web-login', $inactiveTenant->code] as $tenantCode) {
+            $this->post('/admin/login', [
+                'tenant_code' => $tenantCode,
+                'email' => $user->email,
+                'password' => 'SenhaAtual@123',
+            ])->assertSessionHasErrors('email');
+
+            $this->assertGuest('web');
+        }
+    }
+
+    public function test_tenant_login_denies_user_without_active_membership(): void
+    {
+        $tenant = $this->createMigratedTenant('tenant_web_login_no_membership', 'web-login-no-membership');
+        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
+        $user = $this->createUser(role: $role, overrides: [
+            'email' => 'no-membership-admin@example.com',
+            'password' => 'SenhaAtual@123',
+        ]);
+        $this->seedTenantLoginSettings($tenant);
+
+        $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
+            'email' => $user->email,
+            'password' => 'SenhaAtual@123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest('web');
+    }
+
+    public function test_tenant_login_denies_inactive_user_without_authenticating(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_login_inactive_user', 'web-login-inactive-user');
+        $user->forceFill(['is_active' => false])->save();
+
+        $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
+            'email' => $user->email,
+            'password' => 'SenhaAtual@123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest('web');
+    }
+
+    public function test_tenant_login_denies_user_without_admin_permission(): void
+    {
+        $tenant = $this->createMigratedTenant('tenant_web_login_no_admin', 'web-login-no-admin');
+        $role = $this->createRole(RoleCode::USUARIO->value, 'Usuário');
+        $user = $this->createUser(role: $role, overrides: [
+            'email' => 'no-admin-web@example.com',
+            'password' => 'SenhaAtual@123',
+            'password_changed_at' => now(),
+        ]);
+        $this->grantTenantAccess($user, $tenant, $role);
+        $this->seedTenantLoginSettings($tenant);
+
+        $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
+            'email' => $user->email,
+            'password' => 'SenhaAtual@123',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest('web');
+    }
+
+    public function test_tenant_login_denies_disallowed_ip(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_login_ip_denied', 'web-login-ip-denied', securityOverrides: [
+            'allowed_ip_ranges' => ['198.51.100.0/24'],
+        ]);
+
+        $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
+            'email' => $user->email,
+            'password' => 'SenhaAtual@123',
+        ], ['REMOTE_ADDR' => '203.0.113.10'])->assertSessionHasErrors('email');
+
+        $this->assertGuest('web');
     }
 
     public function test_failed_tenant_login_increments_counter_only_for_current_tenant(): void
@@ -410,6 +515,111 @@ final class AdminWebAuthenticationTest extends TestCase
         $this->assertSame(2, $this->tenantValue($tenant, fn (): int => UserPasswordHistory::query()->where('user_id', $user->id)->count()));
     }
 
+    public function test_web_session_lifetime_expires_tenant_admin_session(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_session_lifetime', 'web-session-lifetime', securityOverrides: [
+            'session_lifetime_minutes' => 1,
+        ]);
+        $this->loginTenantWebUser($tenant, $user);
+
+        session(['admin_login_at' => now()->subMinutes(2)->timestamp]);
+
+        $this->get('/admin')
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest('web');
+    }
+
+    public function test_web_session_idle_timeout_expires_tenant_admin_session(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_session_idle', 'web-session-idle', securityOverrides: [
+            'idle_timeout_minutes' => 1,
+        ]);
+        $this->loginTenantWebUser($tenant, $user);
+
+        TenantUserWebSession::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('user_id', $user->id)
+            ->update(['last_activity_at' => now()->subMinutes(2)]);
+
+        $this->get('/admin')
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest('web');
+    }
+
+    public function test_force_single_session_revokes_previous_tenant_web_session(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_session_single', 'web-session-single', securityOverrides: [
+            'force_single_session_per_user' => true,
+        ]);
+
+        TenantUserWebSession::query()->create([
+            'tenant_id' => $tenant->id,
+            'user_id' => $user->id,
+            'session_id' => 'older-session',
+            'ip_address' => '127.0.0.1',
+            'last_activity_at' => now(),
+        ]);
+
+        $this->loginTenantWebUser($tenant, $user);
+
+        $this->assertNotNull(TenantUserWebSession::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('user_id', $user->id)
+            ->where('session_id', 'older-session')
+            ->value('revoked_at'));
+    }
+
+    public function test_revoked_tenant_web_session_is_denied(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_session_revoked', 'web-session-revoked');
+        $this->loginTenantWebUser($tenant, $user);
+
+        TenantUserWebSession::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('user_id', $user->id)
+            ->update([
+                'revoked_at' => now(),
+                'revoked_reason' => 'test',
+            ]);
+
+        $this->get('/admin')
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest('web');
+    }
+
+    public function test_ip_blocked_after_login_denies_tenant_web_session(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_session_ip', 'web-session-ip');
+        $this->loginTenantWebUser($tenant, $user);
+
+        $this->tenantValue($tenant, fn () => TenantSecuritySetting::query()->update([
+            'allowed_ip_ranges' => ['198.51.100.0/24'],
+        ]));
+
+        $this->get('/admin', ['REMOTE_ADDR' => '203.0.113.10'])
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest('web');
+    }
+
+    public function test_tenant_logout_revokes_web_session_and_clears_tenant_session(): void
+    {
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_web_session_logout', 'web-session-logout');
+        $this->loginTenantWebUser($tenant, $user);
+
+        $this->post(route('admin.logout'))
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest('web');
+        $this->assertNotNull(TenantUserWebSession::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('user_id', $user->id)
+            ->value('revoked_at'));
+    }
+
     public function test_authenticated_non_admin_denial_is_audited(): void
     {
         $role = $this->createRole(RoleCode::USUARIO->value, 'Usuário');
@@ -635,6 +845,15 @@ final class AdminWebAuthenticationTest extends TestCase
                 'active' => true,
             ], $passwordOverrides));
         });
+    }
+
+    private function loginTenantWebUser(Tenant $tenant, User $user): void
+    {
+        $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
+            'email' => $user->email,
+            'password' => 'SenhaAtual@123',
+        ])->assertRedirect(route('admin.dashboard'));
     }
 
     /**
