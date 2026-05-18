@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Console;
 
 use App\Models\Tenant;
+use Illuminate\Contracts\Console\Kernel;
+use Tests\Support\FailingPermissionSyncCommand;
 use Tests\TestCase;
 
 final class SystemUpdateCommandTest extends TestCase
@@ -54,16 +56,33 @@ final class SystemUpdateCommandTest extends TestCase
         ])->assertFailed();
     }
 
-    public function test_command_does_not_use_cache_flush(): void
+    public function test_it_fails_if_permission_sync_command_fails(): void
+    {
+        app(Kernel::class)->registerCommand(new FailingPermissionSyncCommand);
+
+        $this->artisan('system:update', [
+            '--force' => true,
+            '--skip-tenants' => true,
+            '--skip-validate' => true,
+        ])->expectsOutputToContain('Running permission sync')
+            ->expectsOutputToContain('Permission sync failed intentionally.')
+            ->expectsOutputToContain('FAILED: Command returned exit code 1.')
+            ->assertFailed();
+    }
+
+    public function test_it_uses_permission_seeder_fallback_when_permission_sync_command_does_not_exist(): void
     {
         $this->artisan('system:update', [
             '--force' => true,
             '--skip-tenants' => true,
             '--skip-validate' => true,
-        ])->expectsOutputToContain('Permission sync command not found; skipping explicit permission sync.')
+        ])->expectsOutputToContain('Permission sync command not found; using PermissionSeeder fallback.')
             ->expectsOutputToContain('Running PermissionSeeder')
             ->assertSuccessful();
+    }
 
+    public function test_command_does_not_use_cache_flush(): void
+    {
         $source = file_get_contents(app_path('Console/Commands/SystemUpdateCommand.php'));
 
         $this->assertIsString($source);

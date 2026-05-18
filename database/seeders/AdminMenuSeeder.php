@@ -10,10 +10,13 @@ use App\Models\AdminMenuItem;
 use App\Models\Permission;
 use App\Services\Web\AdminMenuVersionService;
 use App\Support\Web\WebAdminPermissions;
+use Database\Seeders\Concerns\WritesSeederOutput;
 use Illuminate\Database\Seeder;
 
 class AdminMenuSeeder extends Seeder
 {
+    use WritesSeederOutput;
+
     public function run(): void
     {
         $changed = false;
@@ -410,7 +413,7 @@ class AdminMenuSeeder extends Seeder
             ->first();
 
         if (! $permission instanceof Permission) {
-            $this->command->warn(sprintf(
+            $this->seederWarn(sprintf(
                 'Permissão obrigatória do menu não encontrada: %s.',
                 $permissionCode
             ));

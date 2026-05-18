@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Enums\RoleCode;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\Concerns\WritesSeederOutput;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -14,6 +15,8 @@ use RuntimeException;
 
 class AdminUserSeeder extends Seeder
 {
+    use WritesSeederOutput;
+
     public function run(): void
     {
         DB::transaction(function (): void {
@@ -34,13 +37,13 @@ class AdminUserSeeder extends Seeder
             if ($user instanceof User) {
                 if ($user->role_id === null) {
                     $user->forceFill(['role_id' => $adminRole->id])->save();
-                    $this->command->info('Usuário administrador existente recebeu a role admin por não possuir role.');
+                    $this->seederInfo('Usuário administrador existente recebeu a role admin por não possuir role.');
                 } elseif ((int) $user->role_id !== (int) $adminRole->id) {
-                    $this->command->warn(
+                    $this->seederWarn(
                         'Usuário administrador já existe com outra role. A role não foi sobrescrita automaticamente.'
                     );
                 } else {
-                    $this->command->info('Usuário administrador já existe. Senha e status preservados.');
+                    $this->seederInfo('Usuário administrador já existe. Senha e status preservados.');
                 }
 
                 return;
@@ -67,7 +70,7 @@ class AdminUserSeeder extends Seeder
                 'email_verified_at' => now(),
             ])->save();
 
-            $this->command->info(sprintf('Usuário administrador inicial criado: %s.', $email));
+            $this->seederInfo(sprintf('Usuário administrador inicial criado: %s.', $email));
         });
     }
 }

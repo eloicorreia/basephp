@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api;
 
 use App\Models\Role;
+use App\Models\Tenant;
 use Illuminate\Support\Str;
 use Laravel\Passport\Passport;
 use Tests\Support\BuildsAuthTenancyFixtures;
@@ -53,6 +54,32 @@ final class AdminTenantStoreEndpointTest extends TestCase
         ], [
             'X-Tenant-Id' => $context['tenant']->code,
         ])->assertStatus(422);
+    }
+
+    public function test_admin_tenant_store_returns_conflict_for_existing_code_or_schema(): void
+    {
+        $context = $this->createAdminContext();
+        $code = 'tenant-existing-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 10);
+        $schemaName = 'tenant_existing_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
+
+        Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => $code,
+            'name' => 'Tenant Existente',
+            'schema_name' => $schemaName,
+            'status' => Tenant::STATUS_INACTIVE,
+        ]);
+
+        $this->postJson('/api/v1/admin/tenants', [
+            'code' => $code,
+            'name' => 'Tenant Duplicado',
+            'schema_name' => 'tenant_other_'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12),
+        ], [
+            'X-Tenant-Id' => $context['tenant']->code,
+        ])
+            ->assertStatus(409)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Já existe tenant usando o código ou schema informado.');
     }
 
     public function test_admin_tenant_store_returns_forbidden_for_non_admin_user(): void

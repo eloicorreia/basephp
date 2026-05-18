@@ -128,7 +128,7 @@ final class SystemUpdateCommand extends Command
             }
         }
 
-        $this->warn('Permission sync command not found; skipping explicit permission sync.');
+        $this->warn('Permission sync command not found; using PermissionSeeder fallback.');
 
         return $this->runStep('Running PermissionSeeder', 'db:seed', [
             '--class' => PermissionSeeder::class,

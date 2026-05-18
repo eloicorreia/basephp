@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Models\Tenant;
+use Database\Seeders\Concerns\WritesSeederOutput;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class TenantSeeder extends Seeder
 {
+    use WritesSeederOutput;
+
     public function run(): void
     {
         if (! $this->shouldSeedDevelopmentTenant()) {
-            $this->command->warn(
+            $this->seederWarn(
                 'Tenant de desenvolvimento não criado: ambiente não local/testing e sem permissão explícita.'
             );
 
@@ -39,7 +42,7 @@ class TenantSeeder extends Seeder
             $tenant->save();
         });
 
-        $this->command->info('Tenant de desenvolvimento sincronizado sem provisionar schema ou migrations tenant.');
+        $this->seederInfo('Tenant de desenvolvimento sincronizado sem provisionar schema ou migrations tenant.');
     }
 
     private function shouldSeedDevelopmentTenant(): bool

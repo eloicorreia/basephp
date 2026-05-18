@@ -81,11 +81,7 @@ class LogPersistenceService
             category: $category,
             operation: $operation,
             userId: $userId,
-            context: [
-                'exception' => $throwable::class,
-                'file' => $throwable->getFile(),
-                'line' => $throwable->getLine(),
-            ],
+            context: $this->exceptionContext($throwable),
             httpStatus: $httpStatus,
             processingStatus: 'error',
             stackTraceSummary: $this->buildStackTraceSummary($throwable),
@@ -199,8 +195,40 @@ class LogPersistenceService
 
     private function buildStackTraceSummary(Throwable $throwable): string
     {
-        $summary = $throwable->getFile().':'.$throwable->getLine();
+        if (app()->environment('production')) {
+            return $throwable::class;
+        }
+
+        $summary = $this->relativePath($throwable->getFile()).':'.$throwable->getLine();
 
         return mb_substr($summary, 0, 1000);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function exceptionContext(Throwable $throwable): array
+    {
+        $context = [
+            'exception' => $throwable::class,
+        ];
+
+        if (! app()->environment('production')) {
+            $context['file'] = $this->relativePath($throwable->getFile());
+            $context['line'] = $throwable->getLine();
+        }
+
+        return $context;
+    }
+
+    private function relativePath(string $path): string
+    {
+        $basePath = rtrim(base_path(), DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR;
+
+        if (str_starts_with($path, $basePath)) {
+            return mb_substr($path, mb_strlen($basePath));
+        }
+
+        return basename($path);
     }
 }

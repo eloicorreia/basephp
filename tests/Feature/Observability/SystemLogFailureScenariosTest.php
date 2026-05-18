@@ -170,4 +170,34 @@ final class SystemLogFailureScenariosTest extends TestCase
         $this->assertStringContainsString('password=***', $log->message);
         $this->assertStringContainsString('Authorization: ***', $log->message);
     }
+
+    public function test_it_does_not_persist_absolute_exception_paths_in_production(): void
+    {
+        $originalEnvironment = app()->environment();
+        $requestId = (string) Str::uuid();
+        request()->attributes->set('request_id', $requestId);
+
+        try {
+            app()->detectEnvironment(static fn (): string => 'production');
+
+            app(LogPersistenceService::class)->logSystemError(
+                throwable: new RuntimeException('Falha controlada.'),
+                category: 'observability',
+                operation: 'production_exception_location',
+            );
+        } finally {
+            app()->detectEnvironment(static fn (): string => $originalEnvironment);
+        }
+
+        $log = SystemLog::query()
+            ->where('request_id', $requestId)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertArrayHasKey('exception', $log->context);
+        $this->assertArrayNotHasKey('file', $log->context);
+        $this->assertArrayNotHasKey('line', $log->context);
+        $this->assertSame(RuntimeException::class, $log->stack_trace_summary);
+    }
 }

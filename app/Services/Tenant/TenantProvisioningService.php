@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Tenant;
 
 use App\DTOs\Tenant\TenantProvisioningResult;
+use App\Exceptions\TenantConflictException;
 use App\Models\Tenant;
 use App\Services\Logging\LogPersistenceService;
 use App\Support\Tenant\TenantRequiredTables;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -59,7 +61,7 @@ final readonly class TenantProvisioningService
                 'status' => Tenant::STATUS_ERROR,
             ])->save();
 
-            $this->logLegacyProvisionFailure($throwable, $tenant);
+            $this->logCreateAndProvisionFailure($throwable, $tenant);
 
             throw $throwable;
         }
@@ -367,7 +369,7 @@ final readonly class TenantProvisioningService
 
         if ($existingTenant instanceof Tenant) {
             if ($existingTenant->code !== $code || $existingTenant->schema_name !== $schemaName) {
-                throw new RuntimeException('Já existe tenant usando o código ou schema informado.');
+                throw TenantConflictException::codeOrSchemaAlreadyExists();
             }
 
             if ($existingTenant->status === Tenant::STATUS_ERROR) {
@@ -380,22 +382,30 @@ final readonly class TenantProvisioningService
             return $existingTenant;
         }
 
-        return Tenant::query()->create([
-            'uuid' => (string) Str::uuid(),
-            'code' => $code,
-            'name' => $name,
-            'schema_name' => $schemaName,
-            'status' => Tenant::STATUS_PROVISIONING,
-        ]);
+        try {
+            return Tenant::query()->create([
+                'uuid' => (string) Str::uuid(),
+                'code' => $code,
+                'name' => $name,
+                'schema_name' => $schemaName,
+                'status' => Tenant::STATUS_PROVISIONING,
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isUniqueConstraintViolation($exception)) {
+                throw TenantConflictException::codeOrSchemaAlreadyExists();
+            }
+
+            throw $exception;
+        }
     }
 
-    private function logLegacyProvisionFailure(Throwable $throwable, Tenant $tenant): void
+    private function logCreateAndProvisionFailure(Throwable $throwable, Tenant $tenant): void
     {
         try {
             $this->logPersistenceService->logSystemWarning(
                 message: $throwable->getMessage(),
-                category: 'tenant',
-                operation: 'provision',
+                category: 'tenant-operations',
+                operation: 'tenants_create_and_provision',
                 context: [
                     'tenant_id' => $tenant->id,
                     'tenant_code' => $tenant->code,
@@ -405,7 +415,7 @@ final readonly class TenantProvisioningService
                 processingStatus: 'error',
             );
         } catch (Throwable $loggingThrowable) {
-            Log::warning('Falha ao persistir log operacional de provisionamento legado.', [
+            Log::warning('Falha ao persistir log operacional de criação/provisionamento de tenant.', [
                 'tenant_id' => $tenant->id,
                 'tenant_code' => $tenant->code,
                 'schema_name' => $tenant->schema_name,
@@ -413,5 +423,10 @@ final readonly class TenantProvisioningService
                 'message' => $loggingThrowable->getMessage(),
             ]);
         }
+    }
+
+    private function isUniqueConstraintViolation(QueryException $exception): bool
+    {
+        return $exception->getCode() === '23505';
     }
 }

@@ -6,11 +6,14 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use App\Support\Auth\PermissionRegistry;
+use Database\Seeders\Concerns\WritesSeederOutput;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class PermissionSeeder extends Seeder
 {
+    use WritesSeederOutput;
+
     public function run(): void
     {
         $created = 0;
@@ -45,7 +48,7 @@ class PermissionSeeder extends Seeder
             }
         });
 
-        $this->command->info(sprintf(
+        $this->seederInfo(sprintf(
             'Permissões sincronizadas. Criadas: %d. Atualizadas: %d.',
             $created,
             $updated

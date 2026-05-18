@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tenant;
 
+use App\Exceptions\TenantConflictException;
 use App\Models\Tenant;
 use App\Services\Logging\LogPersistenceService;
 use App\Services\Tenant\TenantMigrationService;
 use App\Services\Tenant\TenantProvisioningService;
 use App\Services\Tenant\TenantSchemaService;
 use App\Services\Tenant\TenantSeederService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -70,8 +72,8 @@ final class TenantProvisioningServiceTest extends TestCase
         $this->assertSame('public', $this->currentSchema());
         $this->assertTrue($this->schemaExists($schemaName));
         $this->assertDatabaseHas('system_logs', [
-            'category' => 'tenant',
-            'operation' => 'provision',
+            'category' => 'tenant-operations',
+            'operation' => 'tenants_create_and_provision',
             'processing_status' => 'error',
             'message' => 'Falha controlada nas migrations do tenant.',
         ]);
@@ -214,7 +216,7 @@ final class TenantProvisioningServiceTest extends TestCase
             'status' => 'inactive',
         ]);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(TenantConflictException::class);
         $this->expectExceptionMessage('Já existe tenant usando o código ou schema informado.');
 
         app(TenantProvisioningService::class)->createAndProvision(
@@ -222,6 +224,53 @@ final class TenantProvisioningServiceTest extends TestCase
             name: 'Tenant Conflitante',
             schemaName: $conflictingSchemaName,
         );
+    }
+
+    public function test_tenant_code_and_schema_name_have_unique_database_constraints(): void
+    {
+        $schemaName = $this->newSchemaName();
+        $code = 'tenant-unique-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 10);
+
+        Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => $code,
+            'name' => 'Tenant Único',
+            'schema_name' => $schemaName,
+            'status' => Tenant::STATUS_INACTIVE,
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => $code,
+            'name' => 'Tenant Duplicado',
+            'schema_name' => $this->newSchemaName(),
+            'status' => Tenant::STATUS_INACTIVE,
+        ]);
+    }
+
+    public function test_tenant_schema_name_has_unique_database_constraint(): void
+    {
+        $schemaName = $this->newSchemaName();
+
+        Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => 'tenant-schema-a-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 8),
+            'name' => 'Tenant Schema A',
+            'schema_name' => $schemaName,
+            'status' => Tenant::STATUS_INACTIVE,
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        Tenant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'code' => 'tenant-schema-b-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 8),
+            'name' => 'Tenant Schema B',
+            'schema_name' => $schemaName,
+            'status' => Tenant::STATUS_INACTIVE,
+        ]);
     }
 
     private function newSchemaName(): string

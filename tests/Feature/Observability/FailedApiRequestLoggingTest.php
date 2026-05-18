@@ -43,6 +43,7 @@ final class FailedApiRequestLoggingTest extends TestCase
         $this->assertSame($traceId, $log->trace_id);
         $this->assertSame($tenant->code, $log->tenant_code);
         $this->assertSame($user->id, $log->user_id);
+        $this->assertSame(1, ApiRequestLog::query()->where('request_id', $requestId)->count());
     }
 
     public function test_it_persists_request_and_trace_ids_for_failed_requests(): void

@@ -8,12 +8,15 @@ use App\Enums\RoleCode;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Support\Auth\PermissionRegistry;
+use Database\Seeders\Concerns\WritesSeederOutput;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class RoleSeeder extends Seeder
 {
+    use WritesSeederOutput;
+
     public function run(): void
     {
         DB::transaction(function (): void {
@@ -59,6 +62,6 @@ class RoleSeeder extends Seeder
             ]);
         });
 
-        $this->command->info('Roles base sincronizadas com sucesso.');
+        $this->seederInfo('Roles base sincronizadas com sucesso.');
     }
 }
