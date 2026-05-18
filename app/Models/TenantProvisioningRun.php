@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class TenantProvisioningRun extends Model
 {
+    public const STATUS_RUNNING = 'running';
+
+    public const STATUS_SUCCESS = 'success';
+
+    public const STATUS_FAILED = 'failed';
+
+    public const OPERATION_TENANTS_CREATE_AND_PROVISION = 'tenants_create_and_provision';
+
     protected $fillable = [
         'tenant_id',
         'tenant_code',

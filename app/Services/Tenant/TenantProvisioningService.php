@@ -9,6 +9,7 @@ use App\Exceptions\TenantConflictException;
 use App\Models\Tenant;
 use App\Models\TenantProvisioningRun;
 use App\Services\Logging\LogPersistenceService;
+use App\Support\Logging\SensitiveDataSanitizer;
 use App\Support\Tenant\TenantRequiredTables;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ final readonly class TenantProvisioningService
         private TenantMigrationService $tenantMigrationService,
         private ?TenantSeederService $tenantSeederService,
         private LogPersistenceService $logPersistenceService,
+        private SensitiveDataSanitizer $sensitiveDataSanitizer,
     ) {}
 
     public function createAndProvision(string $code, string $name, string $schemaName, bool $force = false): Tenant
@@ -62,7 +64,7 @@ final readonly class TenantProvisioningService
                     'status' => Tenant::STATUS_ACTIVE,
                 ])->save();
 
-                $this->finishProvisioningRun($run, 'success');
+                $this->finishProvisioningRun($run, TenantProvisioningRun::STATUS_SUCCESS);
 
                 return $tenant->refresh();
             } catch (Throwable $throwable) {
@@ -75,7 +77,7 @@ final readonly class TenantProvisioningService
                     $this->logCreateAndProvisionFailure($throwable, $tenant);
                 }
 
-                $this->finishProvisioningRun($run, 'failed', $throwable);
+                $this->finishProvisioningRun($run, TenantProvisioningRun::STATUS_FAILED, $throwable);
 
                 throw $throwable;
             }
@@ -420,7 +422,7 @@ final readonly class TenantProvisioningService
             $this->logPersistenceService->logSystemWarning(
                 message: $throwable->getMessage(),
                 category: 'tenant-operations',
-                operation: 'tenants_create_and_provision',
+                operation: TenantProvisioningRun::OPERATION_TENANTS_CREATE_AND_PROVISION,
                 context: [
                     'tenant_id' => $tenant->id,
                     'tenant_code' => $tenant->code,
@@ -448,6 +450,13 @@ final readonly class TenantProvisioningService
     /**
      * Serializes provisioning attempts for the same tenant identity before the
      * unique indexes are reached, avoiding duplicated schema work under load.
+     *
+     * This intentionally uses PostgreSQL's session-level pg_advisory_lock.
+     * Tenant schema creation and migrations may perform DDL with their own
+     * transaction behavior, so a global pg_advisory_xact_lock would require
+     * wrapping the whole provisioning flow in a transaction that is not proven
+     * safe for these schema operations. The session lock is always released in
+     * the finally block below, including failures during migrations/seeders.
      *
      * @template TReturn
      *
@@ -494,8 +503,8 @@ final readonly class TenantProvisioningService
         return TenantProvisioningRun::query()->create([
             'tenant_code' => $code,
             'schema_name' => $schemaName,
-            'operation' => 'tenants_create_and_provision',
-            'status' => 'running',
+            'operation' => TenantProvisioningRun::OPERATION_TENANTS_CREATE_AND_PROVISION,
+            'status' => TenantProvisioningRun::STATUS_RUNNING,
             'started_at' => now(),
             'request_id' => request()->attributes->get('request_id'),
             'trace_id' => request()->attributes->get('trace_id'),
@@ -518,8 +527,17 @@ final readonly class TenantProvisioningService
         $run->forceFill([
             'status' => $status,
             'finished_at' => now(),
-            'error_message' => $throwable instanceof Throwable ? Str::limit($throwable->getMessage(), 4000, '') : null,
+            'error_message' => $throwable instanceof Throwable ? $this->sanitizedErrorMessage($throwable) : null,
             'error_class' => $throwable instanceof Throwable ? $throwable::class : null,
         ])->save();
+    }
+
+    private function sanitizedErrorMessage(Throwable $throwable): string
+    {
+        return Str::limit(
+            $this->sensitiveDataSanitizer->sanitizeText($throwable->getMessage(), maxLength: PHP_INT_MAX),
+            4000,
+            ''
+        );
     }
 }

@@ -12,6 +12,7 @@ use App\Services\Tenant\TenantMigrationService;
 use App\Services\Tenant\TenantProvisioningService;
 use App\Services\Tenant\TenantSchemaService;
 use App\Services\Tenant\TenantSeederService;
+use App\Support\Logging\SensitiveDataSanitizer;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -53,6 +54,7 @@ final class TenantProvisioningServiceTest extends TestCase
             tenantMigrationService: $migrationService,
             tenantSeederService: app(TenantSeederService::class),
             logPersistenceService: app(LogPersistenceService::class),
+            sensitiveDataSanitizer: app(SensitiveDataSanitizer::class),
         );
 
         try {
@@ -74,10 +76,70 @@ final class TenantProvisioningServiceTest extends TestCase
         $this->assertTrue($this->schemaExists($schemaName));
         $this->assertDatabaseHas('system_logs', [
             'category' => 'tenant-operations',
-            'operation' => 'tenants_create_and_provision',
+            'operation' => TenantProvisioningRun::OPERATION_TENANTS_CREATE_AND_PROVISION,
             'processing_status' => 'error',
             'message' => 'Falha controlada nas migrations do tenant.',
         ]);
+    }
+
+    public function test_it_sanitizes_sensitive_error_message_before_persisting_provisioning_run(): void
+    {
+        $schemaName = $this->newSchemaName();
+        $code = 'tenant-secret-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
+        $this->schemasToDrop[] = $schemaName;
+
+        $migrationService = new class(app(TenantSchemaService::class)) extends TenantMigrationService
+        {
+            public function runTenantMigrations(string $schemaName, bool $force = false): void
+            {
+                throw new RuntimeException(
+                    'Falha password=PlainPassword123 token=tenant-token-456 Authorization: Bearer bearer-secret cookie=session-secret secret=client-secret session=abc csrf_token=csrf-secret credentials=credential-secret'
+                );
+            }
+        };
+
+        $service = new TenantProvisioningService(
+            tenantSchemaService: app(TenantSchemaService::class),
+            tenantMigrationService: $migrationService,
+            tenantSeederService: app(TenantSeederService::class),
+            logPersistenceService: app(LogPersistenceService::class),
+            sensitiveDataSanitizer: app(SensitiveDataSanitizer::class),
+        );
+
+        try {
+            $service->createAndProvision(
+                code: $code,
+                name: 'Tenant Secret Failure',
+                schemaName: $schemaName,
+            );
+
+            $this->fail('A falha com dados sensíveis deveria ter sido relançada.');
+        } catch (RuntimeException) {
+        }
+
+        $run = TenantProvisioningRun::query()
+            ->where('tenant_code', $code)
+            ->where('schema_name', $schemaName)
+            ->firstOrFail();
+
+        $this->assertSame(TenantProvisioningRun::STATUS_FAILED, $run->status);
+        $this->assertSame(RuntimeException::class, $run->error_class);
+        $this->assertIsString($run->error_message);
+        $this->assertStringContainsString('password=***', $run->error_message);
+        $this->assertStringContainsString('token=***', $run->error_message);
+        $this->assertStringContainsString('Authorization: ***', $run->error_message);
+        $this->assertStringContainsString('cookie=***', $run->error_message);
+        $this->assertStringContainsString('secret=***', $run->error_message);
+        $this->assertStringContainsString('session=***', $run->error_message);
+        $this->assertStringContainsString('csrf_token=***', $run->error_message);
+        $this->assertStringContainsString('credentials=***', $run->error_message);
+        $this->assertStringNotContainsString('PlainPassword123', $run->error_message);
+        $this->assertStringNotContainsString('tenant-token-456', $run->error_message);
+        $this->assertStringNotContainsString('bearer-secret', $run->error_message);
+        $this->assertStringNotContainsString('session-secret', $run->error_message);
+        $this->assertStringNotContainsString('client-secret', $run->error_message);
+        $this->assertStringNotContainsString('csrf-secret', $run->error_message);
+        $this->assertStringNotContainsString('credential-secret', $run->error_message);
     }
 
     public function test_it_runs_tenant_migrations_with_repository_inside_tenant_schema(): void
@@ -102,8 +164,8 @@ final class TenantProvisioningServiceTest extends TestCase
             'tenant_id' => $tenant->id,
             'tenant_code' => $code,
             'schema_name' => $schemaName,
-            'operation' => 'tenants_create_and_provision',
-            'status' => 'success',
+            'operation' => TenantProvisioningRun::OPERATION_TENANTS_CREATE_AND_PROVISION,
+            'status' => TenantProvisioningRun::STATUS_SUCCESS,
             'error_message' => null,
             'error_class' => null,
         ]);
@@ -183,6 +245,7 @@ final class TenantProvisioningServiceTest extends TestCase
             tenantMigrationService: $migrationService,
             tenantSeederService: app(TenantSeederService::class),
             logPersistenceService: app(LogPersistenceService::class),
+            sensitiveDataSanitizer: app(SensitiveDataSanitizer::class),
         );
 
         try {
@@ -203,8 +266,8 @@ final class TenantProvisioningServiceTest extends TestCase
             'tenant_id' => $failedTenant->id,
             'tenant_code' => $code,
             'schema_name' => $schemaName,
-            'operation' => 'tenants_create_and_provision',
-            'status' => 'failed',
+            'operation' => TenantProvisioningRun::OPERATION_TENANTS_CREATE_AND_PROVISION,
+            'status' => TenantProvisioningRun::STATUS_FAILED,
             'error_class' => RuntimeException::class,
         ]);
 
@@ -316,7 +379,7 @@ final class TenantProvisioningServiceTest extends TestCase
         $this->assertSame(1, TenantProvisioningRun::query()
             ->where('tenant_code', $code)
             ->where('schema_name', $schemaName)
-            ->where('status', 'success')
+            ->where('status', TenantProvisioningRun::STATUS_SUCCESS)
             ->count());
     }
 
