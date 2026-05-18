@@ -119,7 +119,7 @@ Esta base pode ser usada como origem de novos projetos, mas os itens abaixo deve
 - troca de `search_path` fica restrita aos serviços de infraestrutura de tenancy
 - execuções fora do HTTP devem passar por `TenantExecutionManager`
 - políticas de segurança por tenant, como contador de falhas e bloqueio, persistem estado em `tenant_user_security_states`
-- os campos `users.failed_login_attempts`, `users.locked_until` e `users.locked_by_admin` são legados/globais e não fazem parte da política tenant; só devem ser removidos em migration futura após confirmação de inexistência de dependências
+- os campos globais `users.failed_login_attempts`, `users.locked_until` e `users.locked_by_admin` não fazem parte da modelagem oficial
 
 ### Contrato de logging e observabilidade
 

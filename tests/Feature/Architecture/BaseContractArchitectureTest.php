@@ -279,6 +279,37 @@ final class BaseContractArchitectureTest extends TestCase
         }
     }
 
+    public function test_global_user_lock_fields_are_not_used_outside_allowed_contexts(): void
+    {
+        $forbiddenPaths = [
+            app_path('Services'),
+            app_path('Http/Middleware'),
+            app_path('Http/Controllers'),
+            app_path('Http/Requests'),
+            app_path('Http/Resources'),
+        ];
+
+        foreach ($forbiddenPaths as $path) {
+            foreach (File::allFiles($path) as $file) {
+                $contents = File::get($file->getPathname());
+
+                foreach (['failed_login_attempts', 'locked_until', 'locked_by_admin'] as $field) {
+                    foreach ($this->globalUserLockFieldPatterns($field) as $pattern) {
+                        $this->assertDoesNotMatchRegularExpression(
+                            $pattern,
+                            $contents,
+                            sprintf(
+                                'File [%s] must not use global users.%s. Tenant state belongs in tenant_user_security_states.',
+                                $file->getRelativePathname(),
+                                $field
+                            )
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     public function test_observability_defaults_keep_safe_logging_contract(): void
     {
         $allowedHeaders = config('observability.api_request_logging.allowed_headers');
@@ -356,6 +387,21 @@ final class BaseContractArchitectureTest extends TestCase
             'tenant.resolve',
             'tenant.access',
             'password.changed',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function globalUserLockFieldPatterns(string $field): array
+    {
+        $quotedField = preg_quote($field, '/');
+
+        return [
+            '/users\.'.$quotedField.'/',
+            '/\$user->'.$quotedField.'\b/',
+            '/User::(?:query\(\)->)?(?:where|whereNot|whereNull|whereNotNull|update)\(\s*[\'"]'.$quotedField.'[\'"]/',
+            '/DB::table\(\s*[\'"]users[\'"]\s*\).*'.$quotedField.'/s',
         ];
     }
 
