@@ -32,27 +32,32 @@ final readonly class WebAdminLoginService
 
     public function attempt(Request $request, AdminWebAuditService $adminWebAuditService): WebAdminLoginResult
     {
-        $remember = $request->boolean('remember');
         $email = (string) $request->input('email');
         $candidateUser = User::query()->where('email', $email)->first();
         $tenant = $this->tenantFromRequest($request);
 
-        if ($tenant instanceof Tenant) {
-            $preflightFailure = $this->tenantPreflight($request, $tenant, $candidateUser, $adminWebAuditService, $email);
-
-            if ($preflightFailure instanceof WebAdminLoginResult) {
-                return $preflightFailure;
-            }
-        } elseif ($this->hasTenantIdentifier($request)) {
+        if (! $tenant instanceof Tenant) {
             $adminWebAuditService->loginFailed($request, $candidateUser, $email);
+
+            if (! $this->hasTenantIdentifier($request)) {
+                $this->logMissingTenant($request, $candidateUser);
+
+                return WebAdminLoginResult::failure('Tenant obrigatório.');
+            }
 
             return WebAdminLoginResult::failure('Tenant inválido ou inativo.');
         }
 
-        if (! Auth::guard('web')->attempt($request->only('email', 'password'), $remember)) {
+        $preflightFailure = $this->tenantPreflight($request, $tenant, $candidateUser, $adminWebAuditService, $email);
+
+        if ($preflightFailure instanceof WebAdminLoginResult) {
+            return $preflightFailure;
+        }
+
+        if (! Auth::guard('web')->attempt($request->only('email', 'password'), false)) {
             $adminWebAuditService->loginFailed($request, $candidateUser, $email);
 
-            if ($tenant instanceof Tenant && $candidateUser instanceof User) {
+            if ($candidateUser instanceof User) {
                 $this->tenantExecutionManager->run($tenant, function () use ($candidateUser, $tenant, $request): void {
                     $this->securityPolicyService->registerFailedAuthentication(
                         user: $candidateUser,
@@ -83,17 +88,13 @@ final readonly class WebAdminLoginService
             return WebAdminLoginResult::failure('Usuário sem permissão para acessar o módulo administrativo.');
         }
 
-        $mustChangePassword = false;
-
-        if ($tenant instanceof Tenant) {
-            $mustChangePassword = $this->tenantExecutionManager->run(
-                $tenant,
-                fn (): bool => $this->afterSuccessfulTenantLogin($request, $tenant, $user)
-            );
-            $request->session()->put('admin_tenant_code', $tenant->code);
-            $request->session()->put('admin_login_at', now()->timestamp);
-            $request->session()->put('admin_password_changed_at', $user->password_changed_at?->timestamp);
-        }
+        $mustChangePassword = $this->tenantExecutionManager->run(
+            $tenant,
+            fn (): bool => $this->afterSuccessfulTenantLogin($request, $tenant, $user)
+        );
+        $request->session()->put('admin_tenant_code', $tenant->code);
+        $request->session()->put('admin_login_at', now()->timestamp);
+        $request->session()->put('admin_password_changed_at', $user->password_changed_at?->timestamp);
 
         $user->forceFill([
             'last_login_at' => now(),
@@ -251,6 +252,24 @@ final readonly class WebAdminLoginService
                 'ip' => $request->ip(),
             ],
             httpStatus: $status,
+            processingStatus: 'denied',
+        );
+    }
+
+    private function logMissingTenant(Request $request, ?User $user): void
+    {
+        $this->logPersistenceService->logSystemWarning(
+            message: 'Login administrativo negado sem tenant resolvido.',
+            category: 'tenant-security',
+            operation: 'tenant_security.web_login_tenant_required',
+            userId: $user?->id,
+            context: [
+                'tenant_id' => null,
+                'tenant_code' => null,
+                'user_id' => $user?->id,
+                'ip' => $request->ip(),
+            ],
+            httpStatus: 422,
             processingStatus: 'denied',
         );
     }

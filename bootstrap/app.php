@@ -76,7 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ValidationException $e, Request $request) {
             $status = 422;
 
-            if ($request->routeIs('admin.password.update') && ! $request->expectsJson()) {
+            if ($request->routeIs('admin.login.store', 'admin.password.update') && ! $request->expectsJson()) {
                 return redirect()
                     ->back()
                     ->withInput($request->except(['password', 'current_password', 'new_password', 'new_password_confirmation']))

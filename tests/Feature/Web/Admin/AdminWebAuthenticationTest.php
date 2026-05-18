@@ -43,7 +43,7 @@ final class AdminWebAuthenticationTest extends TestCase
             ->assertSee('Esqueci minha senha');
     }
 
-    public function test_admin_user_can_login_with_web_guard(): void
+    public function test_admin_login_requires_tenant_context(): void
     {
         $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
         $user = $this->createUser(role: $role, overrides: [
@@ -54,17 +54,10 @@ final class AdminWebAuthenticationTest extends TestCase
         $this->post('/admin/login', [
             'email' => 'admin-web@example.com',
             'password' => 'secret-password',
-        ])->assertRedirect(route('admin.dashboard'));
+        ])->assertSessionHasErrors('tenant_code');
 
-        $this->assertAuthenticatedAs($user, 'web');
-        $this->assertNotNull($user->refresh()->last_login_at);
-
-        $this->assertDatabaseHas('audit_logs', [
-            'action' => AdminWebAuditService::LOGIN_SUCCESS,
-            'auditable_type' => User::class,
-            'auditable_id' => $user->id,
-            'user_id' => $user->id,
-        ]);
+        $this->assertGuest('web');
+        $this->assertNull($user->refresh()->last_login_at);
     }
 
     public function test_admin_user_can_login_with_tenant_header_and_active_policy(): void
@@ -310,15 +303,20 @@ final class AdminWebAuthenticationTest extends TestCase
 
     public function test_non_admin_user_cannot_login_to_admin_web_module(): void
     {
+        $tenant = $this->createMigratedTenant('tenant_web_login_non_admin', 'web-login-non-admin');
         $role = $this->createRole(RoleCode::USUARIO->value, 'Usuário');
         $user = $this->createUser(role: $role, overrides: [
             'email' => 'user-web@example.com',
-            'password' => 'secret-password',
+            'password' => 'SenhaAtual@123',
+            'password_changed_at' => now(),
         ]);
+        $this->grantTenantAccess($user, $tenant, $role);
+        $this->seedTenantLoginSettings($tenant);
 
         $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
             'email' => 'user-web@example.com',
-            'password' => 'secret-password',
+            'password' => 'SenhaAtual@123',
         ])->assertSessionHasErrors('email');
 
         $this->assertGuest('web');
@@ -333,13 +331,15 @@ final class AdminWebAuthenticationTest extends TestCase
 
     public function test_failed_admin_login_is_audited(): void
     {
-        $role = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
-        $user = $this->createUser(role: $role, overrides: [
-            'email' => 'failed-admin-web@example.com',
-            'password' => 'secret-password',
+        [$tenant, $user] = $this->tenantLoginFixture('tenant_failed_admin_web', 'failed-admin-web', passwordOverrides: [
+            'disallow_user_personal_data' => false,
         ]);
+        $user->forceFill([
+            'email' => 'failed-admin-web@example.com',
+        ])->save();
 
         $this->post('/admin/login', [
+            'tenant_code' => $tenant->code,
             'email' => 'failed-admin-web@example.com',
             'password' => 'wrong-password',
         ])->assertSessionHasErrors('email');

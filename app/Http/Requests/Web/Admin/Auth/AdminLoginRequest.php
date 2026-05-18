@@ -19,10 +19,30 @@ final class AdminLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tenant_code' => ['nullable', 'string', 'max:100'],
+            '_tenant_header' => ['nullable', 'string', 'max:100'],
+            'tenant_code' => ['nullable', 'required_without:_tenant_header', 'string', 'max:100'],
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'remember' => ['sometimes', 'boolean'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function validationData(): array
+    {
+        return array_merge(parent::validationData(), [
+            '_tenant_header' => trim((string) $this->header('X-Tenant-Id', '')),
+        ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'tenant_code.required_without' => 'O tenant é obrigatório para acessar o painel administrativo.',
         ];
     }
 }

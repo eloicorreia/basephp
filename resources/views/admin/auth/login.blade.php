@@ -38,6 +38,8 @@
                                     value="{{ old('tenant_code') }}"
                                     autocomplete="organization"
                                     placeholder="codigo-do-tenant"
+                                    required
+                                    autofocus
                                 >
                                 @error('tenant_code')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -54,7 +56,6 @@
                                     value="{{ old('email') }}"
                                     autocomplete="email"
                                     required
-                                    autofocus
                                 >
                             </div>
 
@@ -76,11 +77,6 @@
                                         <i class="ri-eye-fill align-middle"></i>
                                     </button>
                                 </div>
-                            </div>
-
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="1" id="remember" name="remember">
-                                <label class="form-check-label" for="remember">Manter conectado</label>
                             </div>
 
                             <div class="mt-4">

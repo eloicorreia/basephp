@@ -279,11 +279,11 @@ GET  /admin/logs/api-requests/{apiRequestLog}/payload
 
 ## Autenticação web tenant-aware
 
-O formulário `/admin/login` aceita o campo `tenant_code`. Quando `tenant_code` é informado, o login administrativo é tenant-aware e aplica as configurações salvas em **Sistema > Segurança** e **Sistema > Senhas**. O header `X-Tenant-Id` continua aceito para compatibilidade com testes e automações, mas a tela real não depende mais de header invisível ao usuário.
+O formulário `/admin/login` exige o campo `tenant_code`. Todo login administrativo web é tenant-aware e aplica as configurações salvas em **Sistema > Segurança** e **Sistema > Senhas**. O header `X-Tenant-Id` continua aceito para compatibilidade com testes e automações, mas não permite bypass: sem `tenant_code` ou `X-Tenant-Id` válido, o login é negado antes de autenticar o usuário.
 
 No login tenant-aware, o sistema valida tenant ativo, usuário ativo, vínculo ativo em `tenant_users`, permissão administrativa, `allowed_ip_ranges`, bloqueio em `tenant_user_security_states`, tentativas máximas, duração de bloqueio, senha temporária expirada, expiração de senha e troca obrigatória no primeiro login. Falhas incrementam o contador apenas do tenant atual; sucesso zera apenas o contador do tenant atual e grava `admin_tenant_code`, `admin_login_at`, `admin_password_changed_at` e `admin_web_session_id` na sessão web.
 
-O login sem `tenant_code` e sem `X-Tenant-Id` permanece como fluxo global legado do painel. Esse modo não aplica políticas tenant-aware porque não há tenant resolvido; use-o somente para compatibilidade operacional enquanto o acesso administrativo tenant-aware estiver sendo adotado.
+Não existe fluxo global de login web administrativo. Nenhum usuário entra no painel sem tenant resolvido, vínculo ativo e aplicação da política tenant-aware.
 
 ## Sessão web tenant-aware
 
@@ -297,7 +297,7 @@ As rotas `GET /admin/password/change` e `PUT /admin/password/change` atendem tan
 
 A troca de senha web usa o tenant salvo em `admin_tenant_code` e respeita tamanho mínimo/máximo, maiúscula, minúscula, número, símbolo, senhas comuns, dados pessoais, histórico, expiração e `logout_on_password_change`. Ao concluir, atualiza `users.password`, `users.password_changed_at`, `users.must_change_password=false`, registra histórico no schema do tenant quando configurado e audita a operação.
 
-Na API, `POST /api/v1/auth/change-password` mantém o contrato JSON existente. Quando `X-Tenant-Id` é informado, a API exige vínculo ativo do usuário com o tenant, aplica a política de senha tenant-aware e registra histórico no schema do tenant. Sem `X-Tenant-Id`, permanece o comportamento global legado validado apenas pelo contrato base do endpoint.
+Na API, `POST /api/v1/auth/change-password` mantém o contrato JSON existente. Quando `X-Tenant-Id` é informado, a API exige vínculo ativo do usuário com o tenant, aplica a política de senha tenant-aware e registra histórico no schema do tenant. Sem `X-Tenant-Id`, permanece o comportamento global do endpoint para compatibilidade com clientes já existentes.
 
 ## Template oficial
 
