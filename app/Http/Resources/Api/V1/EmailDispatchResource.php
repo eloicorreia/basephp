@@ -37,9 +37,12 @@ final class EmailDispatchResource extends JsonResource
             'external_reference' => $emailDispatch->external_reference,
             'attempts' => $emailDispatch->attempts,
             'error_message' => $emailDispatch->error_message,
-            'sent_at' => $runtimeSettings->formatDateTime($emailDispatch->sent_at),
-            'created_at' => $runtimeSettings->formatDateTime($emailDispatch->created_at),
-            'updated_at' => $runtimeSettings->formatDateTime($emailDispatch->updated_at),
+            'sent_at' => $runtimeSettings->isoDateTime($emailDispatch->sent_at),
+            'created_at' => $runtimeSettings->isoDateTime($emailDispatch->created_at),
+            'updated_at' => $runtimeSettings->isoDateTime($emailDispatch->updated_at),
+            'sent_at_formatted' => $runtimeSettings->formatDateTime($emailDispatch->sent_at),
+            'created_at_formatted' => $runtimeSettings->formatDateTime($emailDispatch->created_at),
+            'updated_at_formatted' => $runtimeSettings->formatDateTime($emailDispatch->updated_at),
         ];
     }
 }

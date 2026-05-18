@@ -24,9 +24,12 @@ final class QueueJobResource extends JsonResource
                 'id' => $resource['id'] ?? null,
                 'queue' => $resource['queue'] ?? null,
                 'attempts' => $resource['attempts'] ?? null,
-                'reserved_at' => $runtimeSettings->formatDateTime($resource['reserved_at'] ?? null),
-                'available_at' => $runtimeSettings->formatDateTime($resource['available_at'] ?? null),
-                'created_at' => $runtimeSettings->formatDateTime($resource['created_at'] ?? null),
+                'reserved_at' => $resource['reserved_at'] ?? null,
+                'available_at' => $resource['available_at'] ?? null,
+                'created_at' => $resource['created_at'] ?? null,
+                'reserved_at_formatted' => $runtimeSettings->formatDateTime($resource['reserved_at'] ?? null),
+                'available_at_formatted' => $runtimeSettings->formatDateTime($resource['available_at'] ?? null),
+                'created_at_formatted' => $runtimeSettings->formatDateTime($resource['created_at'] ?? null),
                 'payload_preview' => $resource['payload_preview'] ?? null,
             ];
         }
@@ -39,9 +42,12 @@ final class QueueJobResource extends JsonResource
             'id' => $resource->id,
             'queue' => $resource->queue,
             'attempts' => $resource->attempts,
-            'reserved_at' => $runtimeSettings->formatDateTime($resource->reserved_at),
-            'available_at' => $runtimeSettings->formatDateTime($resource->available_at),
-            'created_at' => $runtimeSettings->formatDateTime($resource->created_at),
+            'reserved_at' => $resource->reserved_at,
+            'available_at' => $resource->available_at,
+            'created_at' => $resource->created_at,
+            'reserved_at_formatted' => $runtimeSettings->formatDateTime($resource->reserved_at),
+            'available_at_formatted' => $runtimeSettings->formatDateTime($resource->available_at),
+            'created_at_formatted' => $runtimeSettings->formatDateTime($resource->created_at),
             'payload_preview' => null,
         ];
     }

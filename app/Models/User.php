@@ -31,6 +31,7 @@ class User extends Authenticatable implements OAuthenticatable
         'must_change_password',
         'last_login_at',
         'last_login_ip',
+        // Legacy global lock fields. Tenant security policy uses tenant_user_security_states.
         'failed_login_attempts',
         'locked_until',
         'locked_by_admin',
@@ -67,6 +68,14 @@ class User extends Authenticatable implements OAuthenticatable
     public function tenantUsers(): HasMany
     {
         return $this->hasMany(TenantUser::class);
+    }
+
+    /**
+     * @return HasMany<TenantUserSecurityState, $this>
+     */
+    public function tenantSecurityStates(): HasMany
+    {
+        return $this->hasMany(TenantUserSecurityState::class);
     }
 
     public function hasRole(string ...$roles): bool

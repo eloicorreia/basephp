@@ -34,7 +34,8 @@ class UserResource extends JsonResource
                 'code' => $user->role->code,
                 'name' => $user->role->name,
             ] : null,
-            'created_at' => $runtimeSettings->formatDateTime($user->created_at),
+            'created_at' => $runtimeSettings->isoDateTime($user->created_at),
+            'created_at_formatted' => $runtimeSettings->formatDateTime($user->created_at),
         ];
     }
 }

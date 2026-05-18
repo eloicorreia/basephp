@@ -79,6 +79,23 @@ final class TenantRuntimeSettings
         return $this->format($value, $this->dateFormat());
     }
 
+    public function isoDateTime(DateTimeInterface|string|null $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            $date = $value instanceof DateTimeInterface
+                ? Carbon::instance($value)
+                : Carbon::parse($value);
+
+            return $date->toJSON();
+        } catch (Throwable) {
+            return is_string($value) ? $value : null;
+        }
+    }
+
     private function format(DateTimeInterface|int|string|null $value, string $format): ?string
     {
         if ($value === null || $value === '') {

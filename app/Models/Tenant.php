@@ -32,4 +32,12 @@ class Tenant extends Model
     {
         return $this->hasMany(TenantUser::class);
     }
+
+    /**
+     * @return HasMany<TenantUserSecurityState, $this>
+     */
+    public function userSecurityStates(): HasMany
+    {
+        return $this->hasMany(TenantUserSecurityState::class);
+    }
 }

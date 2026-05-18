@@ -18,12 +18,14 @@ use App\Models\TenantPasswordPolicy;
 use App\Models\TenantQueueSetting;
 use App\Models\TenantSecuritySetting;
 use App\Models\TenantSystemSetting;
+use App\Models\TenantUserSecurityState;
 use App\Models\TenantWebhookSetting;
 use App\Models\User;
 use App\Services\Mail\Contracts\TenantMailConnectionTesterInterface;
 use App\Services\Tenant\TenantExecutionManager;
 use App\Services\Tenant\TenantMigrationService;
 use App\Services\Tenant\TenantSchemaService;
+use App\Services\TenantSettings\TenantSecurityPolicyService;
 use App\Support\Web\WebAdminPermissions;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Support\Facades\Cache;
@@ -299,7 +301,8 @@ final class AdminSystemSettingsWebTest extends TestCase
         $listedRole = collect($response->json('data'))->firstWhere('code', $role->code);
 
         $this->assertIsArray($listedRole);
-        $this->assertMatchesRegularExpression('/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/', (string) $listedRole['created_at']);
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', (string) $listedRole['created_at']);
+        $this->assertMatchesRegularExpression('/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/', (string) $listedRole['created_at_formatted']);
     }
 
     public function test_runtime_settings_block_tenant_api_when_maintenance_mode_is_enabled(): void
@@ -338,13 +341,99 @@ final class AdminSystemSettingsWebTest extends TestCase
     {
         $context = $this->createRuntimeApiContext();
         TenantSecuritySetting::query()->create($this->tenantSecuritySettingAttributes());
-        $context['user']->forceFill(['locked_by_admin' => true])->save();
+        TenantUserSecurityState::query()->create([
+            'tenant_id' => $context['tenant']->id,
+            'user_id' => $context['user']->id,
+            'locked_by_admin' => true,
+        ]);
 
         $this->getJson('/api/v1/auth/me', [
             'X-Tenant-Id' => $context['tenant']->code,
         ])
             ->assertStatus(423)
             ->assertJsonPath('message', 'Usuário bloqueado. Solicite desbloqueio ao administrador.');
+    }
+
+    public function test_security_state_lock_is_tenant_aware(): void
+    {
+        $contextA = $this->createRuntimeApiContext(code: 'settings-tenant-a');
+        $tenantB = $this->createMigratedSettingsTenant('tenant_settings_runtime_b', 'settings-tenant-b');
+        $this->grantTenantAccess($contextA['user'], $tenantB, $this->createRole('runtime-tenant-b-admin', 'Runtime Tenant B Admin'));
+        TenantSecuritySetting::query()->create($this->tenantSecuritySettingAttributes());
+        TenantUserSecurityState::query()->create([
+            'tenant_id' => $contextA['tenant']->id,
+            'user_id' => $contextA['user']->id,
+            'locked_by_admin' => true,
+        ]);
+
+        $this->getJson('/api/v1/auth/me', [
+            'X-Tenant-Id' => $contextA['tenant']->code,
+        ])->assertStatus(423);
+
+        $this->getJson('/api/v1/auth/me', [
+            'X-Tenant-Id' => $tenantB->code,
+        ])->assertOk();
+    }
+
+    public function test_security_failed_authentication_counter_is_tenant_aware(): void
+    {
+        $contextA = $this->createRuntimeApiContext(code: 'settings-tenant-a');
+        $tenantB = $this->createTenant(code: 'settings-tenant-b', schemaName: 'tenant_settings_runtime_b');
+        $settings = TenantSecuritySetting::query()->create($this->tenantSecuritySettingAttributes([
+            'max_login_attempts' => 3,
+        ]));
+
+        app(TenantSecurityPolicyService::class)->registerFailedAuthentication(
+            user: $contextA['user'],
+            tenant: $contextA['tenant'],
+            settings: $settings,
+            ip: '203.0.113.10',
+        );
+
+        $this->assertDatabaseHas('tenant_user_security_states', [
+            'tenant_id' => $contextA['tenant']->id,
+            'user_id' => $contextA['user']->id,
+            'failed_login_attempts' => 1,
+            'last_failed_login_ip' => '203.0.113.10',
+        ]);
+        $this->assertDatabaseMissing('tenant_user_security_states', [
+            'tenant_id' => $tenantB->id,
+            'user_id' => $contextA['user']->id,
+        ]);
+    }
+
+    public function test_security_success_resets_only_current_tenant_counter(): void
+    {
+        $contextA = $this->createRuntimeApiContext(code: 'settings-tenant-a');
+        $tenantB = $this->createTenant(code: 'settings-tenant-b', schemaName: 'tenant_settings_runtime_b');
+        TenantUserSecurityState::query()->create([
+            'tenant_id' => $contextA['tenant']->id,
+            'user_id' => $contextA['user']->id,
+            'failed_login_attempts' => 2,
+        ]);
+        TenantUserSecurityState::query()->create([
+            'tenant_id' => $tenantB->id,
+            'user_id' => $contextA['user']->id,
+            'failed_login_attempts' => 3,
+        ]);
+
+        app(TenantSecurityPolicyService::class)->registerSuccessfulAuthentication(
+            user: $contextA['user'],
+            tenant: $contextA['tenant'],
+            ip: '203.0.113.20',
+        );
+
+        $this->assertDatabaseHas('tenant_user_security_states', [
+            'tenant_id' => $contextA['tenant']->id,
+            'user_id' => $contextA['user']->id,
+            'failed_login_attempts' => 0,
+            'last_successful_login_ip' => '203.0.113.20',
+        ]);
+        $this->assertDatabaseHas('tenant_user_security_states', [
+            'tenant_id' => $tenantB->id,
+            'user_id' => $contextA['user']->id,
+            'failed_login_attempts' => 3,
+        ]);
     }
 
     public function test_security_settings_block_idle_tenant_api_session(): void
@@ -364,6 +453,26 @@ final class AdminSystemSettingsWebTest extends TestCase
         ])
             ->assertStatus(401)
             ->assertJsonPath('message', 'Sessão expirada por inatividade.');
+    }
+
+    public function test_security_settings_allow_ipv4_and_ipv6_cidr_ranges(): void
+    {
+        $context = $this->createRuntimeApiContext();
+        TenantSecuritySetting::query()->create($this->tenantSecuritySettingAttributes([
+            'allowed_ip_ranges' => ['203.0.113.0/24', '2001:db8::/32'],
+        ]));
+
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.44'])
+            ->getJson('/api/v1/auth/me', [
+                'X-Tenant-Id' => $context['tenant']->code,
+            ])
+            ->assertOk();
+
+        $this->withServerVariables(['REMOTE_ADDR' => '2001:db8::1234'])
+            ->getJson('/api/v1/auth/me', [
+                'X-Tenant-Id' => $context['tenant']->code,
+            ])
+            ->assertOk();
     }
 
     public function test_user_without_system_settings_permission_cannot_view_module(): void
@@ -543,10 +652,10 @@ final class AdminSystemSettingsWebTest extends TestCase
         return $this->createUser(role: $role);
     }
 
-    private function createSettingsTenant(): Tenant
+    private function createSettingsTenant(string $code = 'settings-tenant'): Tenant
     {
         return $this->createTenant(
-            code: 'settings-tenant',
+            code: $code,
             name: 'Settings Tenant',
             schemaName: 'public',
         );
@@ -555,9 +664,9 @@ final class AdminSystemSettingsWebTest extends TestCase
     /**
      * @return array{tenant: Tenant, user: User}
      */
-    private function createRuntimeApiContext(): array
+    private function createRuntimeApiContext(string $code = 'settings-tenant'): array
     {
-        $tenant = $this->createSettingsTenant();
+        $tenant = $this->createSettingsTenant($code);
         $adminRole = $this->createRole(RoleCode::ADMIN->value, 'Administrador');
         $tenantRole = $this->createRole('runtime-tenant-admin', 'Runtime Tenant Admin');
         $user = $this->createUser(role: $adminRole);

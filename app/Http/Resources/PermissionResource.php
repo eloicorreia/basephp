@@ -33,8 +33,10 @@ class PermissionResource extends JsonResource
             'is_system' => $permission->is_system,
             'is_sensitive' => $permission->is_sensitive,
             'active' => $permission->active,
-            'created_at' => $runtimeSettings->formatDateTime($permission->created_at),
-            'updated_at' => $runtimeSettings->formatDateTime($permission->updated_at),
+            'created_at' => $runtimeSettings->isoDateTime($permission->created_at),
+            'updated_at' => $runtimeSettings->isoDateTime($permission->updated_at),
+            'created_at_formatted' => $runtimeSettings->formatDateTime($permission->created_at),
+            'updated_at_formatted' => $runtimeSettings->formatDateTime($permission->updated_at),
         ];
     }
 }

@@ -42,8 +42,10 @@ final class TenantUserResource extends JsonResource
                 'name' => $tenantUser->role?->name,
             ],
             'is_active' => (bool) $tenantUser->is_active,
-            'created_at' => $runtimeSettings->formatDateTime($tenantUser->created_at),
-            'updated_at' => $runtimeSettings->formatDateTime($tenantUser->updated_at),
+            'created_at' => $runtimeSettings->isoDateTime($tenantUser->created_at),
+            'updated_at' => $runtimeSettings->isoDateTime($tenantUser->updated_at),
+            'created_at_formatted' => $runtimeSettings->formatDateTime($tenantUser->created_at),
+            'updated_at_formatted' => $runtimeSettings->formatDateTime($tenantUser->updated_at),
         ];
     }
 }

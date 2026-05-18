@@ -28,7 +28,8 @@ final class FailedJobResource extends JsonResource
             'uuid' => $failedJob->uuid,
             'connection' => $failedJob->connection,
             'queue' => $failedJob->queue,
-            'failed_at' => $runtimeSettings->formatDateTime($failedJob->failed_at),
+            'failed_at' => $runtimeSettings->isoDateTime($failedJob->failed_at),
+            'failed_at_formatted' => $runtimeSettings->formatDateTime($failedJob->failed_at),
             'exception_preview' => $failedJob->exception !== null
                 ? mb_substr((string) $failedJob->exception, 0, 500)
                 : null,

@@ -30,8 +30,10 @@ class RoleResource extends JsonResource
             'active' => $role->active,
             'users_count' => $role->users_count,
             'permissions_count' => $role->permissions_count,
-            'created_at' => $runtimeSettings->formatDateTime($role->created_at),
-            'updated_at' => $runtimeSettings->formatDateTime($role->updated_at),
+            'created_at' => $runtimeSettings->isoDateTime($role->created_at),
+            'updated_at' => $runtimeSettings->isoDateTime($role->updated_at),
+            'created_at_formatted' => $runtimeSettings->formatDateTime($role->created_at),
+            'updated_at_formatted' => $runtimeSettings->formatDateTime($role->updated_at),
         ];
     }
 }

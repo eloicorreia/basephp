@@ -30,6 +30,7 @@ final readonly class ApplyTenantSecuritySettings
 
     public function handle(Request $request, Closure $next): Response
     {
+        $tenant = $this->tenantContext->require();
         $settings = $this->runtimeSettings->settings();
         $user = $request->user();
 
@@ -45,9 +46,9 @@ final readonly class ApplyTenantSecuritySettings
             return ApiResponse::error('IP não autorizado para este tenant.', status: 403);
         }
 
-        if ($this->policyService->isLocked($user)) {
+        if ($this->policyService->isLocked($user, $tenant)) {
             return ApiResponse::error(
-                message: (bool) $user->locked_by_admin
+                message: $this->policyService->isLockedByAdmin($user, $tenant)
                     ? 'Usuário bloqueado. Solicite desbloqueio ao administrador.'
                     : 'Usuário temporariamente bloqueado por falhas de autenticação.',
                 status: 423,
@@ -119,19 +120,38 @@ final readonly class ApplyTenantSecuritySettings
 
         [$subnet, $prefix] = explode('/', $range, 2);
 
-        if (! ctype_digit($prefix) || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false || filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+        if (! ctype_digit($prefix)) {
             return false;
         }
 
         $prefixLength = (int) $prefix;
+        $ipBinary = @inet_pton($ip);
+        $subnetBinary = @inet_pton($subnet);
 
-        if ($prefixLength < 0 || $prefixLength > 32) {
+        if ($ipBinary === false || $subnetBinary === false || strlen($ipBinary) !== strlen($subnetBinary)) {
             return false;
         }
 
-        $mask = -1 << (32 - $prefixLength);
+        $maxPrefix = strlen($ipBinary) * 8;
 
-        return ((int) ip2long($ip) & $mask) === ((int) ip2long($subnet) & $mask);
+        if ($prefixLength < 0 || $prefixLength > $maxPrefix) {
+            return false;
+        }
+
+        $fullBytes = intdiv($prefixLength, 8);
+        $remainingBits = $prefixLength % 8;
+
+        if ($fullBytes > 0 && substr($ipBinary, 0, $fullBytes) !== substr($subnetBinary, 0, $fullBytes)) {
+            return false;
+        }
+
+        if ($remainingBits === 0) {
+            return true;
+        }
+
+        $mask = (0xFF << (8 - $remainingBits)) & 0xFF;
+
+        return (ord($ipBinary[$fullBytes]) & $mask) === (ord($subnetBinary[$fullBytes]) & $mask);
     }
 
     private function currentToken(User $user): ?Token
@@ -200,7 +220,12 @@ final readonly class ApplyTenantSecuritySettings
             category: 'tenant-security',
             operation: $operation,
             userId: $user->id,
-            context: array_merge($context, ['ip' => $request->ip()]),
+            context: array_merge($context, [
+                'tenant_id' => $this->tenantContext->require()->id,
+                'tenant_code' => $this->tenantContext->require()->code,
+                'user_id' => $user->id,
+                'ip' => $request->ip(),
+            ]),
             httpStatus: 403,
             processingStatus: 'denied',
         );

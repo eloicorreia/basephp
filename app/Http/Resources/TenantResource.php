@@ -30,8 +30,10 @@ final class TenantResource extends JsonResource
             'schema_name' => $tenant->schema_name,
             'status' => $tenant->status,
             'is_active' => $tenant->status === Tenant::STATUS_ACTIVE,
-            'created_at' => $runtimeSettings->formatDateTime($tenant->created_at),
-            'updated_at' => $runtimeSettings->formatDateTime($tenant->updated_at),
+            'created_at' => $runtimeSettings->isoDateTime($tenant->created_at),
+            'updated_at' => $runtimeSettings->isoDateTime($tenant->updated_at),
+            'created_at_formatted' => $runtimeSettings->formatDateTime($tenant->created_at),
+            'updated_at_formatted' => $runtimeSettings->formatDateTime($tenant->updated_at),
         ];
     }
 }
