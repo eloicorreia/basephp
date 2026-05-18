@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Web\Admin;
+namespace Tests\Feature\Web;
 
 use App\Enums\RoleCode;
 use App\Models\AdminMenuGroup;
