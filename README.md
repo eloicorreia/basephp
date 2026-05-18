@@ -269,11 +269,15 @@ POST /admin/forgot-password
 GET  /admin/reset-password/{token}
 POST /admin/reset-password
 POST /admin/logout
+GET  /admin/password/change
+PUT  /admin/password/change
 GET  /admin
 GET  /admin/logs/api-requests
 GET  /admin/logs/api-requests/{apiRequestLog}
 GET  /admin/logs/api-requests/{apiRequestLog}/payload
 ```
+
+O login administrativo continua compatível com o fluxo web existente. Quando a requisição de login envia o header `X-Tenant-Id`, as regras tenant-aware de segurança e senha são aplicadas: vínculo ativo com tenant, allowlist de IP, bloqueio em `tenant_user_security_states`, expiração/troca obrigatória de senha e senha temporária. Usuários com `must_change_password=true` são redirecionados para `/admin/password/change` antes de acessar as telas administrativas.
 
 ## Template oficial
 

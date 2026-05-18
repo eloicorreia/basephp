@@ -17,6 +17,7 @@ use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\EnsureTenantAccessMiddleware;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureWebAdminPermission;
+use App\Http\Middleware\EnsureWebPasswordChanged;
 use App\Http\Middleware\RequestContextMiddleware;
 use App\Http\Middleware\ResolveTenantMiddleware;
 use App\Services\Logging\LogPersistenceService;
@@ -58,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'password.changed' => EnsurePasswordChangedMiddleware::class,
             'client.credentials' => EnsureClientCredentials::class,
             'web.permission' => EnsureWebAdminPermission::class,
+            'web.password.changed' => EnsureWebPasswordChanged::class,
             'scope' => CheckToken::class,
             'scopes' => CheckToken::class,
             'any_scope' => CheckTokenForAnyScope::class,
@@ -71,6 +73,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (ValidationException $e, Request $request) {
             $status = 422;
+
+            if (! $request->expectsJson() && ! $request->is('api/*')) {
+                return redirect()
+                    ->back()
+                    ->withInput($request->except(['password', 'current_password', 'new_password', 'new_password_confirmation']))
+                    ->withErrors($e->errors());
+            }
 
             try {
                 app(LogPersistenceService::class)->logSystemError(

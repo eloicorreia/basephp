@@ -48,7 +48,7 @@ final class TenantPasswordValidatorService
 
         if ($user instanceof User && $policy->disallow_user_personal_data) {
             $normalized = mb_strtolower($password);
-            foreach (array_filter([$user->name, $user->email]) as $value) {
+            foreach ($this->personalDataFragments($user) as $value) {
                 if (mb_strlen((string) $value) >= 4 && str_contains($normalized, mb_strtolower((string) $value))) {
                     $errors[] = 'A senha não pode conter dados pessoais do usuário.';
                     break;
@@ -88,5 +88,27 @@ final class TenantPasswordValidatorService
             'qwerty',
             'temporary-password',
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function personalDataFragments(User $user): array
+    {
+        $fragments = [];
+
+        foreach (preg_split('/\s+/', (string) $user->name) ?: [] as $part) {
+            $fragments[] = $part;
+        }
+
+        if (is_string($user->email) && str_contains($user->email, '@')) {
+            [$localPart] = explode('@', $user->email, 2);
+            $fragments[] = $localPart;
+        }
+
+        $fragments[] = $user->name;
+        $fragments[] = $user->email;
+
+        return array_values(array_filter(array_unique($fragments), static fn (string $value): bool => $value !== ''));
     }
 }

@@ -26,10 +26,11 @@ class ChangePasswordController extends Controller
             throw new AuthenticationException;
         }
 
-        $this->authService->changePassword(
+        $this->authService->changePasswordForRequest(
             user: $user,
             currentPassword: $request->validated('current_password'),
             newPassword: $request->validated('new_password'),
+            request: $request,
         );
 
         return ApiResponse::success(

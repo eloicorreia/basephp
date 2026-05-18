@@ -28,6 +28,11 @@
                     </button>
                     <div class="dropdown-menu dropdown-menu-end">
                         <h6 class="dropdown-header">{{ $currentUser?->name }}</h6>
+                        <a class="dropdown-item" href="{{ route('admin.password.change') }}">
+                            <i class="ri-lock-password-line text-muted fs-16 align-middle me-1"></i>
+                            <span class="align-middle">Trocar senha</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
                         <form method="POST" action="{{ route('admin.logout') }}" data-turbo="false">
                             @csrf
                             <button type="submit" class="dropdown-item">
