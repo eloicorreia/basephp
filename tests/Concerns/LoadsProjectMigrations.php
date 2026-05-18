@@ -165,6 +165,7 @@ trait LoadsProjectMigrations
             && Schema::hasTable('admin_menu_item_permissions')
             && Schema::hasTable('admin_menu_versions')
             && Schema::hasTable('admin_menu_event_logs')
+            && Schema::hasTable('tenant_provisioning_runs')
             && Schema::hasColumn('permissions', 'group')
             && Schema::hasColumn('permissions', 'is_system')
             && Schema::hasColumn('role_permissions', 'assigned_by')

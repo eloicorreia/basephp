@@ -7,9 +7,11 @@ namespace App\Services\Tenant;
 use App\DTOs\Tenant\TenantProvisioningResult;
 use App\Exceptions\TenantConflictException;
 use App\Models\Tenant;
+use App\Models\TenantProvisioningRun;
 use App\Services\Logging\LogPersistenceService;
 use App\Support\Tenant\TenantRequiredTables;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -28,43 +30,56 @@ final readonly class TenantProvisioningService
     {
         $this->tenantSchemaService->assertValidSchemaName($schemaName);
 
-        $tenant = $this->resolveTenantForProvisioning($code, $name, $schemaName);
+        return $this->withProvisioningLock($code, $schemaName, function () use ($code, $name, $schemaName, $force): Tenant {
+            $run = $this->startProvisioningRun($code, $schemaName);
+            $tenant = null;
 
-        try {
-            $this->tenantSchemaService->createSchema($schemaName);
-            $this->tenantMigrationService->runTenantMigrations($schemaName, $force);
+            try {
+                $tenant = $this->resolveTenantForProvisioning($code, $name, $schemaName);
+                $this->attachTenantToRun($run, $tenant);
 
-            if ($this->tenantSeederService instanceof TenantSeederService) {
-                $searchPathService = app(TenantSearchPathService::class);
+                $this->tenantSchemaService->createSchema($schemaName);
+                $this->tenantMigrationService->runTenantMigrations($schemaName, $force);
 
-                try {
-                    $searchPathService->setTenantSchema($schemaName);
-                    $this->tenantSeederService->runTenantSeeders($force);
-                } finally {
-                    $searchPathService->resetToPublic();
+                if ($this->tenantSeederService instanceof TenantSeederService) {
+                    $searchPathService = app(TenantSearchPathService::class);
+
+                    try {
+                        $searchPathService->setTenantSchema($schemaName);
+                        $this->tenantSeederService->runTenantSeeders($force);
+                    } finally {
+                        $searchPathService->resetToPublic();
+                    }
                 }
+
+                $missingTables = $this->missingRequiredTables($schemaName);
+
+                if ($missingTables !== []) {
+                    throw new RuntimeException('Tenant provisionado com schema incompleto: '.implode(', ', $missingTables));
+                }
+
+                $tenant->forceFill([
+                    'status' => Tenant::STATUS_ACTIVE,
+                ])->save();
+
+                $this->finishProvisioningRun($run, 'success');
+
+                return $tenant->refresh();
+            } catch (Throwable $throwable) {
+                if ($tenant instanceof Tenant) {
+                    $tenant->forceFill([
+                        'status' => Tenant::STATUS_ERROR,
+                    ])->save();
+
+                    $this->attachTenantToRun($run, $tenant);
+                    $this->logCreateAndProvisionFailure($throwable, $tenant);
+                }
+
+                $this->finishProvisioningRun($run, 'failed', $throwable);
+
+                throw $throwable;
             }
-
-            $missingTables = $this->missingRequiredTables($schemaName);
-
-            if ($missingTables !== []) {
-                throw new RuntimeException('Tenant provisionado com schema incompleto: '.implode(', ', $missingTables));
-            }
-
-            $tenant->forceFill([
-                'status' => Tenant::STATUS_ACTIVE,
-            ])->save();
-
-            return $tenant->refresh();
-        } catch (Throwable $throwable) {
-            $tenant->forceFill([
-                'status' => Tenant::STATUS_ERROR,
-            ])->save();
-
-            $this->logCreateAndProvisionFailure($throwable, $tenant);
-
-            throw $throwable;
-        }
+        });
     }
 
     public function provision(Tenant $tenant, bool $createSchema = false, bool $force = false): TenantProvisioningResult
@@ -428,5 +443,83 @@ final readonly class TenantProvisioningService
     private function isUniqueConstraintViolation(QueryException $exception): bool
     {
         return $exception->getCode() === '23505';
+    }
+
+    /**
+     * Serializes provisioning attempts for the same tenant identity before the
+     * unique indexes are reached, avoiding duplicated schema work under load.
+     *
+     * @template TReturn
+     *
+     * @param  callable(): TReturn  $callback
+     * @return TReturn
+     */
+    private function withProvisioningLock(string $code, string $schemaName, callable $callback): mixed
+    {
+        $keys = $this->provisioningLockKeys($code, $schemaName);
+        $acquired = false;
+
+        try {
+            DB::select('SELECT pg_advisory_lock(?, ?)', $keys);
+            $acquired = true;
+
+            return $callback();
+        } finally {
+            if ($acquired) {
+                DB::select('SELECT pg_advisory_unlock(?, ?)', $keys);
+            }
+        }
+    }
+
+    /**
+     * @return array{0: int, 1: int}
+     */
+    private function provisioningLockKeys(string $code, string $schemaName): array
+    {
+        return [
+            $this->signedCrc32('tenant-provisioning'),
+            $this->signedCrc32($code.'|'.$schemaName),
+        ];
+    }
+
+    private function signedCrc32(string $value): int
+    {
+        $hash = crc32($value);
+
+        return $hash > 2147483647 ? $hash - 4294967296 : $hash;
+    }
+
+    private function startProvisioningRun(string $code, string $schemaName): TenantProvisioningRun
+    {
+        return TenantProvisioningRun::query()->create([
+            'tenant_code' => $code,
+            'schema_name' => $schemaName,
+            'operation' => 'tenants_create_and_provision',
+            'status' => 'running',
+            'started_at' => now(),
+            'request_id' => request()->attributes->get('request_id'),
+            'trace_id' => request()->attributes->get('trace_id'),
+        ]);
+    }
+
+    private function attachTenantToRun(TenantProvisioningRun $run, Tenant $tenant): void
+    {
+        if ($run->tenant_id !== null) {
+            return;
+        }
+
+        $run->forceFill([
+            'tenant_id' => $tenant->id,
+        ])->save();
+    }
+
+    private function finishProvisioningRun(TenantProvisioningRun $run, string $status, ?Throwable $throwable = null): void
+    {
+        $run->forceFill([
+            'status' => $status,
+            'finished_at' => now(),
+            'error_message' => $throwable instanceof Throwable ? Str::limit($throwable->getMessage(), 4000, '') : null,
+            'error_class' => $throwable instanceof Throwable ? $throwable::class : null,
+        ])->save();
     }
 }

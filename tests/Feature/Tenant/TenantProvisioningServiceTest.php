@@ -6,6 +6,7 @@ namespace Tests\Feature\Tenant;
 
 use App\Exceptions\TenantConflictException;
 use App\Models\Tenant;
+use App\Models\TenantProvisioningRun;
 use App\Services\Logging\LogPersistenceService;
 use App\Services\Tenant\TenantMigrationService;
 use App\Services\Tenant\TenantProvisioningService;
@@ -97,6 +98,15 @@ final class TenantProvisioningServiceTest extends TestCase
         $this->assertTrue($this->schemaTableExists($schemaName, 'mail_configs'));
         $this->assertTrue($this->schemaTableExists($schemaName, 'business_logs'));
         $this->assertGreaterThan(0, $this->tenantMigrationCount($schemaName));
+        $this->assertDatabaseHas('tenant_provisioning_runs', [
+            'tenant_id' => $tenant->id,
+            'tenant_code' => $code,
+            'schema_name' => $schemaName,
+            'operation' => 'tenants_create_and_provision',
+            'status' => 'success',
+            'error_message' => null,
+            'error_class' => null,
+        ]);
     }
 
     public function test_it_returns_existing_active_tenant_when_provisioning_is_repeated(): void
@@ -189,6 +199,14 @@ final class TenantProvisioningServiceTest extends TestCase
         $failedTenant = Tenant::query()->where('code', $code)->firstOrFail();
 
         $this->assertSame('error', $failedTenant->status);
+        $this->assertDatabaseHas('tenant_provisioning_runs', [
+            'tenant_id' => $failedTenant->id,
+            'tenant_code' => $code,
+            'schema_name' => $schemaName,
+            'operation' => 'tenants_create_and_provision',
+            'status' => 'failed',
+            'error_class' => RuntimeException::class,
+        ]);
 
         $retriedTenant = app(TenantProvisioningService::class)->createAndProvision(
             code: $code,
@@ -239,15 +257,19 @@ final class TenantProvisioningServiceTest extends TestCase
             'status' => Tenant::STATUS_INACTIVE,
         ]);
 
-        $this->expectException(QueryException::class);
+        try {
+            Tenant::query()->create([
+                'uuid' => (string) Str::uuid(),
+                'code' => $code,
+                'name' => 'Tenant Duplicado',
+                'schema_name' => $this->newSchemaName(),
+                'status' => Tenant::STATUS_INACTIVE,
+            ]);
 
-        Tenant::query()->create([
-            'uuid' => (string) Str::uuid(),
-            'code' => $code,
-            'name' => 'Tenant Duplicado',
-            'schema_name' => $this->newSchemaName(),
-            'status' => Tenant::STATUS_INACTIVE,
-        ]);
+            $this->fail('A constraint única de tenants.code deveria rejeitar duplicidade.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23505', $exception->getCode());
+        }
     }
 
     public function test_tenant_schema_name_has_unique_database_constraint(): void
@@ -262,15 +284,40 @@ final class TenantProvisioningServiceTest extends TestCase
             'status' => Tenant::STATUS_INACTIVE,
         ]);
 
-        $this->expectException(QueryException::class);
+        try {
+            Tenant::query()->create([
+                'uuid' => (string) Str::uuid(),
+                'code' => 'tenant-schema-b-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 8),
+                'name' => 'Tenant Schema B',
+                'schema_name' => $schemaName,
+                'status' => Tenant::STATUS_INACTIVE,
+            ]);
 
-        Tenant::query()->create([
-            'uuid' => (string) Str::uuid(),
-            'code' => 'tenant-schema-b-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 8),
-            'name' => 'Tenant Schema B',
-            'schema_name' => $schemaName,
-            'status' => Tenant::STATUS_INACTIVE,
-        ]);
+            $this->fail('A constraint única de tenants.schema_name deveria rejeitar duplicidade.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23505', $exception->getCode());
+        }
+    }
+
+    public function test_provisioning_lock_does_not_block_normal_create_and_provision_flow(): void
+    {
+        $schemaName = $this->newSchemaName();
+        $code = 'tenant-lock-'.substr(str_replace('-', '', (string) Str::uuid()), 0, 12);
+        $this->schemasToDrop[] = $schemaName;
+
+        $tenant = app(TenantProvisioningService::class)->createAndProvision(
+            code: $code,
+            name: 'Tenant Lock',
+            schemaName: $schemaName,
+        );
+
+        $this->assertSame(Tenant::STATUS_ACTIVE, $tenant->status);
+        $this->assertSame('public', $this->currentSchema());
+        $this->assertSame(1, TenantProvisioningRun::query()
+            ->where('tenant_code', $code)
+            ->where('schema_name', $schemaName)
+            ->where('status', 'success')
+            ->count());
     }
 
     private function newSchemaName(): string

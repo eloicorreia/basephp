@@ -30,6 +30,10 @@ trait WritesSeederOutput
 
     private function seederCommand(): ?Command
     {
+        // Seeder::$command is a typed property that may be uninitialized when a
+        // seeder is instantiated and run directly by tests or application code.
+        // Reflection lets us detect that state without triggering a typed
+        // property access error before falling back to silent output.
         $property = new ReflectionProperty(Seeder::class, 'command');
         $property->setAccessible(true);
 

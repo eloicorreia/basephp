@@ -235,6 +235,23 @@ class SeederIdempotencyTest extends TestCase
         $this->assertSame($versionAfterFirstRun, $versionAfterSecondRun);
     }
 
+    public function test_seeders_run_programmatically_without_console_command(): void
+    {
+        config()->set('bootstrap.admin_user.email', 'admin@example.com');
+        config()->set('bootstrap.admin_user.password', 'ChangeMe123!');
+        config()->set('bootstrap.development_tenant.enabled', true);
+
+        (new PermissionSeeder)->run();
+        (new RoleSeeder)->run();
+        (new AdminMenuSeeder)->run();
+        (new TenantSeeder)->run();
+        (new AdminUserSeeder)->run();
+
+        $this->assertSame(1, User::query()->where('email', 'admin@example.com')->count());
+        $this->assertSame(1, Tenant::query()->where('code', 'tenant-dev-001')->count());
+        $this->assertGreaterThan(0, AdminMenuItem::query()->count());
+    }
+
     /**
      * @param  class-string<Model>  $modelClass
      */
