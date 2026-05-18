@@ -8,6 +8,8 @@ use App\Console\Commands\TenantsProvisionCommand;
 use App\Console\Commands\TenantsValidateCommand;
 use App\Exceptions\ApiException;
 use App\Http\Middleware\ApiRequestLoggingMiddleware;
+use App\Http\Middleware\ApplyTenantRuntimeSettings;
+use App\Http\Middleware\ApplyTenantSecuritySettings;
 use App\Http\Middleware\EnsureClientCredentials;
 use App\Http\Middleware\EnsurePasswordChangedMiddleware;
 use App\Http\Middleware\EnsurePermission;
@@ -50,6 +52,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
             'user.active' => EnsureUserIsActive::class,
             'tenant.resolve' => ResolveTenantMiddleware::class,
+            'tenant.runtime-settings' => ApplyTenantRuntimeSettings::class,
+            'tenant.security-settings' => ApplyTenantSecuritySettings::class,
             'tenant.access' => EnsureTenantAccessMiddleware::class,
             'password.changed' => EnsurePasswordChangedMiddleware::class,
             'client.credentials' => EnsureClientCredentials::class,

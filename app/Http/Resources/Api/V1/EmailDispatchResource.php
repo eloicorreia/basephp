@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\EmailDispatch;
+use App\Services\TenantSettings\TenantRuntimeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,7 @@ final class EmailDispatchResource extends JsonResource
         }
 
         $emailDispatch = $this->resource;
+        $runtimeSettings = app(TenantRuntimeSettings::class);
 
         return [
             'id' => $emailDispatch->id,
@@ -35,9 +37,9 @@ final class EmailDispatchResource extends JsonResource
             'external_reference' => $emailDispatch->external_reference,
             'attempts' => $emailDispatch->attempts,
             'error_message' => $emailDispatch->error_message,
-            'sent_at' => $emailDispatch->sent_at,
-            'created_at' => $emailDispatch->created_at,
-            'updated_at' => $emailDispatch->updated_at,
+            'sent_at' => $runtimeSettings->formatDateTime($emailDispatch->sent_at),
+            'created_at' => $runtimeSettings->formatDateTime($emailDispatch->created_at),
+            'updated_at' => $runtimeSettings->formatDateTime($emailDispatch->updated_at),
         ];
     }
 }

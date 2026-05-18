@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\User;
+use App\Services\TenantSettings\TenantRuntimeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,7 @@ class UserResource extends JsonResource
         }
 
         $user = $this->resource;
+        $runtimeSettings = app(TenantRuntimeSettings::class);
 
         return [
             'id' => $user->id,
@@ -32,7 +34,7 @@ class UserResource extends JsonResource
                 'code' => $user->role->code,
                 'name' => $user->role->name,
             ] : null,
-            'created_at' => $user->created_at,
+            'created_at' => $runtimeSettings->formatDateTime($user->created_at),
         ];
     }
 }

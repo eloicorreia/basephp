@@ -55,10 +55,10 @@ class RoleService
     private function normalizePerPage(?int $perPage): int
     {
         if ($perPage === null || $perPage < 1) {
-            return self::DEFAULT_PER_PAGE;
+            return (int) config('tenant.runtime.default_items_per_page', self::DEFAULT_PER_PAGE);
         }
 
-        return min($perPage, self::MAX_PER_PAGE);
+        return min($perPage, (int) config('tenant.runtime.max_items_per_page', self::MAX_PER_PAGE));
     }
 
     private function normalizeSort(?string $sort): string

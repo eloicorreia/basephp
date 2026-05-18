@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin\Web;
 
 use App\Models\ApiRequestLog;
+use App\Services\TenantSettings\TenantRuntimeSettings;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -13,7 +14,8 @@ use Throwable;
 final readonly class AdminLogQueryService
 {
     public function __construct(
-        private VisibleLogSanitizer $visibleLogSanitizer
+        private VisibleLogSanitizer $visibleLogSanitizer,
+        private TenantRuntimeSettings $runtimeSettings,
     ) {}
 
     /**
@@ -154,7 +156,7 @@ final readonly class AdminLogQueryService
             'processing_status' => $log->processing_status,
             'duration_ms' => $log->duration_ms,
             'ip' => $log->ip,
-            'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+            'created_at' => $this->runtimeSettings->formatDateTime($log->created_at),
         ];
     }
 

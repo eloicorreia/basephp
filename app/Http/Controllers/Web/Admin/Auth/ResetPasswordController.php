@@ -48,6 +48,7 @@ final class ResetPasswordController extends Controller
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                     'must_change_password' => false,
+                    'password_changed_at' => now(),
                 ])->save();
 
                 $resetUser = $user;

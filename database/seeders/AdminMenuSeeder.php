@@ -182,7 +182,7 @@ class AdminMenuSeeder extends Seeder
             [
                 'admin_menu_group_id' => $systemSettingsGroup->id,
                 'parent_id' => null,
-                'title' => 'Configurações do Sistema',
+                'title' => 'Sistema',
                 'translation_key' => null,
                 'route_name' => 'admin.system-settings.index',
                 'active_route_pattern' => 'admin.system-settings.*',

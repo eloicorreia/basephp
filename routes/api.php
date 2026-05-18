@@ -55,6 +55,8 @@ Route::prefix('v1')->group(function (): void {
         OAuthScopes::scope(OAuthScopes::TENANT_ACCESS),
         'tenant.resolve',
         'tenant.access',
+        'tenant.runtime-settings',
+        'tenant.security-settings',
         'password.changed',
     ])->group(function (): void {
         Route::get('/auth/me', MeController::class)

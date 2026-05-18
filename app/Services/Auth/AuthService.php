@@ -39,6 +39,7 @@ class AuthService
         $user->forceFill([
             'password' => $newPassword,
             'must_change_password' => false,
+            'password_changed_at' => now(),
         ]);
 
         $user->save();
@@ -50,6 +51,7 @@ class AuthService
             beforeData: $before,
             afterData: [
                 'must_change_password' => false,
+                'password_changed_at' => $user->password_changed_at,
             ],
             userId: $user->id,
             userRole: $user->role?->code,

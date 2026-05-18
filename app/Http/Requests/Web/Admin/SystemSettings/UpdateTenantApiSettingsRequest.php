@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Web\Admin\SystemSettings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 final class UpdateTenantApiSettingsRequest extends FormRequest
 {
@@ -29,5 +30,45 @@ final class UpdateTenantApiSettingsRequest extends FormRequest
             'api_require_correlation_id' => ['sometimes', 'boolean'],
             'api_allowed_origins' => ['nullable', 'string', 'max:4000'],
         ];
+    }
+
+    /**
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $value = $this->input('api_allowed_origins');
+
+                if (! is_string($value) || trim($value) === '') {
+                    return;
+                }
+
+                foreach (preg_split('/\R/', $value) ?: [] as $line) {
+                    $origin = trim($line);
+
+                    if ($origin === '' || $origin === '*' || $this->isValidOrigin($origin)) {
+                        continue;
+                    }
+
+                    $validator->errors()->add('api_allowed_origins', 'Informe apenas origens válidas, uma por linha.');
+
+                    return;
+                }
+            },
+        ];
+    }
+
+    private function isValidOrigin(string $origin): bool
+    {
+        if (filter_var($origin, FILTER_VALIDATE_URL) === false) {
+            return false;
+        }
+
+        $scheme = parse_url($origin, PHP_URL_SCHEME);
+        $host = parse_url($origin, PHP_URL_HOST);
+
+        return in_array($scheme, ['http', 'https'], true) && is_string($host) && $host !== '';
     }
 }

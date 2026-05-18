@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Permission;
+use App\Services\TenantSettings\TenantRuntimeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,7 @@ class PermissionResource extends JsonResource
         }
 
         $permission = $this->resource;
+        $runtimeSettings = app(TenantRuntimeSettings::class);
 
         return [
             'id' => $permission->id,
@@ -31,8 +33,8 @@ class PermissionResource extends JsonResource
             'is_system' => $permission->is_system,
             'is_sensitive' => $permission->is_sensitive,
             'active' => $permission->active,
-            'created_at' => $permission->created_at,
-            'updated_at' => $permission->updated_at,
+            'created_at' => $runtimeSettings->formatDateTime($permission->created_at),
+            'updated_at' => $runtimeSettings->formatDateTime($permission->updated_at),
         ];
     }
 }

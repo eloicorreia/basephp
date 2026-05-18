@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Web\Admin\SystemSettings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 final class UpdateTenantNotificationSettingsRequest extends FormRequest
 {
@@ -25,6 +26,34 @@ final class UpdateTenantNotificationSettingsRequest extends FormRequest
             'notify_admin_on_permission_change' => ['sometimes', 'boolean'],
             'notify_admin_on_integration_failure' => ['sometimes', 'boolean'],
             'admin_notification_emails' => ['nullable', 'string', 'max:4000'],
+        ];
+    }
+
+    /**
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $value = $this->input('admin_notification_emails');
+
+                if (! is_string($value) || trim($value) === '') {
+                    return;
+                }
+
+                foreach (preg_split('/\R/', $value) ?: [] as $line) {
+                    $email = trim($line);
+
+                    if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) !== false) {
+                        continue;
+                    }
+
+                    $validator->errors()->add('admin_notification_emails', 'Informe apenas e-mails válidos, um por linha.');
+
+                    return;
+                }
+            },
         ];
     }
 }

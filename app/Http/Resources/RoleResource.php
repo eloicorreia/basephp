@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\Role;
+use App\Services\TenantSettings\TenantRuntimeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,7 @@ class RoleResource extends JsonResource
         }
 
         $role = $this->resource;
+        $runtimeSettings = app(TenantRuntimeSettings::class);
 
         return [
             'id' => $role->id,
@@ -28,8 +30,8 @@ class RoleResource extends JsonResource
             'active' => $role->active,
             'users_count' => $role->users_count,
             'permissions_count' => $role->permissions_count,
-            'created_at' => $role->created_at,
-            'updated_at' => $role->updated_at,
+            'created_at' => $runtimeSettings->formatDateTime($role->created_at),
+            'updated_at' => $runtimeSettings->formatDateTime($role->updated_at),
         ];
     }
 }

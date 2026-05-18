@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\TenantUser;
+use App\Services\TenantSettings\TenantRuntimeSettings;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,7 @@ final class TenantUserResource extends JsonResource
         }
 
         $tenantUser = $this->resource;
+        $runtimeSettings = app(TenantRuntimeSettings::class);
 
         return [
             'id' => $tenantUser->id,
@@ -40,8 +42,8 @@ final class TenantUserResource extends JsonResource
                 'name' => $tenantUser->role?->name,
             ],
             'is_active' => (bool) $tenantUser->is_active,
-            'created_at' => $tenantUser->created_at,
-            'updated_at' => $tenantUser->updated_at,
+            'created_at' => $runtimeSettings->formatDateTime($tenantUser->created_at),
+            'updated_at' => $runtimeSettings->formatDateTime($tenantUser->updated_at),
         ];
     }
 }

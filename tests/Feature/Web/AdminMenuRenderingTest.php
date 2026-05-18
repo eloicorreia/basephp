@@ -54,7 +54,7 @@ final class AdminMenuRenderingTest extends TestCase
         $this->assertStringContainsString('Dashboard', $html);
         $this->assertStringContainsString('Logs da API', $html);
         $this->assertStringContainsString('admin/logs/api-requests', $html);
-        $this->assertStringContainsString('Configurações do Sistema', $html);
+        $this->assertStringContainsString('Sistema', $html);
         $this->assertStringContainsString('system-settings/password-policy', $html);
         $this->assertStringContainsString('system-settings/mail', $html);
         $this->assertStringNotContainsString('Nenhum menu disponível', $html);

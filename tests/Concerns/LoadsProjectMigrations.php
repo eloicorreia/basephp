@@ -183,6 +183,10 @@ trait LoadsProjectMigrations
             && Schema::hasTable('tenant_notification_settings')
             && Schema::hasColumn('users', 'role_id')
             && Schema::hasColumn('users', 'is_active')
-            && Schema::hasColumn('users', 'must_change_password');
+            && Schema::hasColumn('users', 'must_change_password')
+            && Schema::hasColumn('users', 'failed_login_attempts')
+            && Schema::hasColumn('users', 'locked_until')
+            && Schema::hasColumn('users', 'locked_by_admin')
+            && Schema::hasColumn('users', 'password_changed_at');
     }
 }

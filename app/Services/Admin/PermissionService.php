@@ -25,7 +25,7 @@ class PermissionService
      */
     public function paginateForAdmin(bool $activeOnly = true, ?string $context = null, int $perPage = 50): LengthAwarePaginator
     {
-        $perPage = max(1, min($perPage, 100));
+        $perPage = max(1, min($perPage, (int) config('tenant.runtime.max_items_per_page', 100)));
 
         return Permission::query()
             ->when($activeOnly, static fn ($query) => $query->where('active', true))

@@ -31,6 +31,10 @@ class User extends Authenticatable implements OAuthenticatable
         'must_change_password',
         'last_login_at',
         'last_login_ip',
+        'failed_login_attempts',
+        'locked_until',
+        'locked_by_admin',
+        'password_changed_at',
     ];
 
     protected $hidden = [
@@ -43,6 +47,10 @@ class User extends Authenticatable implements OAuthenticatable
         'is_active' => 'boolean',
         'must_change_password' => 'boolean',
         'last_login_at' => 'datetime',
+        'failed_login_attempts' => 'integer',
+        'locked_until' => 'datetime',
+        'locked_by_admin' => 'boolean',
+        'password_changed_at' => 'datetime',
     ];
 
     /**
