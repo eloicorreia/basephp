@@ -31,7 +31,8 @@ class User extends Authenticatable implements OAuthenticatable
         'must_change_password',
         'last_login_at',
         'last_login_ip',
-        // Legacy global lock fields. Tenant security policy uses tenant_user_security_states.
+        // Legacy/global lock fields. Tenant-scoped security policy uses tenant_user_security_states.
+        // Keep them only for backward compatibility until a future migration proves no dependency remains.
         'failed_login_attempts',
         'locked_until',
         'locked_by_admin',

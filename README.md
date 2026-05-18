@@ -118,6 +118,8 @@ Esta base pode ser usada como origem de novos projetos, mas os itens abaixo deve
 - controllers não leem `X-Tenant-Id`, não manipulam `TenantContext` e não executam `SET search_path`
 - troca de `search_path` fica restrita aos serviços de infraestrutura de tenancy
 - execuções fora do HTTP devem passar por `TenantExecutionManager`
+- políticas de segurança por tenant, como contador de falhas e bloqueio, persistem estado em `tenant_user_security_states`
+- os campos `users.failed_login_attempts`, `users.locked_until` e `users.locked_by_admin` são legados/globais e não fazem parte da política tenant; só devem ser removidos em migration futura após confirmação de inexistência de dependências
 
 ### Contrato de logging e observabilidade
 
@@ -244,6 +246,10 @@ Todas as rotas REST devem usar versionamento:
   }
 }
 ```
+
+## Datas em Resources
+
+Campos REST canônicos como `created_at` e `updated_at` devem permanecer estáveis em ISO/UTC para integrações e clientes externos. Formatos humanos configuráveis pelo tenant devem ser expostos apenas em campos adicionais com sufixo `_formatted`, por exemplo `created_at_formatted` e `updated_at_formatted`, seguindo as runtime settings do tenant.
 
 ---
 

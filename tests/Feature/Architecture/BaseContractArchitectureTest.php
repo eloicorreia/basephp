@@ -263,6 +263,22 @@ final class BaseContractArchitectureTest extends TestCase
         }
     }
 
+    public function test_tenant_security_policy_does_not_use_global_user_lock_fields(): void
+    {
+        $contents = File::get(app_path('Services/TenantSettings/TenantSecurityPolicyService.php'));
+
+        $this->assertStringContainsString('TenantUserSecurityState', $contents);
+        $this->assertStringContainsString('tenant_user_security_states', $contents);
+
+        foreach (['failed_login_attempts', 'locked_until', 'locked_by_admin'] as $legacyField) {
+            $this->assertStringNotContainsString(
+                '$user->'.$legacyField,
+                $contents,
+                sprintf('Tenant security policy must not read or write users.%s.', $legacyField)
+            );
+        }
+    }
+
     public function test_observability_defaults_keep_safe_logging_contract(): void
     {
         $allowedHeaders = config('observability.api_request_logging.allowed_headers');
